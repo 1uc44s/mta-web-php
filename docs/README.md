@@ -21,6 +21,7 @@ Bu klasör projenin **tek doğruluk kaynağıdır**. Kod ile doküman çelişirs
 | 10 | [ROADMAP.md](ROADMAP.md) | Geliştirme fazları ve çıkış kriterleri |
 | 11 | [RULES.md](RULES.md) | Kod standartları, PDO/SQL injection, XSS/CSRF, test ve commit kuralları |
 | 12 | [TODO.md](TODO.md) | Sıradaki görevler, test adımları, açık kararlar |
+| 13 | [OPERATIONS.md](OPERATIONS.md) | Dağıtım, geri alma, yedek/geri yükleme, izleme, break-glass, kimlik bilgisi rotasyonu |
 
 **Kaynak şartname:** [grandroleplay_benzeri_mta_roleplay_platform_teknik_sartname.md](grandroleplay_benzeri_mta_roleplay_platform_teknik_sartname.md) — proje sahibinin ilk brief'i. Bu set brief'i esas alır; brief'ten bilinçli sapmalar [PRD.md §10](PRD.md#10-kararlar-ve-brieften-sapmalar) içinde gerekçesiyle kayıtlıdır. Brief ile bu set çeliştiğinde **bu set** geçerlidir.
 

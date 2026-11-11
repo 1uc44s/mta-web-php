@@ -20,7 +20,7 @@ Laravel 13 · PHP 8.4 · MariaDB 10.11 · Blade + Tailwind CSS v4 + Alpine.js (C
 | 8 | Başvurular, moderasyon, oyun komutları | ⏳ |
 | 9 | Ekonomi ve ödeme | ⏳ |
 | 10 | Gelişmiş kanallar | ⏳ |
-| 11 | Sertleştirme ve yayın | ⏳ |
+| 11 | Sertleştirme ve yayın | 🟡 R1 yerel kısım ✅ (güvenlik testleri, audit, yedek/geri yükleme testi, izleme, operasyon dokümanı); production kurulumu, hukuk ve marka onayı açık |
 
 ---
 
@@ -411,7 +411,21 @@ Faz 5'te mevcut tablolar da kullanılmaya başladı: `page_revisions` (sayfa dü
 
 ---
 
-## 5. Mimari notlar
+## 5. Operasyon (Faz 11 R1)
+
+Ayrıntı: [docs/OPERATIONS.md](docs/OPERATIONS.md). Örnek production dosyaları: [`deploy/`](deploy/) — `nginx/meridyen.conf`, `supervisor/meridyen-worker.conf`, `cron/meridyen`, `backup.sh` (şifreli günlük döküm + dosyalar).
+
+| Komut | Zamanlama | Görev |
+|---|---|---|
+| `php artisan mrp:health-check [--json]` | 5 dk | Başarısız iş (24 sa), kuyruk gecikmesi > 10 dk, disk < %10, MTA heartbeat > 5 dk → `security` log; alarm varsa çıkış kodu 1 |
+| `php artisan audit:verify` | 03:30 | Audit hash zinciri |
+| `php artisan mrp:make-super-admin <kullanıcı>` | elle | Break-glass |
+
+**Yayın kapısı testleri:** `tests/Feature/Security/ReleaseGateTest.php` (SQL injection, session fixation, `X-Forwarded-For` ile hız sınırı atlatma, yansıyan XSS, sayfa başına sorgu sınırı, sağlık kontrolü). `composer audit` ve `npm audit` 0 açık.
+
+**Veritabanı kullanıcıları (production):** `meridyen_app` (yalnızca `SELECT/INSERT/UPDATE/DELETE`), `meridyen_migrate` (DDL + trigger, yalnızca dağıtımda), `meridyen_backup` (salt okunur + trigger dökümü). Uygulama kullanıcısı audit/consent trigger'larını değiştiremez.
+
+## 6. Mimari notlar
 
 - **Güvenlik başlıkları (global):** nonce'lu CSP (`unsafe-inline` / `unsafe-eval` yok), `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, `COOP`, `X-Frame-Options: DENY`, `X-Request-Id`. Production + HTTPS'te HSTS.
 - **CSRF:** Laravel token + `VerifyOrigin` (cross-site `Sec-Fetch-Site` / `Origin` → 419). İstisna yalnızca `webhooks/*`.

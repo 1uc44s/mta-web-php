@@ -1,0 +1,6 @@
+# /etc/cron.d/meridyen — docs/OPERATIONS.md §1. Tüm zamanlanmış işler routes/console.php içindedir.
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+* * * * * www-data cd /var/www/meridyen && php artisan schedule:run >> /dev/null 2>&1
+0 3 * * * meridyen-backup /var/www/meridyen/deploy/backup.sh >> /var/log/meridyen-backup.log 2>&1
