@@ -108,7 +108,7 @@ T1.4–T1.7 `php artisan serve` (`http://127.0.0.1:8000`) üzerinde yapıldı; v
 
 Ayrıntılı görev tabloları [ROADMAP.md](ROADMAP.md) içindedir. Faz başladığında görevler bu dosyanın §2 bölümüne taşınır ve alt adımlara bölünür.
 
-- [ ] **Faz 2** Tasarım sistemi + public site (2.1–2.9)
+- [x] **Faz 2** Tasarım sistemi + public site — 2026-11-11, commit `9fdb1fe`. Kanıt: 108 test / 622 assertion yeşil, Larastan 0 hata, Pint temiz; tüm public rotalar 200; 375 px'te yatay taşma yok (header'daki responsive sınıf çakışması bulunup düzeltildi). Kapsam notları: `system_settings`, `mta_servers` ve Akademi tabloları planlanandan erken (Faz 2) oluşturuldu çünkü public sayfalar bunlara ihtiyaç duyuyor; ACP düzenleme ekranları Faz 4–5'te. Kalıcı logo ve OG görseli OD-01'i bekliyor (geçici SVG favicon ve logo bileşeni mevcut).
 - [ ] **Faz 3** Kimlik doğrulama (3.1–3.8)
 - [ ] **Faz 4** RBAC + branşlar + ACP iskeleti (4.1–4.11)
 - [ ] **Faz 5** CMS + Akademi + şablon motoru (5.1–5.9)

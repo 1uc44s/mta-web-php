@@ -87,6 +87,7 @@ public function store(Request $request)
 | Hassas alanlar `$hidden` içindedir (`password, remember_token, two_factor_*`). Panel JSON'u Resource sınıflarıyla üretilir | MUST |
 | `Model::preventLazyLoading(! app()->isProduction())`, `preventSilentlyDiscardingAttributes()`, `preventAccessingMissingAttributes()` açıktır | MUST |
 | Route model binding dışa açık varlıklarda `ulid` kullanır | MUST |
+| Cache'e yalnızca skaler ve düz dizi yazılır. Eloquent modeli/koleksiyonu veya başka nesne cache'lenmez: Laravel 13 cache'i güvenlik gereği nesne `unserialize` etmez (Faz 2 bulgusu) | MUST |
 | Kuyruk işleri idempotenttir ve `ShouldBeUnique` veya idempotency anahtarı kullanır | MUST |
 | Uzun süren işler (e-posta, görsel işleme, webhook işleme) kuyruğa atılır | MUST |
 | Olaylar (`Events`) yan etkileri ayırmak için kullanılır. Kritik iş kuralı listener'a gizlenmez | SHOULD |
