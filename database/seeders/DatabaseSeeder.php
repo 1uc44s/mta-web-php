@@ -4,24 +4,23 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
-class DatabaseSeeder extends Seeder
+/**
+ * docs/DATABASE.md §12 seed sırası. DemoSeeder yalnızca yerel ortamda çalışır.
+ * İlk süper admin seed ile oluşturulmaz: `php artisan mrp:make-super-admin {email}` (Faz 4).
+ */
+final class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        $this->call([
+            ServerSeeder::class,
+            ContentSeeder::class,
         ]);
+
+        if (app()->isLocal()) {
+            $this->call(DemoSeeder::class);
+        }
     }
 }

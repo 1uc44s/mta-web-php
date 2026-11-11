@@ -43,6 +43,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->web(append: [VerifyOrigin::class]);
 
+        // Tema/efekt/çerez tercihi cookie'leri gizli değildir; değerleri allowlist ile doğrulanır (docs/DESIGN.md §4).
+        $middleware->encryptCookies(except: ['mrp_theme', 'mrp_effects', 'mrp_consent']);
+
         // Grup zincirleri sonraki fazlarda tamamlanır (verified, active, staff, mfa, admin.idle …).
         $middleware->group('panel', ['web', 'auth']);
         $middleware->group('admin', ['web', 'auth']);

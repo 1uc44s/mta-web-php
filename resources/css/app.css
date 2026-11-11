@@ -202,7 +202,77 @@
     }
 }
 
+/* ---------- Bileşen katmanı ---------- */
+@layer components {
+    /* Uzun metin (Markdown çıktısı). Typography eklentisi yerine token'lı küçük set. */
+    .prose-mrp {
+        color: var(--c-text-muted);
+        font-size: 1.0625rem;
+        line-height: 1.75;
+        max-width: 68ch;
+    }
+    .prose-mrp > * + * { margin-top: 1.1em; }
+    .prose-mrp h2, .prose-mrp h3, .prose-mrp h4 { color: var(--c-text); line-height: 1.25; margin-top: 2em; }
+    .prose-mrp h2 { font-size: 1.5rem; }
+    .prose-mrp h3 { font-size: 1.25rem; }
+    .prose-mrp h4 { font-size: 1.0625rem; }
+    .prose-mrp strong { color: var(--c-text); font-weight: 600; }
+    .prose-mrp a { color: var(--c-accent); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+    .prose-mrp a:hover { text-decoration-thickness: 2px; }
+    .prose-mrp ul { list-style: none; padding-left: 0; }
+    .prose-mrp ul > li { position: relative; padding-left: 1.25em; }
+    .prose-mrp ul > li::before { content: ''; position: absolute; left: 0.1em; top: 0.72em; width: 0.45em; height: 1px; background: var(--c-accent); }
+    .prose-mrp ol { list-style: decimal-leading-zero; padding-left: 1.75em; }
+    .prose-mrp ol > li::marker { color: var(--c-text-subtle); font-family: var(--font-mono); font-size: 0.85em; }
+    .prose-mrp li + li { margin-top: 0.4em; }
+    .prose-mrp blockquote { border-left: 2px solid var(--c-amber); padding: 0.25em 0 0.25em 1em; color: var(--c-text); }
+    .prose-mrp code { font-family: var(--font-mono); font-size: 0.875em; background: var(--c-surface-2); border: 1px solid var(--c-border); border-radius: var(--radius-sm); padding: 0.1em 0.35em; color: var(--c-text); }
+    .prose-mrp pre { background: var(--c-surface-2); border: 1px solid var(--c-border); border-radius: var(--radius-md); padding: 1em; overflow-x: auto; }
+    .prose-mrp pre code { background: none; border: 0; padding: 0; }
+    .prose-mrp hr { border: 0; border-top: 1px solid var(--c-border); margin: 2.5em 0; }
+    .prose-mrp table { width: 100%; border-collapse: collapse; font-size: 0.9375rem; display: block; overflow-x: auto; }
+    .prose-mrp th, .prose-mrp td { border-bottom: 1px solid var(--c-border); padding: 0.6em 0.75em; text-align: left; }
+    .prose-mrp th { color: var(--c-text); font-weight: 600; }
+    .prose-mrp img { border-radius: var(--radius-md); border: 1px solid var(--c-border); }
+
+    /* Native <dialog> görünümü ve giriş animasyonu (azaltılmış harekette kapalı). */
+    .dialog-mrp::backdrop { background: rgb(5 6 8 / 0.72); }
+    [data-theme='light'] .dialog-mrp::backdrop { background: rgb(14 17 22 / 0.4); }
+    @media (prefers-reduced-motion: no-preference) {
+        .dialog-mrp[open] { animation: mrp-dialog-in var(--dur-slow) var(--ease-out); }
+    }
+    @keyframes mrp-dialog-in {
+        from { opacity: 0; transform: translateY(8px) scale(0.985); }
+        to { opacity: 1; transform: none; }
+    }
+
+    @keyframes mrp-pulse {
+        0% { opacity: 0.55; transform: scale(1); }
+        100% { opacity: 0; transform: scale(2.6); }
+    }
+
+    /* Kural derin bağlantısıyla gelindiğinde vurgulama. */
+    .rule-target:target { background: var(--c-accent-soft); border-color: var(--c-accent); }
+}
+
 /* ---------- Yardımcılar ---------- */
+
+/* Canlı nokta nabzı (DESIGN §3.4). Utility olduğu için group-data-* varyantlarıyla kullanılabilir. */
+@utility pulse-live {
+    &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 999px;
+        background: currentColor;
+        opacity: 0;
+    }
+    @media (prefers-reduced-motion: no-preference) {
+        &::after {
+            animation: mrp-pulse 2s var(--ease-out) infinite;
+        }
+    }
+}
 @utility eyebrow {
     font-family: var(--font-mono);
     font-size: 0.75rem;

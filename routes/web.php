@@ -2,11 +2,59 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Public\AcademyController;
+use App\Http\Controllers\Public\ContactController;
+use App\Http\Controllers\Public\EventController;
+use App\Http\Controllers\Public\FactionController;
+use App\Http\Controllers\Public\FaqController;
+use App\Http\Controllers\Public\GameJobController;
+use App\Http\Controllers\Public\GameSystemController;
+use App\Http\Controllers\Public\HomeController;
+use App\Http\Controllers\Public\NewsController;
+use App\Http\Controllers\Public\PageController;
+use App\Http\Controllers\Public\PreferenceController;
+use App\Http\Controllers\Public\RulesController;
+use App\Http\Controllers\Public\SeoController;
 use Illuminate\Support\Facades\Route;
 
 /*
- * Public site ve kimlik doğrulama rotaları (docs/ROUTES.md §3–4).
- * Yeni rota önce ROUTES.md'ye eklenir.
+ * Public site rotaları (docs/ROUTES.md §3). Yeni rota önce ROUTES.md'ye eklenir.
  */
 
-Route::view('/', 'public.home')->name('public.home');
+Route::get('/', HomeController::class)->name('public.home');
+Route::get('/about', PageController::class)->defaults('slug', 'about')->name('public.about');
+
+Route::get('/systems', [GameSystemController::class, 'index'])->name('public.systems.index');
+Route::get('/systems/{slug}', [GameSystemController::class, 'show'])->name('public.systems.show');
+Route::get('/jobs', [GameJobController::class, 'index'])->name('public.jobs.index');
+Route::get('/jobs/{slug}', [GameJobController::class, 'show'])->name('public.jobs.show');
+Route::get('/factions', [FactionController::class, 'index'])->name('public.factions.index');
+Route::get('/factions/{slug}', [FactionController::class, 'show'])->name('public.factions.show');
+
+Route::get('/start', [AcademyController::class, 'start'])->name('public.start');
+Route::get('/rules', RulesController::class)->name('public.rules');
+Route::get('/academy', [AcademyController::class, 'index'])->name('public.academy.index');
+Route::get('/academy/{course}', [AcademyController::class, 'course'])->name('public.academy.course');
+Route::get('/academy/{course}/{topic}', [AcademyController::class, 'topic'])->name('public.academy.topic');
+
+Route::get('/news', [NewsController::class, 'index'])->name('public.news.index');
+Route::get('/news/category/{category:slug}', [NewsController::class, 'index'])->name('public.news.category');
+Route::get('/news/{post}', [NewsController::class, 'show'])->name('public.news.show');
+Route::get('/events', [EventController::class, 'index'])->name('public.events.index');
+Route::get('/events/{event}', [EventController::class, 'show'])->name('public.events.show');
+Route::get('/faq', FaqController::class)->name('public.faq');
+
+Route::get('/contact', [ContactController::class, 'show'])->name('public.contact');
+Route::post('/contact', [ContactController::class, 'store'])->middleware('throttle:contact')->name('public.contact.store');
+
+foreach (['privacy', 'kvkk', 'terms', 'cookies'] as $legal) {
+    Route::get('/'.$legal, PageController::class)->defaults('slug', $legal)->name('public.legal.'.$legal);
+}
+Route::get('/p/{slug}', PageController::class)->name('public.page');
+
+Route::post('/preferences/theme', [PreferenceController::class, 'theme'])->middleware('throttle:preferences')->name('public.preferences.theme');
+Route::post('/cookie-consent', [PreferenceController::class, 'cookieConsent'])->middleware('throttle:preferences')->name('public.cookie-consent');
+
+Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('public.sitemap');
+Route::get('/robots.txt', [SeoController::class, 'robots'])->name('public.robots');
+Route::get('/feed.xml', [SeoController::class, 'feed'])->name('public.feed');
