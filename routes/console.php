@@ -10,5 +10,6 @@ use Illuminate\Support\Facades\Schedule;
 
 Schedule::command('content:publish-scheduled')->everyMinute()->withoutOverlapping();
 Schedule::command('mrp:expire-roles')->hourly()->withoutOverlapping();
+Schedule::command('mrp:maintenance-tick')->hourly()->withoutOverlapping();
 Schedule::command('audit:verify')->dailyAt('03:30')->withoutOverlapping();
 Schedule::command('model:prune')->daily();

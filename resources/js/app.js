@@ -4,7 +4,9 @@
 import Alpine from '@alpinejs/csp';
 import { initCopy } from './modules/copy';
 import { initDialogs } from './modules/dialogs';
+import { initNotificationBadge } from './modules/notifications';
 import { initPreferences } from './modules/preferences';
+import { initPwa } from './modules/pwa';
 import { initRulesFilter } from './modules/rules-filter';
 import { initServerStatus } from './modules/server-status';
 import { initUi } from './modules/ui';
@@ -18,6 +20,8 @@ const boot = () => {
     initRulesFilter();
     initServerStatus();
     initUi();
+    initNotificationBadge();
+    initPwa();
 };
 
 if (document.readyState === 'loading') {

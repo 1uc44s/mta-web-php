@@ -11,6 +11,7 @@ use App\Services\Content\MarkdownRenderer;
 use App\Services\Settings\SettingsRepository;
 use App\Support\ConfigValidator;
 use App\View\Composers\AdminLayoutComposer;
+use App\View\Composers\PanelLayoutComposer;
 use App\View\Composers\PublicLayoutComposer;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -44,6 +45,7 @@ final class AppServiceProvider extends ServiceProvider
 
         View::composer('components.layouts.public', PublicLayoutComposer::class);
         View::composer('components.layouts.admin', AdminLayoutComposer::class);
+        View::composer('components.layouts.panel', PanelLayoutComposer::class);
 
         Event::subscribe(AuthEventSubscriber::class);
 
@@ -91,5 +93,8 @@ final class AppServiceProvider extends ServiceProvider
         RateLimiter::for('verification', fn (Request $request): Limit => Limit::perHour(6)->by('verify:'.($request->user()?->getAuthIdentifier() ?? $request->ip())));
         // docs/ROUTES.md T:uploads — dosya yükleme (medya, ileride ticket ekleri).
         RateLimiter::for('uploads', fn (Request $request): Limit => Limit::perMinute(20)->by('uploads:'.($request->user()?->getAuthIdentifier() ?? $request->ip())));
+        // docs/ROUTES.md §5.4: destek talebi oluşturma 5/saat, mesaj 20/10 dk (kullanıcı başına).
+        RateLimiter::for('support-create', fn (Request $request): Limit => Limit::perHour(5)->by('sup-c:'.$request->user()?->getAuthIdentifier()));
+        RateLimiter::for('support-message', fn (Request $request): Limit => Limit::perMinutes(10, 20)->by('sup-m:'.$request->user()?->getAuthIdentifier()));
     }
 }

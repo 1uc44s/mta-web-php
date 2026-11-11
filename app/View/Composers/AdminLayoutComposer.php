@@ -22,6 +22,9 @@ final class AdminLayoutComposer
         ['label' => 'admin.nav.players', 'items' => [
             ['label' => 'admin.nav.users', 'route' => 'admin.users.index', 'icon' => 'users', 'can' => 'users.read', 'match' => 'admin.users.*'],
         ]],
+        ['label' => 'support.title', 'items' => [
+            ['label' => 'support.admin.queue', 'route' => 'admin.support.index', 'icon' => 'life-buoy', 'can' => 'support.read', 'match' => 'admin.support.*'],
+        ]],
         ['label' => 'content_admin.nav.content', 'items' => [
             ['label' => 'Sayfalar', 'route' => 'admin.content.pages.index', 'icon' => 'file-text', 'can' => 'content.read', 'match' => 'admin.content.pages.*'],
             ['label' => 'Haberler', 'route' => 'admin.content.news.index', 'icon' => 'newspaper', 'can' => 'content.read', 'match' => 'admin.content.news*'],

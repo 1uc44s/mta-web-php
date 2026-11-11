@@ -7,6 +7,7 @@ namespace Database\Seeders;
 use App\Models\Branch;
 use App\Models\Permission;
 use App\Models\Role;
+use App\Models\SupportCategory;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -32,7 +33,27 @@ final class AccessControlSeeder extends Seeder
             $this->syncPermissions();
             $this->syncRoles();
             $this->seedBranches();
+            $this->seedSupportCategories();
         });
+    }
+
+    /** docs/DATABASE.md §8.1 — ticket'lar kategorinin branşına yönlenir (ADMIN §5.4). */
+    private function seedSupportCategories(): void
+    {
+        $categories = [
+            ['hesap-ve-giris', 'Hesap ve giriş', 'Giriş, e-posta, 2FA ve hesap sorunları', 'destek-genel', 'normal'],
+            ['hata-bildirimi', 'Hata bildirimi', 'Oyunda veya sitede karşılaştığın teknik hatalar', 'destek-teknik', 'normal'],
+            ['oyuncu-sikayeti', 'Oyuncu şikayeti', 'Kural ihlali bildirimi (kanıt eklemeyi unutma)', 'moderasyon', 'high'],
+            ['odeme', 'Ödeme ve bakiye', 'Ödeme, bakiye ve iade soruları', 'finans', 'normal'],
+            ['genel', 'Genel soru', 'Diğer tüm konular', 'destek-genel', 'low'],
+        ];
+
+        foreach ($categories as $i => [$slug, $name, $description, $branch, $priority]) {
+            SupportCategory::query()->firstOrCreate(['slug' => $slug], [
+                'name' => $name, 'description' => $description, 'default_priority' => $priority, 'sort' => $i,
+                'branch_id' => Branch::query()->where('slug', $branch)->value('id'),
+            ]);
+        }
     }
 
     private function syncPermissions(): void

@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
+use App\Actions\Account\AccountDeletion;
 use App\Actions\Admin\SetUserSuspension;
 use App\Enums\UserStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\ReasonRequest;
 use App\Http\Requests\Admin\SuspendUserRequest;
 use App\Models\Role;
 use App\Models\User;
@@ -86,5 +88,17 @@ final class UserController extends Controller
         }
 
         return back()->with('toast', __('admin.users.verification_sent'));
+    }
+
+    /** KVKK talebiyle anonimleştirme — docs/ROUTES.md §6.2, DATABASE §13 (PC + gerekçe; hiyerarşi). */
+    public function anonymize(ReasonRequest $request, User $user, AccountDeletion $deletion): RedirectResponse
+    {
+        /** @var User $actor */
+        $actor = $request->user();
+        abort_if($user->id === $actor->id || ($user->isStaff() && ! $actor->outranks($user)), 403);
+
+        $deletion->anonymize($user, $actor, (string) $request->validated('reason'));
+
+        return back()->with('toast', 'Hesap anonimleştirildi.');
     }
 }

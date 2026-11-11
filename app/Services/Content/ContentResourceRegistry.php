@@ -7,6 +7,7 @@ namespace App\Services\Content;
 use App\Models\AcademyCourse;
 use App\Models\AcademyTopic;
 use App\Models\Announcement;
+use App\Models\Branch;
 use App\Models\CommunityEvent;
 use App\Models\Faction;
 use App\Models\Faq;
@@ -20,6 +21,8 @@ use App\Models\Page;
 use App\Models\Rule;
 use App\Models\RuleCategory;
 use App\Models\SocialLink;
+use App\Models\SupportCategory;
+use App\Models\SupportMacro;
 use App\Models\Tag;
 use Illuminate\Database\Eloquent\Model;
 use InvalidArgumentException;
@@ -244,6 +247,32 @@ final class ContentResourceRegistry
                     'ends_at' => ['type' => 'datetime', 'label' => 'Bitiş', 'rules' => ['nullable', 'date', 'after:starts_at']],
                 ],
             ],
+            // docs/ROUTES.md §6.4: destek kategorileri ve makroları CMS kaynak deseniyle (support.manage).
+            'support-categories' => [
+                'model' => SupportCategory::class, 'label' => 'Destek kategorileri', 'singular' => 'Kategori', 'family' => 'support', 'title' => 'name',
+                'publishable' => false, 'sortable' => true, 'slug_from' => 'name', 'search' => ['name'], 'columns' => ['name', 'branch_id', 'is_active'],
+                'path' => 'support/categories', 'name' => 'support.categories',
+                'fields' => [
+                    'name' => ['type' => 'text', 'label' => 'Ad', 'rules' => ['required', 'string', 'max:100']],
+                    'description' => ['type' => 'text', 'label' => 'Form ipucu', 'rules' => ['nullable', 'string', 'max:255']],
+                    'branch_id' => ['type' => 'belongs', 'label' => 'Yönlendirilen branş', 'model' => Branch::class, 'display' => 'name', 'rules' => ['required']],
+                    'default_priority' => ['type' => 'select', 'label' => 'Varsayılan öncelik', 'options' => ['low' => 'Düşük', 'normal' => 'Normal', 'high' => 'Yüksek', 'urgent' => 'Acil'], 'rules' => ['required']],
+                    'requires_linked_account' => ['type' => 'bool', 'label' => 'Bağlı oyun hesabı gerektirir (Faz 7)'],
+                    'is_active' => ['type' => 'bool', 'label' => 'Aktif'],
+                ],
+            ],
+            'support-macros' => [
+                'model' => SupportMacro::class, 'label' => 'Yanıt makroları', 'singular' => 'Makro', 'family' => 'support', 'title' => 'title',
+                'publishable' => false, 'sortable' => false, 'slug_from' => null, 'search' => ['title'], 'columns' => ['title', 'branch_id', 'is_active'],
+                'path' => 'support/macros', 'name' => 'support.macros',
+                'fields' => [
+                    'title' => ['type' => 'text', 'label' => 'Başlık', 'rules' => ['required', 'string', 'max:100']],
+                    'body' => ['type' => 'textarea', 'label' => 'Metin ({{ player.username }}, {{ ticket.number }}, {{ ticket.subject }}, {{ staff.username }})', 'rules' => ['required', 'string', 'max:5000'], 'wide' => true],
+                    'branch_id' => ['type' => 'belongs', 'label' => 'Branş (boş = herkes)', 'model' => Branch::class, 'display' => 'name'],
+                    'category_id' => ['type' => 'belongs', 'label' => 'Kategori', 'model' => SupportCategory::class, 'display' => 'name'],
+                    'is_active' => ['type' => 'bool', 'label' => 'Aktif'],
+                ],
+            ],
         ];
     }
 
@@ -259,6 +288,7 @@ final class ContentResourceRegistry
         return match (self::get($key)['family']) {
             'academy' => 'academy.manage',
             'announcements' => $ability === 'publish' ? 'announcements.publish' : 'announcements.manage',
+            'support' => 'support.manage',
             default => match ($ability) {
                 'read' => 'content.read',
                 'create' => 'content.create',

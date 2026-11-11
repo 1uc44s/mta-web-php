@@ -1,6 +1,6 @@
 {{-- Panel: Akademi ilerlemesi — docs/CMS.md §5.2. İlerleme = tamamlanan / yayındaki konu. --}}
-<x-layouts.public :title="'Akademi ilerlemem'">
-    <section class="mx-auto max-w-[1240px] px-4 py-14 sm:px-8">
+<x-layouts.panel :title="'Akademi ilerlemem'">
+    <section class="mx-auto max-w-5xl">
         <x-brand.eyebrow>Oyuncu paneli</x-brand.eyebrow>
         <h1 class="mt-4 font-display text-h1 font-bold font-expanded text-text">Akademi ilerlemem</h1>
         <p class="mt-3 max-w-2xl text-text-muted">Konuları okuyup "Okudum" dediğinde ilerlemen burada görünür. Zorunlu dersler rozetle işaretlidir.</p>
@@ -22,4 +22,4 @@
             @endforelse
         </ul>
     </section>
-</x-layouts.public>
+</x-layouts.panel>

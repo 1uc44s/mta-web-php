@@ -7,6 +7,7 @@ use App\Http\Middleware\AssignRequestId;
 use App\Http\Middleware\EnsureAccountActive;
 use App\Http\Middleware\EnsureStaff;
 use App\Http\Middleware\LogAdminActivity;
+use App\Http\Middleware\PrivateAreaHeaders;
 use App\Http\Middleware\RequireAdminMfa;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\ThrottleSensitiveAuthRoutes;
@@ -55,6 +56,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'mfa' => RequireAdminMfa::class,
             'admin.idle' => AdminIdleTimeout::class,
             'admin.activity' => LogAdminActivity::class,
+            'private.headers' => PrivateAreaHeaders::class,
         ]);
 
         // Girişli kullanıcı misafir sayfasına gelirse panele (Fortify home), misafir korumalı sayfaya gelirse girişe.
@@ -65,8 +67,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->encryptCookies(except: ['mrp_theme', 'mrp_effects', 'mrp_consent']);
 
         // docs/SRS.md FR-ADM-001 zinciri. Rota bazında ayrıca `can:` (FR-ADM-002) ve kritik işlemlerde `password.confirm` (FR-ADM-004).
-        $middleware->group('panel', ['web', 'auth', 'active']);
-        $middleware->group('admin', ['web', 'auth', 'verified', 'active', 'staff', 'mfa', 'admin.idle', 'admin.activity']);
+        // private.headers: FR-UCP-007 / FR-PWA-003 (noindex + no-store).
+        $middleware->group('panel', ['web', 'auth', 'active', 'private.headers']);
+        $middleware->group('admin', ['web', 'auth', 'verified', 'active', 'staff', 'mfa', 'admin.idle', 'admin.activity', 'private.headers']);
         $middleware->group('hooks', []);
 
         // CSRF istisnası yalnızca imza doğrulamalı webhook'lar (docs/RULES.md §7).

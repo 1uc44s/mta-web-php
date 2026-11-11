@@ -1,6 +1,6 @@
 {{-- Faz 3 panel iskeleti. Tam panel düzeni (sidebar, kartlar) Faz 6'da (docs/DESIGN.md §7.2). --}}
-<x-layouts.public :title="'Oyuncu paneli'">
-    <section class="mx-auto max-w-[1240px] px-4 py-14 sm:px-8">
+<x-layouts.panel :title="'Genel bakış'">
+    <section class="mx-auto max-w-5xl">
         <x-brand.eyebrow>Oyuncu paneli</x-brand.eyebrow>
         <h1 class="mt-4 font-display text-h1 font-bold font-expanded text-text">Hoş geldin, {{ $user->username }}</h1>
 
@@ -67,4 +67,4 @@
             <x-ui.button type="submit" variant="secondary" icon="log-out">Çıkış yap</x-ui.button>
         </form>
     </section>
-</x-layouts.public>
+</x-layouts.panel>

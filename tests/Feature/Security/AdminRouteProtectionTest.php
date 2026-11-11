@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Actions\Support\TicketWorkflow;
 use App\Enums\AuditAction;
 use App\Models\Branch;
 use App\Models\ContactMessage;
@@ -10,6 +11,8 @@ use App\Models\MessageTemplate;
 use App\Models\Page;
 use App\Models\Role;
 use App\Models\Rule;
+use App\Models\SupportAttachment;
+use App\Models\SupportCategory;
 use App\Models\User;
 use App\Services\Audit\AuditLogger;
 use App\Services\Content\ContentResourceRegistry;
@@ -19,7 +22,9 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Routing\Route as RouteObject;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 
 /*
  * docs/SRS.md SEC-010, FR-ADM-001/002: her admin.* rotası × (misafir, oyuncu, 2FA'sız personel, izinsiz personel).
@@ -38,11 +43,19 @@ function adminRouteCases(): array
     $page = Page::query()->where('slug', 'home')->firstOrFail();
     $media = Media::query()->create(['disk' => 'public', 'path' => 'media/yok.webp', 'variants' => [], 'original_name' => 'yok.png', 'mime' => 'image/webp', 'width' => 10, 'height' => 10, 'size_bytes' => 1, 'alt_text' => 'Deneme']);
     $message = ContactMessage::query()->create(['name' => 'Ad', 'email' => 'a@example.com', 'subject' => 'Konu', 'body' => 'Metin', 'status' => 'new']);
+    $ticket = app(TicketWorkflow::class)->create($target, SupportCategory::query()->firstOrFail(), 'Deneme talebi', 'Deneme talebinin açıklaması burada.', (string) Str::uuid());
+    Storage::fake('local');
+    Storage::disk('local')->put('support/yok.txt', 'x');
+    $attachment = SupportAttachment::query()->create([
+        'ulid' => strtolower((string) Str::ulid()), 'ticket_id' => $ticket->id, 'message_id' => $ticket->messages()->value('id'), 'uploaded_by' => $target->id,
+        'disk' => 'local', 'path' => 'support/yok.txt', 'original_name' => 'yok.txt', 'mime' => 'text/plain', 'size_bytes' => 1, 'sha256' => str_repeat('0', 64),
+    ]);
 
     $base = [
         'user' => $target->ulid, 'role' => $role->id, 'branch' => $branch->id, 'log' => $log->ulid, 'group' => 'site', 'uuid' => 'yok',
         'page' => $page->id, 'section' => $page->sections()->value('id'), 'revision' => 999999, 'rule' => Rule::query()->value('id'),
         'template' => MessageTemplate::query()->value('id'), 'media' => $media->ulid, 'message' => $message->ulid,
+        'ticket' => $ticket->ulid, 'attachment' => $attachment->ulid,
     ];
 
     $cases = [];
@@ -132,7 +145,7 @@ it('FR-ADM-002: süper admin her GET admin sayfasını görüntüleyebilir', fun
     foreach (adminRouteCases() as $case) {
         if ($case['method'] === 'GET' && ! $case['missing']) {
             $response = $this->actingAs($super)->get($case['url']);
-            expect($response->status())->toBe(200, $case['route']->getName().' → '.$response->status());
+            expect($response->getStatusCode())->toBe(200, $case['route']->getName().' → '.$response->getStatusCode());
             $checked++;
         }
     }

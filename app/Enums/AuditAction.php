@@ -32,6 +32,7 @@ enum AuditAction: string
     case BranchesLeadChanged = 'branches.lead_changed';
     case StaffOffboarded = 'staff.offboarded';
     case MfaReset = 'security.mfa_reset';
+    case SupportEscalated = 'support.escalated';
     case ContentPublished = 'content.published';
     case ContentUnpublished = 'content.unpublished';
     case ContentDeleted = 'content.deleted';
@@ -44,7 +45,7 @@ enum AuditAction: string
     {
         return match ($this) {
             self::AdminLogin, self::AdminLogout, self::BranchesCreated, self::BranchesUpdated, self::BranchesMemberAdded,
-            self::BranchesMemberRemoved, self::BranchesLeadChanged, self::ContentPublished, self::ContentUnpublished,
+            self::BranchesMemberRemoved, self::BranchesLeadChanged, self::SupportEscalated, self::ContentPublished, self::ContentUnpublished,
             self::ContentDeleted, self::RulesVersionBumped => 'info',
             self::RolesCreated, self::RolesUpdated, self::RolesDeleted, self::RolesPermissionsSynced,
             self::SuperAdminAssigned, self::SuperAdminRevoked, self::SuperAdminBreakGlass, self::MfaReset => 'critical',
@@ -58,7 +59,7 @@ enum AuditAction: string
             self::UsersSuspended, self::UsersUnsuspended, self::UsersAnonymized, self::RolesAssigned, self::RolesRevoked,
             self::RolesCreated, self::RolesUpdated, self::RolesDeleted, self::RolesPermissionsSynced,
             self::SuperAdminAssigned, self::SuperAdminRevoked, self::SuperAdminBreakGlass,
-            self::StaffOffboarded, self::MfaReset, self::RulesVersionBumped,
+            self::StaffOffboarded, self::MfaReset, self::RulesVersionBumped, self::SupportEscalated,
         ], true);
     }
 }

@@ -60,6 +60,8 @@ final class SecurityHeaders
             'font-src' => ["'self'"],
             'connect-src' => $connect,
             'frame-src' => ['https://www.youtube-nocookie.com'],
+            'worker-src' => ["'self'"],   // PWA service worker (FR-PWA-002)
+            'manifest-src' => ["'self'"],
             'form-action' => ["'self'"],
             'frame-ancestors' => ["'none'"],
             'base-uri' => ["'self'"],

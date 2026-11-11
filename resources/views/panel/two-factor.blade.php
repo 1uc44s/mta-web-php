@@ -1,6 +1,6 @@
 {{-- 2FA kurulum sihirbazı — docs/ROUTES.md §5 (panel.security.two-factor), SRS FR-AUTH-016/017. Fortify rotalarını kullanır. --}}
-<x-layouts.public :title="__('auth.ui.two_factor_setup.title')">
-    <section class="mx-auto max-w-3xl px-4 py-14 sm:px-8">
+<x-layouts.panel :title="__('auth.ui.two_factor_setup.title')">
+    <section class="max-w-3xl">
         <x-brand.eyebrow>{{ __('auth.ui.two_factor_setup.eyebrow') }}</x-brand.eyebrow>
         <div class="mt-4 flex flex-wrap items-center gap-3">
             <h1 class="font-display text-h2 font-bold font-expanded text-text">{{ __('auth.ui.two_factor_setup.title') }}</h1>
@@ -71,4 +71,4 @@
             @endif
         </div>
     </section>
-</x-layouts.public>
+</x-layouts.panel>

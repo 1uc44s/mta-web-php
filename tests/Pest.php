@@ -44,5 +44,5 @@ function staffUser(string ...$roles): User
 /** Parola onayı (password.confirm) yapılmış oturum verisi. */
 function confirmedPassword(): array
 {
-    return ['auth.password_confirmed_at' => time()];
+    return ['auth.password_confirmed_at' => now()->getTimestamp()];
 }

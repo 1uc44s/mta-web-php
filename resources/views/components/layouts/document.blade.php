@@ -30,6 +30,10 @@
         @if ($robots)<meta name="robots" content="{{ $robots }}">@endif
     @endif
     <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
+    {{-- PWA (docs/SRS.md FR-PWA-001/002): SW yalnızca güvenli bağlamda ve production'da (veya PWA_DEV=true) kaydedilir. --}}
+    <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
+    <link rel="apple-touch-icon" href="{{ asset('icons/icon-192.png') }}">
+    <meta name="mrp-sw" content="{{ (app()->isProduction() || config('roleplay.pwa.register_in_dev')) ? asset('sw.js') : '' }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body {{ $attributes->class(['min-h-svh bg-bg text-text antialiased']) }}>

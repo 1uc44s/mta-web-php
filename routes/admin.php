@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\PageSectionController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\StaffController;
+use App\Http\Controllers\Admin\SupportController;
 use App\Http\Controllers\Admin\SystemHealthController;
 use App\Http\Controllers\Admin\TemplateController;
 use App\Http\Controllers\Admin\UserController;
@@ -128,3 +129,21 @@ Route::post('templates/{template}/revisions/{revision}/restore', [TemplateContro
 Route::get('contact', [ContactMessageController::class, 'index'])->middleware('can:contact.read')->name('contact.index');
 Route::get('contact/{message:ulid}', [ContactMessageController::class, 'show'])->middleware('can:contact.read')->name('contact.show');
 Route::post('contact/{message:ulid}/status', [ContactMessageController::class, 'status'])->middleware('can:contact.read')->name('contact.status');
+
+// §6.4 Destek (Faz 6) — kapsam (branş) her uçta controller'da; kategoriler/makrolar yukarıdaki kaynak deseninde.
+Route::prefix('support')->name('support.')->group(function (): void {
+    Route::get('/', [SupportController::class, 'index'])->middleware('can:support.read')->name('index');
+    Route::get('counters', [SupportController::class, 'counters'])->middleware(['can:support.read', 'throttle:poll'])->name('counters');
+    Route::get('attachments/{attachment:ulid}', [SupportController::class, 'attachment'])->middleware('can:support.read')->name('attachments.show');
+    Route::get('{ticket:ulid}', [SupportController::class, 'show'])->middleware('can:support.read')->where('ticket', '[0-9a-z]{26}')->name('show');
+    Route::post('{ticket:ulid}/messages', [SupportController::class, 'message'])->middleware('can:support.reply')->where('ticket', '[0-9a-z]{26}')->name('messages.store');
+    Route::post('{ticket:ulid}/status', [SupportController::class, 'status'])->middleware('can:support.reply')->where('ticket', '[0-9a-z]{26}')->name('status');
+    Route::post('{ticket:ulid}/assign', [SupportController::class, 'assign'])->middleware('can:support.assign')->where('ticket', '[0-9a-z]{26}')->name('assign');
+    Route::post('{ticket:ulid}/claim', [SupportController::class, 'claim'])->middleware('can:support.reply')->where('ticket', '[0-9a-z]{26}')->name('claim');
+    Route::post('{ticket:ulid}/priority', [SupportController::class, 'priority'])->middleware('can:support.assign')->where('ticket', '[0-9a-z]{26}')->name('priority');
+    Route::post('{ticket:ulid}/escalate', [SupportController::class, 'escalate'])->middleware('can:support.assign')->where('ticket', '[0-9a-z]{26}')->name('escalate');
+    Route::post('{ticket:ulid}/reopen-decision', [SupportController::class, 'reopenDecision'])->middleware('can:support.reply')->where('ticket', '[0-9a-z]{26}')->name('reopen-decision');
+});
+
+// §6.2 KVKK silme / anonimleştirme (Faz 6)
+Route::post('users/{user:ulid}/anonymize', [UserController::class, 'anonymize'])->middleware(['can:users.anonymize', 'password.confirm'])->name('users.anonymize');

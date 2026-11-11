@@ -77,6 +77,45 @@ return [
         'outro' => [],
     ],
 
+    'support.staff_replied' => [
+        'variables' => ['user.username', 'ticket.number', 'ticket.subject', 'link.ticket'],
+        'subject' => 'Destek talebine yanıt geldi: {{ ticket.number }}',
+        'greeting' => 'Merhaba {{ user.username }},',
+        'lines' => [
+            '“{{ ticket.subject }}” başlıklı destek talebine yetkili ekip yanıt verdi.',
+        ],
+        'action' => ['label' => 'Yanıtı oku', 'url' => 'link.ticket'],
+        'outro' => [
+            'Bu e-postaları panelde Ayarlar › Bildirimler bölümünden kapatabilirsin.',
+        ],
+    ],
+
+    'security.email_change_requested' => [
+        'variables' => ['user.username', 'link.confirm'],
+        'subject' => 'Yeni e-posta adresini onayla',
+        'greeting' => 'Merhaba {{ user.username }},',
+        'lines' => [
+            'Hesabının e-posta adresini bu adresle değiştirmek istedin. Değişikliği tamamlamak için onayla.',
+        ],
+        'action' => ['label' => 'Değişikliği onayla', 'url' => 'link.confirm'],
+        'outro' => [
+            'Bağlantı 60 dakika geçerlidir. Bu isteği sen yapmadıysan bu e-postayı yok sayabilirsin.',
+        ],
+    ],
+
+    'security.email_changed_notice' => [
+        'variables' => ['user.username', 'new_email_masked', 'link.support'],
+        'subject' => 'Hesabının e-posta adresi değiştirildi',
+        'greeting' => 'Merhaba {{ user.username }},',
+        'lines' => [
+            'Hesabının e-posta adresi {{ new_email_masked }} olarak değiştirildi. Bu adrese artık e-posta gönderilmeyecek.',
+        ],
+        'action' => ['label' => 'Destek ile iletişime geç', 'url' => 'link.support'],
+        'outro' => [
+            'Bu değişikliği sen yapmadıysan hemen destek ekibine yaz.',
+        ],
+    ],
+
     'security.password_changed' => [
         'variables' => ['user.username', 'event.time', 'event.device', 'link.security'],
         'subject' => 'Parolan değiştirildi',
