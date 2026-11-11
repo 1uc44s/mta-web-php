@@ -5,9 +5,12 @@ declare(strict_types=1);
 use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\BranchController;
+use App\Http\Controllers\Admin\CharacterController;
 use App\Http\Controllers\Admin\ContactMessageController;
 use App\Http\Controllers\Admin\ContentController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\GameAccountController;
+use App\Http\Controllers\Admin\IntegrationController;
 use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\PageSectionController;
 use App\Http\Controllers\Admin\RoleController;
@@ -143,6 +146,28 @@ Route::prefix('support')->name('support.')->group(function (): void {
     Route::post('{ticket:ulid}/priority', [SupportController::class, 'priority'])->middleware('can:support.assign')->where('ticket', '[0-9a-z]{26}')->name('priority');
     Route::post('{ticket:ulid}/escalate', [SupportController::class, 'escalate'])->middleware('can:support.assign')->where('ticket', '[0-9a-z]{26}')->name('escalate');
     Route::post('{ticket:ulid}/reopen-decision', [SupportController::class, 'reopenDecision'])->middleware('can:support.reply')->where('ticket', '[0-9a-z]{26}')->name('reopen-decision');
+});
+
+// §6.6 Oyun hesapları ve karakterler (Faz 7)
+Route::prefix('game-accounts')->name('game-accounts.')->group(function (): void {
+    Route::get('/', [GameAccountController::class, 'index'])->middleware('can:game_accounts.read')->name('index');
+    Route::post('manual-link', [GameAccountController::class, 'manualLink'])->middleware(['can:game_accounts.manage', 'password.confirm'])->name('manual-link');
+    Route::post('links/{link}/approve-unlink', [GameAccountController::class, 'approveUnlink'])->middleware('can:game_accounts.manage')->whereNumber('link')->name('approve-unlink');
+    Route::post('links/{link}/reject-unlink', [GameAccountController::class, 'rejectUnlink'])->middleware('can:game_accounts.manage')->whereNumber('link')->name('reject-unlink');
+    Route::post('links/{link}/revoke', [GameAccountController::class, 'revoke'])->middleware(['can:game_accounts.manage', 'password.confirm'])->whereNumber('link')->name('revoke');
+    Route::get('{account}', [GameAccountController::class, 'show'])->middleware('can:game_accounts.read')->where('account', '[0-9a-z]{26}')->name('show');
+});
+Route::get('characters', [CharacterController::class, 'index'])->middleware('can:characters.read')->name('characters.index');
+Route::get('characters/{character}', [CharacterController::class, 'show'])->middleware('can:characters.read')->where('character', '[0-9a-z]{26}')->name('characters.show');
+Route::post('characters/{character}/visibility', [CharacterController::class, 'visibility'])->middleware('can:characters.review')->where('character', '[0-9a-z]{26}')->name('characters.visibility');
+
+// §6.11 MTA entegrasyonu (Faz 7) — secret yalnızca oluşturma yanıtında bir kez
+Route::prefix('integrations/mta')->name('integrations.mta')->middleware('can:integrations.manage')->group(function (): void {
+    Route::get('/', [IntegrationController::class, 'index']);
+    Route::post('servers', [IntegrationController::class, 'storeServer'])->middleware('password.confirm')->name('.servers.store');
+    Route::post('servers/{server}', [IntegrationController::class, 'updateServer'])->middleware('password.confirm')->whereNumber('server')->name('.servers.update');
+    Route::post('servers/{server}/credentials', [IntegrationController::class, 'storeCredential'])->middleware('password.confirm')->whereNumber('server')->name('.credentials.store');
+    Route::post('credentials/{credential}/revoke', [IntegrationController::class, 'revokeCredential'])->middleware('password.confirm')->whereNumber('credential')->name('.credentials.revoke');
 });
 
 // §6.2 KVKK silme / anonimleştirme (Faz 6)

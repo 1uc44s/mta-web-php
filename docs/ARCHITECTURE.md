@@ -547,10 +547,10 @@ R2'de Reverb'e geçildiğinde aynı olaylar private kanallarla yayınlanır (`pr
 | Her dakika | `content:publish-scheduled` | Zamanlanmış içerikleri yayına al (FR-CMS-008) |
 | Her dakika | `bridge:requeue-stale-commands` | 2 dk sonuçsuz komutları yeniden kuyruğa al (FR-BRG-011) |
 | Her 5 dk | `admin:compute-dashboard-metrics` | Dashboard metrikleri cache (FR-ADM-010) |
-| Her 15 dk | `bridge:prune-nonces` | 15 dk'dan eski nonce'ları sil |
+| Her 15 dk | `bridge:maintain` | 15 dk'dan eski nonce'lar, 30 gün+ heartbeat, 90 gün+ `game_events`, 7 gün+ bağlama kodları; süresi dolan komutlar `expired` (Faz 7: tek komutta birleştirildi) |
 | Saatlik | `users:expire-suspensions`, `roles:expire-temporary`, `branches:expire-members` | Süreli durumlar |
 | Saatlik | `support:auto-transition` | FR-SUP-005 otomatik geçişler |
-| Günlük 00:10 | `stats:aggregate-servers` | `server_stats_daily` |
+| Günlük 00:10 | `bridge:maintain --stats` | `server_stats_daily` (dünün tepe/ortalama oyuncu, uptime oranı, tekil hesap) |
 | Günlük 02:00 | `wallet:reconcile` | FR-WAL-007 |
 | Günlük 03:00 | `backup:run` (prod) | NFR-REL-004 |
 | Günlük 03:30 | `data:prune` | SRS §6.2 saklama süreleri |

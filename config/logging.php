@@ -78,6 +78,16 @@ return [
             'replace_placeholders' => true,
         ],
 
+        // docs/SRS.md FR-BRG-008, NFR-OBS-002: güvenlik olayları ayrı dosyada (secret içermez, redaksiyonlu).
+        'security' => [
+            'driver' => 'daily',
+            'tap' => [RedactSensitiveData::class],
+            'path' => storage_path('logs/security.log'),
+            'level' => 'info',
+            'days' => 90,
+            'replace_placeholders' => true,
+        ],
+
         'monthly' => [
             'driver' => 'monthly',
             'path' => storage_path('logs/laravel.log'),

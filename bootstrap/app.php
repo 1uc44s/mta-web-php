@@ -11,6 +11,7 @@ use App\Http\Middleware\PrivateAreaHeaders;
 use App\Http\Middleware\RequireAdminMfa;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\ThrottleSensitiveAuthRoutes;
+use App\Http\Middleware\VerifyBridgeSignature;
 use App\Http\Middleware\VerifyOrigin;
 use App\Support\ApiErrorResponse;
 use Illuminate\Foundation\Application;
@@ -57,6 +58,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin.idle' => AdminIdleTimeout::class,
             'admin.activity' => LogAdminActivity::class,
             'private.headers' => PrivateAreaHeaders::class,
+            'bridge' => VerifyBridgeSignature::class,
         ]);
 
         // Girişli kullanıcı misafir sayfasına gelirse panele (Fortify home), misafir korumalı sayfaya gelirse girişe.

@@ -5,9 +5,12 @@ declare(strict_types=1);
 use App\Actions\Support\TicketWorkflow;
 use App\Enums\AuditAction;
 use App\Models\Branch;
+use App\Models\Character;
 use App\Models\ContactMessage;
+use App\Models\GameAccountLink;
 use App\Models\Media;
 use App\Models\MessageTemplate;
+use App\Models\MtaAccount;
 use App\Models\Page;
 use App\Models\Role;
 use App\Models\Rule;
@@ -51,7 +54,15 @@ function adminRouteCases(): array
         'disk' => 'local', 'path' => 'support/yok.txt', 'original_name' => 'yok.txt', 'mime' => 'text/plain', 'size_bytes' => 1, 'sha256' => str_repeat('0', 64),
     ]);
 
+    // Faz 7: oyun hesabı, bağlantı, karakter ve köprü anahtarı
+    $bridge = bridgeCredential();
+    $gameAccount = MtaAccount::query()->create(['mta_server_id' => $bridge['server']->id, 'mta_account_ref' => '1', 'account_name' => 'oyuncu']);
+    $gameLink = GameAccountLink::query()->create(['user_id' => $target->id, 'mta_account_id' => $gameAccount->id, 'status' => 'active', 'verification_method' => 'ingame_code', 'linked_at' => now()]);
+    $character = Character::query()->create(['mta_server_id' => $bridge['server']->id, 'mta_account_id' => $gameAccount->id, 'mta_character_ref' => 'c-1', 'name' => 'Karakter', 'synced_at' => now()]);
+
     $base = [
+        'account' => $gameAccount->ulid, 'link' => $gameLink->id, 'character' => $character->ulid,
+        'server' => $bridge['server']->id, 'credential' => $bridge['credential']->id,
         'user' => $target->ulid, 'role' => $role->id, 'branch' => $branch->id, 'log' => $log->ulid, 'group' => 'site', 'uuid' => 'yok',
         'page' => $page->id, 'section' => $page->sections()->value('id'), 'revision' => 999999, 'rule' => Rule::query()->value('id'),
         'template' => MessageTemplate::query()->value('id'), 'media' => $media->ulid, 'message' => $message->ulid,

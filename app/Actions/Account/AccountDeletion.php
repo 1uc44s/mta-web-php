@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Account;
 
+use App\Actions\GameAccounts\ManageLinks;
 use App\Enums\AuditAction;
 use App\Enums\UserStatus;
 use App\Models\Role;
@@ -24,7 +25,11 @@ final class AccountDeletion
 {
     public const GRACE_DAYS = 14;
 
-    public function __construct(private readonly SecurityEventLogger $security, private readonly AuditLogger $audit) {}
+    public function __construct(
+        private readonly SecurityEventLogger $security,
+        private readonly AuditLogger $audit,
+        private readonly ManageLinks $links,
+    ) {}
 
     public function request(User $user, Request $request): void
     {
@@ -66,11 +71,12 @@ final class AccountDeletion
                 'suspension_reason' => null,
             ])->save();
 
-            foreach (['sessions', 'user_notification_preferences', 'email_change_requests', 'user_security_events', 'user_roles', 'branch_members'] as $table) {
+            foreach (['sessions', 'user_notification_preferences', 'email_change_requests', 'user_security_events', 'user_roles', 'branch_members', 'game_link_codes'] as $table) {
                 DB::table($table)->where('user_id', $user->id)->delete();
             }
             DB::table('notifications')->where(['notifiable_type' => $user->getMorphClass(), 'notifiable_id' => $user->id])->delete();
-            // game_link_codes / game_account_links → Faz 7'de köprü komutuyla birlikte eklenir.
+            // DATABASE §13 adım 3: aktif oyun hesabı bağlantıları `revoked` olur, köprüye `account.link_revoked` gider.
+            $this->links->revokeAllFor($user);
         });
 
         $user->flushAuthz();

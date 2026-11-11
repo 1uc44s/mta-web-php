@@ -75,6 +75,10 @@ final class AppServiceProvider extends ServiceProvider
     private function configureRateLimiting(): void
     {
         RateLimiter::for('contact', fn (Request $request): Limit => Limit::perHour(5)->by('contact:'.$request->ip()));
+        // docs/SRS.md FR-BRG-006: anahtar başına 120/dk, heartbeat ayrı 6/dk.
+        RateLimiter::for('bridge', fn (Request $request): Limit => Limit::perMinute(120)->by('bridge:'.substr((string) $request->header('X-Bridge-Key', $request->ip()), 0, 40)));
+        RateLimiter::for('bridge-heartbeat', fn (Request $request): Limit => Limit::perMinute(6)->by('bridge-hb:'.substr((string) $request->header('X-Bridge-Key', $request->ip()), 0, 40)));
+        RateLimiter::for('link-code', fn (Request $request): Limit => Limit::perHour(5)->by('link-code:'.$request->user()?->getAuthIdentifier()));
         RateLimiter::for('public-api', fn (Request $request): Limit => Limit::perMinute(60)->by('papi:'.$request->ip()));
         RateLimiter::for('preferences', fn (Request $request): Limit => Limit::perMinute(30)->by('pref:'.$request->ip()));
         RateLimiter::for('poll', fn (Request $request): Limit => Limit::perMinute(30)->by('poll:'.($request->user()?->getAuthIdentifier() ?? $request->ip())));

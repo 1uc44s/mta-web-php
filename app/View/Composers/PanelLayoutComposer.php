@@ -23,6 +23,8 @@ final class PanelLayoutComposer
 
         $items = [
             ['label' => 'Genel bakış', 'route' => 'panel.dashboard', 'icon' => 'layout-dashboard', 'match' => 'panel.dashboard', 'tab' => true],
+            ['label' => 'Oyun hesaplarım', 'route' => 'panel.game-accounts.index', 'icon' => 'gamepad-2', 'match' => 'panel.game-accounts.*', 'tab' => false],
+            ['label' => 'Karakterlerim', 'route' => 'panel.characters.index', 'icon' => 'users', 'match' => 'panel.characters.*', 'tab' => false],
             ['label' => 'Destek', 'route' => 'panel.support.index', 'icon' => 'life-buoy', 'match' => 'panel.support.*', 'tab' => true],
             ['label' => 'Akademi', 'route' => 'panel.academy', 'icon' => 'graduation-cap', 'match' => 'panel.academy', 'tab' => true],
             ['label' => 'Bildirimler', 'route' => 'panel.notifications.index', 'icon' => 'bell', 'match' => 'panel.notifications.*', 'tab' => true],

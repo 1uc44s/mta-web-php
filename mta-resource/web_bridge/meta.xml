@@ -1,0 +1,30 @@
+<meta>
+    <!-- Meridyen web köprüsü — docs/ARCHITECTURE.md §7. Yalnızca server-side; istemciye hiçbir dosya gönderilmez. -->
+    <info author="Meridyen Roleplay" name="web_bridge" version="1.0.0" type="script" description="Web paneli ile MTA arasında imzalı köprü" />
+    <min_mta_version server="1.6.0" />
+
+    <script src="config.lua" type="server" />
+    <script src="shared/constants.lua" type="server" />
+    <script src="server/util.lua" type="server" />
+    <script src="server/signature.lua" type="server" />
+    <script src="server/request.lua" type="server" />
+    <script src="server/heartbeat.lua" type="server" />
+    <script src="server/player_events.lua" type="server" />
+    <script src="server/account_link.lua" type="server" />
+    <script src="server/character_sync.lua" type="server" />
+    <script src="server/commands.lua" type="server" />
+    <script src="server/main.lua" type="server" />
+
+    <!-- Öz-test vektörleri (main.lua okur). İstemciye indirilmez. -->
+    <file src="tests/vectors.lua" download="false" />
+
+    <!-- Gamemode, karakter özetini ve özel olayları bu export'larla gönderir. -->
+    <export function="syncCharacters" type="server" />
+    <export function="queueEvent" type="server" />
+
+    <!-- ACL: resource.web_bridge için fetchRemote ve kickPlayer izni gerekir (README). -->
+    <aclrequest>
+        <right name="function.fetchRemote" access="true" />
+        <right name="function.kickPlayer" access="true" />
+    </aclrequest>
+</meta>

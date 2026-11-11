@@ -4,6 +4,7 @@
 import Alpine from '@alpinejs/csp';
 import { initCopy } from './modules/copy';
 import { initDialogs } from './modules/dialogs';
+import { initLinkCode } from './modules/link-code';
 import { initNotificationBadge } from './modules/notifications';
 import { initPreferences } from './modules/preferences';
 import { initPwa } from './modules/pwa';
@@ -21,6 +22,7 @@ const boot = () => {
     initServerStatus();
     initUi();
     initNotificationBadge();
+    initLinkCode();
     initPwa();
 };
 

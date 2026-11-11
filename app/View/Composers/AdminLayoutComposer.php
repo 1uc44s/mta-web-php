@@ -21,6 +21,8 @@ final class AdminLayoutComposer
         ]],
         ['label' => 'admin.nav.players', 'items' => [
             ['label' => 'admin.nav.users', 'route' => 'admin.users.index', 'icon' => 'users', 'can' => 'users.read', 'match' => 'admin.users.*'],
+            ['label' => 'game.admin.accounts', 'route' => 'admin.game-accounts.index', 'icon' => 'gamepad-2', 'can' => 'game_accounts.read', 'match' => 'admin.game-accounts.*'],
+            ['label' => 'game.admin.characters', 'route' => 'admin.characters.index', 'icon' => 'contact', 'can' => 'characters.read', 'match' => 'admin.characters.*'],
         ]],
         ['label' => 'support.title', 'items' => [
             ['label' => 'support.admin.queue', 'route' => 'admin.support.index', 'icon' => 'life-buoy', 'can' => 'support.read', 'match' => 'admin.support.*'],
@@ -54,6 +56,7 @@ final class AdminLayoutComposer
         ]],
         ['label' => 'admin.nav.system', 'items' => [
             ['label' => 'admin.nav.settings', 'route' => 'admin.settings.index', 'icon' => 'sliders-horizontal', 'can' => 'settings.read', 'match' => 'admin.settings.*'],
+            ['label' => 'game.admin.integrations', 'route' => 'admin.integrations.mta', 'icon' => 'plug', 'can' => 'integrations.manage', 'match' => 'admin.integrations.*'],
             ['label' => 'admin.nav.health', 'route' => 'admin.system.health', 'icon' => 'activity', 'can' => 'settings.read', 'match' => 'admin.system.*'],
             ['label' => 'admin.nav.audit', 'route' => 'admin.audit-logs.index', 'icon' => 'scroll-text', 'can' => 'audit.read', 'match' => 'admin.audit-logs.*'],
             ['label' => 'admin.nav.activity', 'route' => 'admin.activity-logs.index', 'icon' => 'eye', 'can' => 'activity.read', 'match' => 'admin.activity-logs.*'],

@@ -40,6 +40,17 @@ enum AuditAction: string
     case TemplatesUpdated = 'templates.updated';
     case SettingsUpdated = 'settings.updated';
     case ServersMaintenanceToggled = 'servers.maintenance_toggled';
+    case BridgeSignatureAlert = 'bridge.signature_alert';
+    case AccountsLinked = 'accounts.linked';
+    case AccountsUnlinkRequested = 'accounts.unlink_requested';
+    case AccountsUnlinked = 'accounts.unlinked';
+    case AccountsUnlinkRejected = 'accounts.unlink_rejected';
+    case AccountsLinkRevoked = 'accounts.link_revoked';
+    case AccountsManualLinked = 'accounts.manual_linked';
+    case CharactersVisibilityChanged = 'characters.visibility_changed';
+    case IntegrationsCredentialCreated = 'integrations.credential_created';
+    case IntegrationsCredentialRevoked = 'integrations.credential_revoked';
+    case IntegrationsServerUpdated = 'integrations.server_updated';
 
     public function severity(): string
     {
@@ -48,7 +59,9 @@ enum AuditAction: string
             self::BranchesMemberRemoved, self::BranchesLeadChanged, self::SupportEscalated, self::ContentPublished, self::ContentUnpublished,
             self::ContentDeleted, self::RulesVersionBumped => 'info',
             self::RolesCreated, self::RolesUpdated, self::RolesDeleted, self::RolesPermissionsSynced,
-            self::SuperAdminAssigned, self::SuperAdminRevoked, self::SuperAdminBreakGlass, self::MfaReset => 'critical',
+            self::SuperAdminAssigned, self::SuperAdminRevoked, self::SuperAdminBreakGlass, self::MfaReset,
+            self::BridgeSignatureAlert, self::IntegrationsCredentialCreated, self::IntegrationsCredentialRevoked => 'critical',
+            self::AccountsLinked, self::AccountsUnlinkRequested => 'info',
             default => 'warning',
         };
     }
@@ -60,6 +73,8 @@ enum AuditAction: string
             self::RolesCreated, self::RolesUpdated, self::RolesDeleted, self::RolesPermissionsSynced,
             self::SuperAdminAssigned, self::SuperAdminRevoked, self::SuperAdminBreakGlass,
             self::StaffOffboarded, self::MfaReset, self::RulesVersionBumped, self::SupportEscalated,
+            self::AccountsUnlinked, self::AccountsUnlinkRejected, self::AccountsLinkRevoked, self::AccountsManualLinked,
+            self::CharactersVisibilityChanged, self::IntegrationsCredentialRevoked,
         ], true);
     }
 }

@@ -16,7 +16,7 @@ Laravel 13 · PHP 8.4 · MariaDB 10.11 · Blade + Tailwind CSS v4 + Alpine.js (C
 | 4 | RBAC, branşlar, yönetim paneli iskeleti | ✅ |
 | 5 | CMS, Akademi, mesaj şablon motoru | ✅ |
 | 6 | Oyuncu paneli, destek, PWA | ✅ |
-| 7 | MTA köprüsü + Lua resource | ⏳ |
+| 7 | MTA köprüsü + Lua resource | ✅ |
 | 8 | Başvurular, moderasyon, oyun komutları | ⏳ |
 | 9 | Ekonomi ve ödeme | ⏳ |
 | 10 | Gelişmiş kanallar | ⏳ |
@@ -237,6 +237,41 @@ Panel düzeni: masaüstünde sol menü, mobilde alt sekme çubuğu (Genel · Des
 
 **PWA:** `public/manifest.webmanifest` (`start_url=/panel?source=pwa`, 192/512 + maskable ikonlar `public/icons/`), `public/sw.js` (panel/admin/api/kimlik yolları **asla** cache'lenmez; gezinmeler ağ önce → `public/offline.html`; `/build/*` cache önce; `SKIP_WAITING` + `CLEAR_RUNTIME_CACHE`). SW yalnızca HTTPS/localhost'ta ve production'da (veya `.env` `PWA_DEV=true`) kaydedilir.
 
+### Faz 7 — Oyun hesapları, karakterler, MTA entegrasyonu
+
+**Oyuncu paneli:**
+
+| Yöntem | URL | Ad | Not |
+|---|---|---|---|
+| GET | `/panel/game-accounts` | `panel.game-accounts.index` | Bağlı hesaplar (`n / max`) + bağlama kodu kartı |
+| POST | `/panel/game-accounts/link-code` | `panel.game-accounts.link-code` | Doğrulanmış e-posta, 5/saat; önceki kodu iptal eder. Kod **yalnızca** bir sonraki sayfa görüntülemesinde gösterilir (oturumdan `pull`) |
+| POST | `/panel/game-accounts/link-code/cancel` | `panel.game-accounts.link-code.cancel` | |
+| GET | `/panel/game-accounts/link-status` | `panel.game-accounts.link-status` | JSON `{state: none\|pending\|linked\|expired, expires_in, account_name?}` — kodu asla döndürmez; 5 sn polling |
+| POST | `/panel/game-accounts/{id}/unlink-request` (`reason` ≥ 10) | `panel.game-accounts.unlink-request` | PC; başkasının bağlantısı 404 |
+| GET | `/panel/characters`, `/panel/characters/{ulid}` | `panel.characters.index/show` | Yalnızca aktif bağlantılı hesapların karakterleri; detayda yalnızca `character_public_fields` |
+
+**ACP:**
+
+| Yöntem | URL | Ad | Yetki |
+|---|---|---|---|
+| GET | `/admin/game-accounts` (`?q=&filter=all\|unlink_requested\|unlinked`) | `admin.game-accounts.index` | `game_accounts.read` |
+| GET | `/admin/game-accounts/{ulid}` | `admin.game-accounts.show` | `game_accounts.read` (bağlantı geçmişi + karakterler) |
+| POST | `/admin/game-accounts/links/{id}/approve-unlink` · `/reject-unlink` (`reason`) | `admin.game-accounts.*` | `game_accounts.manage` |
+| POST | `/admin/game-accounts/links/{id}/revoke` (`reason`) | `admin.game-accounts.revoke` | `game_accounts.manage` + PC; köprüye `account.link_revoked` |
+| POST | `/admin/game-accounts/manual-link` (`username, mta_server_id, mta_account_ref, account_name, evidence, reason`) | `admin.game-accounts.manual-link` | `game_accounts.manage` + PC (`verification_method=admin_manual`) |
+| GET | `/admin/characters`, `/admin/characters/{ulid}` | `admin.characters.index/show` | `characters.read` |
+| POST | `/admin/characters/{ulid}/visibility` (`hidden`, `reason`) | `admin.characters.visibility` | `characters.review`; audit `characters.visibility_changed` |
+| GET | `/admin/integrations/mta` | `admin.integrations.mta` | `integrations.manage` — sunucular, durum, anahtarlar |
+| POST | `/admin/integrations/mta/servers`, `/servers/{id}` | `admin.integrations.mta.servers.store/update` | + PC, `reason` (bakım bayrağı değişimi `servers.maintenance_toggled`) |
+| POST | `/admin/integrations/mta/servers/{id}/credentials` (`scopes[]`, `expires_at?`, `reason`) | `admin.integrations.mta.credentials.store` | + PC. Secret **yalnızca bu yanıtta** gösterilir (flash/oturuma yazılmaz). Sunucu başına ≤ 2 aktif anahtar |
+| POST | `/admin/integrations/mta/credentials/{id}/revoke` (`reason`) | `admin.integrations.mta.credentials.revoke` | + PC |
+
+**Bağlantı durum makinesi:** `active → unlink_requested → unlinked` (onay) / `→ active` (ret); `active|unlink_requested → revoked` (yetkili veya hesap anonimleştirme). Bağlantı bittiğinde `game_commands`'a `account.link_revoked {account_ref}` girer (idempotency `link:{id}:revoked`).
+
+**Zamanlayıcı:** `bridge:maintain` (15 dk) — nonce (15 dk), heartbeat (30 gün), `game_events` (90 gün), bağlama kodları (7 gün) temizliği + süresi dolan komutlar `expired`; `bridge:maintain --stats` (00:10) — `server_stats_daily`.
+
+**Lua resource:** [`mta-resource/web_bridge/`](mta-resource/web_bridge/README.md) — kurulum, ACL, `config.lua`, gamemode export'ları (`syncCharacters`, `queueEvent`), olaylar (`onWebBridgeRequestCharacters`, `onWebBridgeLinkRevoked`, `onWebBridgeMaintenanceChanged`). Oyun içi komut: `/webbagla KOD`.
+
 ## 3. JSON API (`/api/v1`)
 
 Hata biçimi (tüm JSON uçları):
@@ -248,6 +283,31 @@ Hata biçimi (tüm JSON uçları):
 | Yöntem | URL | Kimlik doğrulama | Limit | Faz |
 |---|---|---|---|---|
 | GET | `/api/v1/public/server-status` | Yok | 60/dk/IP | 2 |
+| GET | `/api/v1/game/ping` | Köprü imzası (her kapsam) | 120/dk/anahtar | 7 |
+| POST | `/api/v1/game/heartbeat` | Köprü, `heartbeat` | 6/dk/anahtar | 7 |
+| POST | `/api/v1/game/player/connected` · `/player/disconnected` | Köprü, `events` | 120/dk | 7 |
+| POST | `/api/v1/game/accounts/sync` · `/characters/sync` | Köprü, `events` | 120/dk | 7 |
+| POST | `/api/v1/game/account-link/verify` | Köprü, `account_link` | 120/dk + hesap başına 5 yanlış/10 dk | 7 |
+
+**Köprü imzası** (ARCHITECTURE §7.2): başlıklar `X-Bridge-Key`, `X-Bridge-Timestamp` (unix sn, ±300), `X-Bridge-Nonce` (32–64 hex, tek kullanım), `X-Bridge-Signature` = `hex(HMAC-SHA256(secret, "METHOD\nPATH\nTIMESTAMP\nNONCE\n" + hex(SHA256(body))))`. Sıra: biçim → anahtar aktif → zaman → gövde ≤ 64 KB → imza (`hash_equals`) → kapsam → nonce INSERT (imzadan **sonra**) → `last_used_at`. Hatalar: `401 SIGNATURE_INVALID`, `403 FORBIDDEN`, `409 REPLAY_DETECTED`, `413 PAYLOAD_TOO_LARGE`, `422 VALIDATION_ERROR`, `429 RATE_LIMITED`. Başarısızlıklar `storage/logs/security-*.log`'a (secret'sız); 5 dk'da 20'yi aşarsa kritik audit `bridge.signature_alert`.
+
+Örnek gövdeler ve yanıtlar:
+
+```jsonc
+// POST /heartbeat → {"data":{"status":"online","maintenance":false}}
+{ "players": 87, "max_players": 300, "server_name": "Meridyen RP", "game_mode": "Roleplay", "map": "San Andreas", "resource_version": "1.0.0", "uptime_sec": 86400 }
+// POST /player/connected → {"data":{"duplicate":false}}  (aynı event_id → duplicate:true, yan etki yok)
+{ "event_id": "<uuid>", "occurred_at": "2026-11-11T18:40:00Z", "account": { "ref": "1042", "name": "kaan" } }
+// POST /accounts/sync (≤ 100; yalnızca web'de kayıtlı hesaplar güncellenir) → {"data":{"duplicate":false,"updated":1}}
+{ "event_id": "<uuid>", "accounts": [ { "ref": "1042", "name": "kaan", "last_seen_at": "…" } ] }
+// POST /characters/sync (≤ 20; bağlı değilse {"ignored":true}) → {"data":{"duplicate":false,"ignored":false,"synced":1}}
+{ "event_id": "<uuid>", "account_ref": "1042", "characters": [ { "ref": "c-551", "name": "Kaan Demir", "status": "active", "level": 12,
+  "playtime_minutes": 5400, "faction_key": "lspd", "job_key": "taxi", "public_profile": { "bio": "…" } } ] }
+// POST /account-link/verify → {"data":{"linked":true,"web_username":"kaan_w"}} · 422 LINK_CODE_INVALID · 409 ACCOUNT_ALREADY_LINKED · 409 LINK_LIMIT_REACHED · 429 RATE_LIMITED
+{ "event_id": "<uuid>", "code": "K7Q4-M2XD", "account": { "ref": "1042", "name": "kaan" } }
+```
+
+Ortak HMAC test vektörleri: `mta-resource/web_bridge/tests/vectors.json` (Pest) = `tests/vectors.lua` (Lua öz-testi).
 
 `GET /api/v1/public/server-status` yanıtı (15 sn cache, `ETag` / `304` destekli):
 
@@ -274,6 +334,7 @@ Hata biçimi (tüm JSON uçları):
 | `2026_11_11_110000_create_access_control_tables` | `roles`, `permissions`, `role_permissions`, `user_roles`, `branches`, `branch_members`, `audit_logs` (+ trigger), `admin_activity_logs` | 4 |
 | `2026_11_12_090000_create_cms_messaging_tables` | `announcements`, `announcement_reads`, `academy_progress`, `rule_acknowledgements`, `message_templates`, `message_template_revisions`, `message_dispatches` | 5 |
 | `2026_11_12_100000_create_support_notification_tables` | `support_categories`, `support_ticket_sequence`, `support_tickets`, `support_messages`, `support_attachments`, `support_ticket_events`, `support_macros`, `user_notification_preferences`, `notifications` | 6 |
+| `2026_11_12_110000_create_bridge_game_tables` | `integration_credentials`, `bridge_nonces`, `server_heartbeats`, `server_stats_daily`, `mta_accounts`, `game_account_links`, `game_link_codes`, `characters`, `game_events`, `game_commands` (+ FK `support_tickets.character_id`) | 7 |
 | `2026_11_11_100000_create_settings_and_servers_tables` | `system_settings`, `mta_servers` | 2 |
 | `2026_11_11_100100_create_content_tables` | `media`, `pages`, `page_sections`, `page_revisions`, `redirects`, `navigation_items`, `social_links`, `news_categories`, `news_posts`, `tags`, `news_post_tag`, `game_system_categories`, `game_systems`, `rule_categories`, `rules`, `rule_revisions`, `game_jobs`, `factions`, `faqs`, `community_events`, `academy_courses`, `academy_topics`, `academy_topic_rule`, `contact_messages` | 2 |
 
@@ -332,6 +393,20 @@ Faz 5'te mevcut tablolar da kullanılmaya başladı: `page_revisions` (sayfa dü
 | `user_notification_preferences` | PK (`user_id`,`category`,`channel`), `enabled` | Kayıt yoksa açık; güvenlik e-postaları tercihe bağlı değil |
 | `notifications` | Laravel standart (`uuid`, `type`, `notifiable_*`, `data` JSON, `read_at`) | Panel bildirimleri |
 
+**Köprü ve oyun tabloları (Faz 7):**
+
+| Tablo | Önemli kolonlar | Not |
+|---|---|---|
+| `integration_credentials` | `mta_server_id`, `key_id` (unique, `mrp_live_…`), `secret` (**encrypted** cast), `scopes` JSON (`heartbeat, events, account_link, commands`), `last_used_at`, `expires_at`, `revoked_at`, `created_by` | Sunucu başına ≤ 2 aktif |
+| `bridge_nonces` | PK `nonce` CHAR(64), `credential_id`, `created_at` | Replay koruması; 15 dk sonra silinir |
+| `server_heartbeats` | `mta_server_id`, `player_count`, `max_players`, `payload` JSON (ad, mod, harita, sürüm, uptime), `received_at` | 30 gün |
+| `server_stats_daily` | PK (`mta_server_id`, `date`), `peak_players`, `avg_players`, `uptime_ratio`, `unique_accounts` | `bridge:maintain --stats` |
+| `mta_accounts` | `ulid`, `mta_server_id`, `mta_account_ref` (sunucu içinde unique), `account_name`, `last_seen_at`, `synced_at` | Yalnızca bağlanan hesaplar kaydedilir |
+| `game_account_links` | `user_id`, `mta_account_id` (RESTRICT), `status` (`active\|unlink_requested\|unlinked\|revoked`), `verification_method` (`ingame_code\|admin_manual`), **generated** `active_mta_account_id` + unique `uq_gal_active_account` | Bir oyun hesabının DB seviyesinde tek aktif bağlantısı |
+| `game_link_codes` | `user_id`, `purpose` (`account_link`), `code_hash` (HMAC-SHA256, APP_KEY türevi; düz kod saklanmaz), `attempts`, `expires_at` (+10 dk), `used_at`, `used_by_mta_account_id`, `cancelled_at` | 5 denemede iptal |
+| `characters` | `ulid`, `mta_server_id`, `mta_account_id`, `mta_character_ref` (sunucu içinde unique), `name`, `status`, `faction_id`, `game_job_id`, `level`, `playtime_minutes`, `public_profile` JSON (allowlist), `is_profile_hidden`, `last_seen_at`, `synced_at` | Salt okunur kopya |
+| `game_events` | `mta_server_id`, `event_id` (sunucu içinde unique), `type`, `mta_account_id`, `payload` (minimal), `status` (`received\|processed\|failed\|ignored`), `occurred_at`, `received_at`, `processed_at` | İdempotency defteri, 90 gün |
+| `game_commands` | `ulid`, `mta_server_id`, `type` (allowlist), `target_mta_account_id`, `payload`, `idempotency_key` (unique), `status` (`pending\|dispatched\|succeeded\|failed\|expired\|cancelled`), `attempts`, `result`, `requested_by`, `source_type/id`, `expires_at` | Faz 7: yalnızca `account.link_revoked`; pull uçları Faz 8 |
 **Seed sırası:** `ServerSeeder` → `AccessControlSeeder` (izinler, 9 sistem rolü + matris, 6 branş, 5 destek kategorisi) → `MessageTemplateSeeder` (sistem e-posta şablonları) → `ContentSeeder` → (`local` ise) `DemoSeeder`. İlk süper admin seed ile oluşturulmaz (bkz. §2 Yönetim paneli).
 
 ---

@@ -3,7 +3,9 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Panel\AcademyController;
+use App\Http\Controllers\Panel\CharacterController;
 use App\Http\Controllers\Panel\DashboardController;
+use App\Http\Controllers\Panel\GameAccountController;
 use App\Http\Controllers\Panel\NotificationController;
 use App\Http\Controllers\Panel\SecurityController;
 use App\Http\Controllers\Panel\SettingsController;
@@ -48,6 +50,15 @@ Route::post('security/sessions/{session}/revoke', [SecurityController::class, 'r
 Route::get('security/events', [SecurityController::class, 'events'])->name('security.events');
 Route::post('account/delete-request', [SecurityController::class, 'deleteRequest'])->middleware('password.confirm')->name('account.delete-request');
 Route::post('account/delete-cancel', [SecurityController::class, 'deleteCancel'])->name('account.delete-cancel');
+
+// §5.3 Oyun hesapları ve karakterler (Faz 7) — kod üretimi doğrulanmış e-posta + throttle:link-code
+Route::get('game-accounts', [GameAccountController::class, 'index'])->name('game-accounts.index');
+Route::post('game-accounts/link-code', [GameAccountController::class, 'linkCode'])->middleware(['verified', 'throttle:link-code'])->name('game-accounts.link-code');
+Route::post('game-accounts/link-code/cancel', [GameAccountController::class, 'cancel'])->name('game-accounts.link-code.cancel');
+Route::get('game-accounts/link-status', [GameAccountController::class, 'status'])->middleware('throttle:poll')->name('game-accounts.link-status');
+Route::post('game-accounts/{link}/unlink-request', [GameAccountController::class, 'unlinkRequest'])->middleware('password.confirm')->whereNumber('link')->name('game-accounts.unlink-request');
+Route::get('characters', [CharacterController::class, 'index'])->name('characters.index');
+Route::get('characters/{character}', [CharacterController::class, 'show'])->where('character', '[0-9A-Za-z]{26}')->name('characters.show');
 
 // §5.4 Destek — doğrulanmış e-posta gerekir (panel.verified)
 Route::middleware('verified')->prefix('support')->name('support.')->group(function (): void {
