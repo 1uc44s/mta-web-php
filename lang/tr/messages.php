@@ -52,6 +52,20 @@ return [
         ],
     ],
 
+    'staff.role_changed' => [
+        'variables' => ['user.username', 'role.name', 'action', 'link.admin'],
+        'subject' => 'Yetkilerin güncellendi',
+        'greeting' => 'Merhaba {{ user.username }},',
+        'lines' => [
+            '“{{ role.name }}” rolü hesabına {{ action }}.',
+            'Yönetim paneline erişim için iki adımlı doğrulama (2FA) zorunludur.',
+        ],
+        'action' => ['label' => 'Paneli aç', 'url' => 'link.admin'],
+        'outro' => [
+            'Bu değişiklik hakkında sorun varsa yönetim ekibine yaz.',
+        ],
+    ],
+
     'security.password_changed' => [
         'variables' => ['user.username', 'event.time', 'event.device', 'link.security'],
         'subject' => 'Parolan değiştirildi',

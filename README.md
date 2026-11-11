@@ -13,7 +13,7 @@ Laravel 13 · PHP 8.4 · MariaDB 10.11 · Blade + Tailwind CSS v4 + Alpine.js (C
 | 1 | Temel kurulum (Laravel, güvenlik başlıkları, kalite araçları) | ✅ |
 | 2 | Tasarım sistemi + public site | ✅ |
 | 3 | Kimlik doğrulama | ✅ |
-| 4 | RBAC, branşlar, yönetim paneli iskeleti | ⏳ |
+| 4 | RBAC, branşlar, yönetim paneli iskeleti | ✅ |
 | 5 | CMS, Akademi, mesaj şablon motoru | ⏳ |
 | 6 | Oyuncu paneli, destek, PWA | ⏳ |
 | 7 | MTA köprüsü + Lua resource | ⏳ |
@@ -109,6 +109,44 @@ Kayıt ve e-posta doğrulama kendi controller'larımızdadır; giriş, çıkış
 **Askı:** `status=suspended` hesap girişte gerekçe + bitiş tarihiyle reddedilir; süresi dolan askı girişte kalkar; oturum açıkken askıya alınan kullanıcı `active` middleware ile sonraki istekte çıkarılır.
 **E-posta (yerel):** `MAIL_MAILER=log`, `QUEUE_CONNECTION=sync` → e-postalar `storage/logs/laravel-*.log` içine yazılır. Doğrulama bağlantısı `APP_URL` hostuyla imzalanır; bağlantıyı aynı hosttan açın.
 
+### Yönetim paneli — ACP (Faz 4)
+
+**İlk süper admini oluşturma** (seed ile oluşmaz):
+
+```bash
+php artisan mrp:make-super-admin sen@ornek.com
+```
+
+Hesap varsa ona rol verilir, yoksa kullanıcı adı ve parola **interaktif** sorulur. Ardından `/login` → `/admin` açıldığında 2FA kurulumu (`/panel/security/two-factor`) zorunlu tutulur: QR'ı bir kimlik doğrulama uygulamasıyla okut, kodu gir, kurtarma kodlarını sakla.
+
+Middleware zinciri: `web, auth, verified, active, staff, mfa, admin.idle (30 dk), admin.activity`. Personel olmayan → **404**, 2FA yok → kurulum sayfası, izin yok → **403**. "PC" = parola onayı (10 dk).
+
+| Yöntem | URL | Ad | Yetki |
+|---|---|---|---|
+| GET | `/admin` | `admin.dashboard` | personel |
+| GET | `/admin/system/health` | `admin.system.health` | `settings.read` |
+| POST | `/admin/system/failed-jobs/{uuid}/retry` | `admin.system.failed-jobs.retry` | `settings.update` |
+| GET | `/admin/users`, `/admin/users/{ulid}` | `admin.users.index/show` | `users.read` (e-posta `users.read_pii` yoksa maskeli) |
+| GET | `/admin/users/{ulid}/security` | `admin.users.security` | `users.security_read` |
+| POST | `/admin/users/{ulid}/status` | `admin.users.status` | `users.suspend` + PC, gerekçe zorunlu, hiyerarşi |
+| POST | `/admin/users/{ulid}/resend-verification` | `admin.users.resend-verification` | `users.update`, 3/saat |
+| GET | `/admin/staff`, `/admin/staff/{ulid}` | `admin.staff.index/show` | `staff.read` |
+| POST | `/admin/staff/{ulid}/roles` | `admin.staff.roles.assign` | `staff.manage` + PC |
+| POST | `/admin/staff/{ulid}/roles/{role}/revoke` | `admin.staff.roles.revoke` | `staff.manage` + PC (son süper admin korunur) |
+| GET | `/admin/roles`, `/admin/roles/{role}/edit` | `admin.roles.index/edit` | `roles.read` |
+| GET/POST | `/admin/roles/create`, `/admin/roles`, `/admin/roles/{role}`, `/admin/roles/{role}/delete` | `admin.roles.create/store/update/destroy` | `roles.manage` (yalnızca süper admin) + PC; sistem rolleri salt okunur |
+| GET | `/admin/branches`, `/admin/branches/{id}` | `admin.branches.index/show` | `staff.read` |
+| GET/POST | `/admin/branches/create`, `/admin/branches`, `/admin/branches/{id}` | `admin.branches.create/store/update` | `branches.manage` |
+| POST | `/admin/branches/{id}/members`, `…/members/{ulid}/remove` | `admin.branches.members.store/destroy` | `branches.manage` veya (`branches.assign_members` + branş lideri) |
+| POST | `/admin/branches/{id}/members/{ulid}/lead` | `admin.branches.members.lead` | `branches.manage` |
+| GET | `/admin/audit-logs`, `/admin/audit-logs/{ulid}` | `admin.audit-logs.index/show` | `audit.read` (finans yöneticisi yalnızca `wallet.*/payments.*/refunds.*`) |
+| GET | `/admin/activity-logs` | `admin.activity-logs.index` | `activity.read` (süper admin) |
+| GET | `/admin/settings`, `/admin/settings/{group}` | `admin.settings.index/edit` | `settings.read` |
+| POST | `/admin/settings/{group}` | `admin.settings.update` | `settings.update` + PC; `security`, `mail`, `features.payments` yalnızca süper admin |
+| GET | `/panel/security/two-factor` | `panel.security.two-factor` | giriş yapmış kullanıcı (personel 2FA'yı kapatamaz) |
+
+**Artisan komutları:** `mrp:make-super-admin {email}` · `mrp:expire-roles` (saatlik) · `audit:verify` (günlük 03:30; bozuk zincirde çıkış kodu 1). Zamanlayıcı için sunucuda: `* * * * * php artisan schedule:run`.
+
 ## 3. JSON API (`/api/v1`)
 
 Hata biçimi (tüm JSON uçları):
@@ -143,6 +181,7 @@ Hata biçimi (tüm JSON uçları):
 | `0001_01_01_000001_create_cache_table` | `cache`, `cache_locks` | 1 |
 | `0001_01_01_000002_create_jobs_table` | `jobs`, `job_batches`, `failed_jobs` | 1 |
 | `2026_11_11_090000_create_identity_tables` | `user_security_events`, `email_change_requests`, `consents` | 3 |
+| `2026_11_11_110000_create_access_control_tables` | `roles`, `permissions`, `role_permissions`, `user_roles`, `branches`, `branch_members`, `audit_logs` (+ trigger), `admin_activity_logs` | 4 |
 | `2026_11_11_100000_create_settings_and_servers_tables` | `system_settings`, `mta_servers` | 2 |
 | `2026_11_11_100100_create_content_tables` | `media`, `pages`, `page_sections`, `page_revisions`, `redirects`, `navigation_items`, `social_links`, `news_categories`, `news_posts`, `tags`, `news_post_tag`, `game_system_categories`, `game_systems`, `rule_categories`, `rules`, `rule_revisions`, `game_jobs`, `factions`, `faqs`, `community_events`, `academy_courses`, `academy_topics`, `academy_topic_rule`, `contact_messages` | 2 |
 
@@ -155,12 +194,25 @@ Hata biçimi (tüm JSON uçları):
 
 | Tablo | Önemli kolonlar | Not |
 |---|---|---|
-| `users` | `ulid` (public kimlik), `username` (20, unique, harf duyarsız), `email` (254, unique), `password` (argon2id), `status` (`active\|suspended\|banned\|pending_deletion`), `suspended_until`, `suspension_reason`, `two_factor_secret/recovery_codes/confirmed_at` (şifreli), `theme`, `reduced_effects`, `locale`, `last_login_at`, `deletion_requested_at` | |
-| `user_security_events` | `user_id` (null olabilir), `event`, `ip_masked`, `ip_hash` (HMAC), `user_agent_summary`, `identifier_hash` (HMAC, başarısız girişte), `metadata` JSON, `created_at` | **Append-only** (UPDATE/DELETE trigger ile engelli) |
+| `users` | `ulid` (public kimlik), `username` (20, unique, harf duyarsız), `email` (254, unique), `password` (argon2id), `status` (`active\|inactive\|suspended\|pending_deletion\|anonymized`), `suspended_until`, `suspension_reason`, `two_factor_secret/recovery_codes/confirmed_at` (şifreli), `theme`, `reduced_effects`, `locale`, `last_login_at`, `deletion_requested_at` | |
+| `user_security_events` | `user_id` (null olabilir), `event`, `ip_masked`, `ip_hash` (HMAC), `user_agent_summary`, `identifier_hash` (HMAC, başarısız girişte), `metadata` JSON, `created_at` | Uygulama yalnızca INSERT yapar; 180 gün saklama |
 | `email_change_requests` | `user_id`, `new_email`, `token_hash` (unique), `expires_at`, `confirmed_at`, `cancelled_at` | Faz 6 akışı |
-| `consents` | `user_id` / `anon_id`, `type` (`terms\|kvkk_ack\|marketing…`), `version`, `granted`, `ip_masked` | **Append-only**; kayıtta `terms` + `kvkk_ack` |
+| `consents` | `user_id` / `anon_id`, `type` (`terms\|kvkk_ack\|marketing…`), `version`, `granted`, `ip_masked` | **Append-only** (UPDATE/DELETE trigger ile engelli); kayıtta `terms` + `kvkk_ack` |
 
-**Seed sırası:** `ServerSeeder` → `ContentSeeder` → (`local` ise) `DemoSeeder`.
+**Yetki ve denetim tabloları (Faz 4):**
+
+| Tablo | Önemli kolonlar | Not |
+|---|---|---|
+| `roles` | `slug` (unique), `name`, `description`, `color`, `priority` (hiyerarşi, super_admin=100), `is_staff`, `is_system` | 9 sistem rolü seed edilir (`config/roles.php`) |
+| `permissions` | `key` (unique, ör. `users.read`), `group`, `description`, `is_sensitive` | 68 izin, kaynak `config/permissions.php` |
+| `role_permissions` | PK (`role_id`, `permission_id`), `created_at` | CASCADE |
+| `user_roles` | `user_id` (RESTRICT), `role_id` (RESTRICT), `assigned_by`, `expires_at` (geçici rol), unique (`user_id`,`role_id`) | `mrp:expire-roles` saatlik temizler |
+| `branches` | `slug` (unique), `name`, `type` (`support\|moderation\|faction\|content\|economy\|game\|general`), `faction_id`, `parent_id` (escalation), `is_active` | Seed: `yonetim, destek-genel, destek-teknik, moderasyon, icerik, finans` |
+| `branch_members` | `branch_id`, `user_id`, `is_lead`, `assigned_by`, `expires_at`, unique (`branch_id`,`user_id`) | Üye olmak için personel rolü şart |
+| `audit_logs` | `ulid`, `actor_type` (`user\|system\|scheduler\|bridge\|payment_provider`), `actor_id`, `action`, `target_type/id`, `severity` (`info\|warning\|critical`), `changes` JSON (hassas alanlar `[REDACTED]`), `reason`, `ip_masked`, `user_agent_summary`, `request_id`, `prev_hash`, `hash` | **Append-only + hash zinciri**: `hash = SHA256(prev_hash ‖ canonical_json(satır))`, `GET_LOCK('audit_chain')` ile serileştirilir |
+| `admin_activity_logs` | `user_id`, `route_name`, `method`, `target_type/id`, `ip_masked`, `created_at` | Tüm başarılı admin istekleri (görüntüleme dahil), 90 gün |
+
+**Seed sırası:** `ServerSeeder` → `AccessControlSeeder` (izinler, 9 sistem rolü + matris, 6 branş) → `ContentSeeder` → (`local` ise) `DemoSeeder`. İlk süper admin seed ile oluşturulmaz (bkz. §2 Yönetim paneli).
 
 ---
 

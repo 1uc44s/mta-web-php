@@ -114,6 +114,6 @@ return [
     |
     */
 
-    'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
+    'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 600), // docs/SRS.md FR-ADM-004: PC penceresi 10 dk
 
 ];

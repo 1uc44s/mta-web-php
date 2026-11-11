@@ -18,6 +18,12 @@
         @endunless
 
         <p class="mt-8 max-w-xl text-text-muted">Panelin tamamı (oyun hesabı bağlama, karakterler, destek, bildirimler) sonraki fazlarda bu alana eklenecek.</p>
+        <div class="mt-8 flex flex-wrap gap-3">
+            <x-ui.button variant="secondary" icon="shield-check" :href="route('panel.security.two-factor')">{{ __('auth.ui.two_factor_setup.title') }}</x-ui.button>
+            @if ($user->isStaff())
+                <x-ui.button icon="shield" :href="route('admin.dashboard')">{{ __('admin.title') }}</x-ui.button>
+            @endif
+        </div>
         <form method="POST" action="{{ route('logout') }}" class="mt-8">
             @csrf
             <x-ui.button type="submit" variant="secondary" icon="log-out">Çıkış yap</x-ui.button>

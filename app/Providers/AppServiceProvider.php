@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Listeners\AuthEventSubscriber;
+use App\Models\User;
 use App\Services\Bridge\ServerStatusResolver;
 use App\Services\Content\MarkdownRenderer;
 use App\Services\Settings\SettingsRepository;
 use App\Support\ConfigValidator;
+use App\View\Composers\AdminLayoutComposer;
 use App\View\Composers\PublicLayoutComposer;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -17,6 +19,7 @@ use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -40,8 +43,23 @@ final class AppServiceProvider extends ServiceProvider
         Paginator::defaultView('components.ui.pagination');
 
         View::composer('components.layouts.public', PublicLayoutComposer::class);
+        View::composer('components.layouts.admin', AdminLayoutComposer::class);
 
         Event::subscribe(AuthEventSubscriber::class);
+
+        // docs/ADMIN.md §1, §4.1: süper admin her şeyi yapar; katalogdaki izinler rol eşlemesinden çözülür.
+        // Katalog dışı yetenekler (policy'ler) için null döner → normal Gate akışı.
+        $catalog = array_fill_keys(array_keys((array) config('permissions')), true);
+        Gate::before(function (mixed $user, string $ability) use ($catalog): ?bool {
+            if (! $user instanceof User) {
+                return null;
+            }
+            if ($user->isSuperAdmin()) {
+                return true;
+            }
+
+            return isset($catalog[$ability]) && $user->hasPermission($ability) ? true : null;
+        });
 
         $this->configureRateLimiting();
 

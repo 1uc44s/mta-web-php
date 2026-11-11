@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Actions\Auth\DisableTwoFactorForPlayers;
 use App\Actions\Auth\ResetUserPassword;
 use App\Enums\UserStatus;
 use App\Models\User;
@@ -14,6 +15,7 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Laravel\Fortify\Actions\DisableTwoFactorAuthentication;
 use Laravel\Fortify\Contracts\FailedPasswordResetLinkRequestResponse;
 use Laravel\Fortify\Contracts\LogoutResponse;
 use Laravel\Fortify\Fortify;
@@ -43,6 +45,9 @@ final class FortifyServiceProvider extends ServiceProvider
             FailedPasswordResetLinkRequestResponse::class,
             fn (): SuccessfulPasswordResetLinkRequestResponse => new SuccessfulPasswordResetLinkRequestResponse(Password::RESET_LINK_SENT),
         );
+
+        // FR-AUTH-017: personel 2FA'yı kapatamaz.
+        $this->app->bind(DisableTwoFactorAuthentication::class, DisableTwoFactorForPlayers::class);
     }
 
     public function boot(): void

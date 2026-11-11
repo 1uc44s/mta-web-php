@@ -2,8 +2,12 @@
 
 declare(strict_types=1);
 
+use App\Http\Middleware\AdminIdleTimeout;
 use App\Http\Middleware\AssignRequestId;
 use App\Http\Middleware\EnsureAccountActive;
+use App\Http\Middleware\EnsureStaff;
+use App\Http\Middleware\LogAdminActivity;
+use App\Http\Middleware\RequireAdminMfa;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\ThrottleSensitiveAuthRoutes;
 use App\Http\Middleware\VerifyOrigin;
@@ -47,6 +51,10 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'active' => EnsureAccountActive::class,
+            'staff' => EnsureStaff::class,
+            'mfa' => RequireAdminMfa::class,
+            'admin.idle' => AdminIdleTimeout::class,
+            'admin.activity' => LogAdminActivity::class,
         ]);
 
         // Girişli kullanıcı misafir sayfasına gelirse panele (Fortify home), misafir korumalı sayfaya gelirse girişe.
@@ -56,9 +64,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // Tema/efekt/çerez tercihi cookie'leri gizli değildir; değerleri allowlist ile doğrulanır (docs/DESIGN.md §4).
         $middleware->encryptCookies(except: ['mrp_theme', 'mrp_effects', 'mrp_consent']);
 
-        // Grup zincirleri sonraki fazlarda tamamlanır (verified, active, staff, mfa, admin.idle …).
+        // docs/SRS.md FR-ADM-001 zinciri. Rota bazında ayrıca `can:` (FR-ADM-002) ve kritik işlemlerde `password.confirm` (FR-ADM-004).
         $middleware->group('panel', ['web', 'auth', 'active']);
-        $middleware->group('admin', ['web', 'auth', 'verified', 'active']);
+        $middleware->group('admin', ['web', 'auth', 'verified', 'active', 'staff', 'mfa', 'admin.idle', 'admin.activity']);
         $middleware->group('hooks', []);
 
         // CSRF istisnası yalnızca imza doğrulamalı webhook'lar (docs/RULES.md §7).

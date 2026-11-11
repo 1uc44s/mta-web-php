@@ -210,7 +210,7 @@ Fortify'ın `updateProfileInformation` ve `updatePasswords` özellikleri **kapal
 
 ## 6. Yönetim paneli (`/admin`)
 
-`admin` grubu. "Yetki" = `can:` middleware'i. "Kapsam" = Policy'nin ek olarak branş veya sahiplik kontrolü yapması.
+`admin` grubu: `web, auth, verified, active, staff, mfa, admin.idle, admin.activity` (SRS FR-ADM-001). Personel olmayan → 404, 2FA yok → `panel.security.two-factor`, izin yok → 403. "Yetki" = `can:` middleware'i. "Kapsam" = Action/Policy içinde ek branş veya sahiplik kontrolü. "PC" = `password.confirm` (10 dk penceresi).
 
 ### 6.1 Panel ve sistem
 

@@ -6,14 +6,18 @@ namespace App\Models;
 
 use App\Enums\UserStatus;
 use App\Models\Concerns\HasPublicUlid;
+use App\Services\Authorization\PermissionResolver;
 use App\Services\Messaging\MessageDispatcher;
 use Carbon\CarbonImmutable;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\URL;
+use Laravel\Fortify\Contracts\TwoFactorAuthenticationProvider;
+use Laravel\Fortify\Fortify;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 
 /**
@@ -79,6 +83,115 @@ final class User extends Authenticatable implements MustVerifyEmail
     public function hasTwoFactorEnabled(): bool
     {
         return $this->two_factor_confirmed_at !== null && $this->two_factor_secret !== null;
+    }
+
+    /**
+     * Fortify, QR etiketinde giriş alanının (`login`) model niteliğini okur; bizde böyle bir kolon yok.
+     * Etiket olarak kullanıcı adı kullanılır (e-posta authenticator uygulamasına yazılmaz).
+     */
+    public function twoFactorQrCodeUrl(): string
+    {
+        return app(TwoFactorAuthenticationProvider::class)->qrCodeUrl(
+            (string) config('app.name'),
+            $this->username,
+            Fortify::currentEncrypter()->decrypt((string) $this->two_factor_secret),
+        );
+    }
+
+    // ---- Yetki (docs/ADMIN.md §1, §5) ----------------------------------------
+
+    /** @var array{roles: list<string>, priority: int, is_staff: bool, is_super: bool, permissions: list<string>, branches: list<int>, lead_branches: list<int>}|null */
+    private ?array $authzCache = null;
+
+    /** @return BelongsToMany<Role, $this> */
+    public function roles(): BelongsToMany
+    {
+        return $this->belongsToMany(Role::class, 'user_roles')->withPivot(['id', 'assigned_by', 'expires_at', 'created_at']);
+    }
+
+    /** @return BelongsToMany<Branch, $this> */
+    public function branches(): BelongsToMany
+    {
+        return $this->belongsToMany(Branch::class, 'branch_members')->withPivot(['id', 'is_lead', 'assigned_by', 'expires_at', 'created_at']);
+    }
+
+    /** @return array{roles: list<string>, priority: int, is_staff: bool, is_super: bool, permissions: list<string>, branches: list<int>, lead_branches: list<int>} */
+    public function authz(): array
+    {
+        return $this->authzCache ??= app(PermissionResolver::class)->for($this);
+    }
+
+    /** Rol/branş değişikliğinden sonra çağrılır (bellek + cache). */
+    public function flushAuthz(): void
+    {
+        $this->authzCache = null;
+        app(PermissionResolver::class)->flush($this->id);
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->authz()['is_super'];
+    }
+
+    /** En az bir personel rolü (is_staff) var mı? Kozmetik roller /admin açmaz. */
+    public function isStaff(): bool
+    {
+        return $this->authz()['is_staff'];
+    }
+
+    public function hasPermission(string $key): bool
+    {
+        return $this->isSuperAdmin() || in_array($key, $this->authz()['permissions'], true);
+    }
+
+    /**
+     * İzin kapsamsız mı? (ADMIN §3: 🔸 izinler branş/eylem öneki ile sınırlıdır.) Süper admin ve config dışı
+     * (ACP'de oluşturulmuş) roller kapsamsız sayılır.
+     */
+    public function hasUnscopedPermission(string $key): bool
+    {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        foreach ($this->authz()['roles'] as $slug) {
+            $meta = config('roles.'.$slug);
+            if (! is_array($meta)) {
+                if ($this->roles()->where('slug', $slug)->whereHas('permissions', fn ($q) => $q->where('key', $key))->exists()) {
+                    return true;
+                }
+
+                continue;
+            }
+            if (in_array($key, $meta['permissions'], true) && ! in_array($key, $meta['scoped'], true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function rolePriority(): int
+    {
+        return $this->authz()['priority'];
+    }
+
+    /** @return list<int> */
+    public function activeBranchIds(): array
+    {
+        return $this->authz()['branches'];
+    }
+
+    public function leadsBranch(int $branchId): bool
+    {
+        return in_array($branchId, $this->authz()['lead_branches'], true);
+    }
+
+    /** Hiyerarşi: hedef personelden kesin olarak yüksek öncelik (docs/ADMIN.md §4.2, ROUTES §6.2). */
+    public function outranks(self $other): bool
+    {
+        // Süper admin en üst seviyedir (diğer süper adminler dahil); son süper admin koruması işlem katmanında.
+        return $this->isSuperAdmin() || $this->rolePriority() > $other->rolePriority();
     }
 
     /** Doğrulama bağlantısı: imzalı, oturum gerektirmez (docs/PRD.md D-15). */

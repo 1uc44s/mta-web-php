@@ -18,7 +18,9 @@ Etkin yetki = (rollerden gelen izinler) ∩ (kaynak branş kapsamı) ∩ (iş ku
 - **İzin** ne yapılabileceğini söyler (`support.reply`).
 - **Branş** nerede yapılabileceğini söyler (yalnızca "LSPD Fraksiyonu" branşının ticket'ları).
 - **Hiyerarşi** kime yapılabileceğini söyler (kendinden düşük öncelikli personele).
-- İzin kataloğunun tek kaynağı `config/permissions.php` dosyasıdır. `PermissionSeeder` DB'yi bununla senkronlar. Kodda bulunmayan bir izin ACP'den oluşturulamaz. ACP rolleri ve rol ↔ izin eşlemesini düzenler, izin kataloğunu değil.
+- İzin kataloğunun tek kaynağı `config/permissions.php` dosyasıdır. Sistem rolleri ve rol ↔ izin matrisi `config/roles.php` dosyasındadır (§3'ten üretilir; `RoleMatrixTest` ikisini karşılaştırır). `AccessControlSeeder` DB'yi bunlarla senkronlar. Kodda bulunmayan bir izin ACP'den oluşturulamaz.
+- **Faz 4 kararı:** Sistem rolleri (`is_system`) ACP'de **salt okunurdur**; izinleri her seed çalıştırmasında matristen yeniden yazılır. ACP (`roles.manage`, yalnızca süper admin) **özel** roller oluşturur, düzenler ve siler (öncelik 1–89, kullanımdaki rol silinemez).
+- Personel olmayan (rolsüz veya yalnızca kozmetik rollü) kullanıcı `/admin/*` altında **404** alır (yönetim alanının varlığı ifşa edilmez). Personel olup ilgili izni olmayan **403** alır.
 
 ## 2. Roller
 
