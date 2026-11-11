@@ -22,6 +22,28 @@ final class AdminLayoutComposer
         ['label' => 'admin.nav.players', 'items' => [
             ['label' => 'admin.nav.users', 'route' => 'admin.users.index', 'icon' => 'users', 'can' => 'users.read', 'match' => 'admin.users.*'],
         ]],
+        ['label' => 'content_admin.nav.content', 'items' => [
+            ['label' => 'Sayfalar', 'route' => 'admin.content.pages.index', 'icon' => 'file-text', 'can' => 'content.read', 'match' => 'admin.content.pages.*'],
+            ['label' => 'Haberler', 'route' => 'admin.content.news.index', 'icon' => 'newspaper', 'can' => 'content.read', 'match' => 'admin.content.news*'],
+            ['label' => 'Etkinlikler', 'route' => 'admin.content.events.index', 'icon' => 'calendar', 'can' => 'content.read', 'match' => 'admin.content.events.*'],
+            ['label' => 'SSS', 'route' => 'admin.content.faqs.index', 'icon' => 'circle-help', 'can' => 'content.read', 'match' => 'admin.content.faqs.*'],
+            ['label' => 'Navigasyon', 'route' => 'admin.content.navigation.index', 'icon' => 'menu', 'can' => 'content.read', 'match' => 'admin.content.navigation.*'],
+            ['label' => 'Sosyal bağlantılar', 'route' => 'admin.content.social-links.index', 'icon' => 'share-2', 'can' => 'content.read', 'match' => 'admin.content.social-links.*'],
+            ['label' => 'content_admin.nav.media', 'route' => 'admin.media.index', 'icon' => 'image', 'can' => 'content.read', 'match' => 'admin.media.*'],
+        ]],
+        ['label' => 'content_admin.nav.game', 'items' => [
+            ['label' => 'Oyun sistemleri', 'route' => 'admin.content.systems.index', 'icon' => 'cpu', 'can' => 'content.read', 'match' => 'admin.content.system*'],
+            ['label' => 'Meslekler', 'route' => 'admin.content.jobs.index', 'icon' => 'briefcase', 'can' => 'content.read', 'match' => 'admin.content.jobs.*'],
+            ['label' => 'Fraksiyonlar', 'route' => 'admin.content.factions.index', 'icon' => 'shield', 'can' => 'content.read', 'match' => 'admin.content.factions.*'],
+            ['label' => 'Kurallar', 'route' => 'admin.content.rules.index', 'icon' => 'scale', 'can' => 'content.read', 'match' => 'admin.content.rule*'],
+            ['label' => 'Akademi dersleri', 'route' => 'admin.content.academy-courses.index', 'icon' => 'graduation-cap', 'can' => 'academy.manage', 'match' => 'admin.content.academy-courses.*'],
+            ['label' => 'Akademi konuları', 'route' => 'admin.content.academy-topics.index', 'icon' => 'book-open', 'can' => 'academy.manage', 'match' => 'admin.content.academy-topics.*'],
+        ]],
+        ['label' => 'content_admin.nav.communication', 'items' => [
+            ['label' => 'Duyurular', 'route' => 'admin.announcements.index', 'icon' => 'megaphone', 'can' => 'announcements.manage', 'match' => 'admin.announcements.*'],
+            ['label' => 'content_admin.nav.templates', 'route' => 'admin.templates.index', 'icon' => 'mail', 'can' => 'templates.read', 'match' => 'admin.templates.*'],
+            ['label' => 'content_admin.nav.contact', 'route' => 'admin.contact.index', 'icon' => 'inbox', 'can' => 'contact.read', 'match' => 'admin.contact.*'],
+        ]],
         ['label' => 'admin.nav.team', 'items' => [
             ['label' => 'admin.nav.staff', 'route' => 'admin.staff.index', 'icon' => 'shield-user', 'can' => 'staff.read', 'match' => 'admin.staff.*'],
             ['label' => 'admin.nav.branches', 'route' => 'admin.branches.index', 'icon' => 'git-branch', 'can' => 'staff.read', 'match' => 'admin.branches.*'],

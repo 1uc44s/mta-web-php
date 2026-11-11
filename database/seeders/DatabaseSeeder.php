@@ -17,6 +17,7 @@ final class DatabaseSeeder extends Seeder
         $this->call([
             ServerSeeder::class,
             AccessControlSeeder::class,
+            MessageTemplateSeeder::class,
             ContentSeeder::class,
         ]);
 

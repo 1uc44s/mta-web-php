@@ -7,6 +7,7 @@ namespace App\View\Composers;
 use App\Models\NavigationItem;
 use App\Models\SocialLink;
 use App\Services\Bridge\ServerStatusResolver;
+use App\Services\Content\AnnouncementFeed;
 use App\Services\Settings\SettingsRepository;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
@@ -22,6 +23,7 @@ final class PublicLayoutComposer
     public function __construct(
         private readonly SettingsRepository $settings,
         private readonly ServerStatusResolver $status,
+        private readonly AnnouncementFeed $announcements,
     ) {}
 
     public function compose(View $view): void
@@ -59,6 +61,7 @@ final class PublicLayoutComposer
             'navigation' => $navigation,
             'site' => $this->settings->public(),
             'serverStatus' => $this->status->primary(),
+            'bannerAnnouncements' => $this->announcements->banner(),
         ]);
     }
 }

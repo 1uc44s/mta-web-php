@@ -305,3 +305,19 @@ Uygulama: `ContentObserver` (Eloquent observer) + sürüm anahtarı deseni ([ARC
 - **Form:** sol sütunda içerik, sağ sütunda yan panel (durum, yayın tarihi, slug, SEO, görsel). Taslak 30 sn'de bir **tarayıcı localStorage'ına** otomatik kaydedilir; kayıt DB'ye kullanıcı "Kaydet" dediğinde yapılır. Sayfadan çıkarken kaydedilmemiş değişiklik uyarısı gösterilir.
 - **Markdown editörü:** Hafif textarea + araç çubuğu (kalın, başlık, liste, bağlantı, callout, kural bağlantısı) ve yan yana önizleme sekmesi. WYSIWYG kullanılmaz (güvenlik ve tutarlılık için).
 - **Bölüm düzenleyici:** Bölüm kartları listesi, sürükle-bırak + klavye sıralama, şemadan üretilen form, görünür/gizli anahtarı, "varsayılana dön".
+
+## 10. Faz 5 uygulama notları (R1)
+
+Faz 5'te teslim edilen ACP deneyimi §9'daki hedefin sade bir ilk sürümüdür. Farklar bilinçlidir ve sonraki fazlarda kapatılır:
+
+| Konu | Faz 5 durumu | Hedef |
+|---|---|---|
+| Bölüm düzenleyici | Her bölüm için **JSON veri alanı** + şema alan listesi + görünür/gizli + yukarı/aşağı taşıma. Kayıtta tür şemasıyla doğrulanır; şema dışı anahtarlar atılır (`SectionRegistry::schema()`) | Şemadan otomatik form (R2) |
+| Markdown editörü | Düz textarea + söz dizimi ipucu; önizleme imzalı **önizleme sayfasında** (30 dk) | Araç çubuğu + yan yana canlı önizleme (R2) |
+| Taslak otomatik kayıt (localStorage) | Yok | R2 |
+| Şablon editörü | Kaydedilmiş sürümün örnek veriyle önizlemesi + `preview` JSON uç noktası + kendine test gönderimi + revizyon geri yükleme | Kaydetmeden canlı önizleme (JS) |
+| Kısa kodlar (`:::not`, `[[kural:…]]`, `[[adres]]`) | Henüz yok (Markdown düz render edilir) | R2 |
+| `factions.update_own` | Faz 8'e ertelendi | Fraksiyon branşı ile |
+| Mesaj kanalları | Yalnızca `mail` (+ `message_dispatches` logu). Duyurularda `public_banner` ve `panel` kanalı kendi ekranlarında gösterilir | `panel` bildirimi Faz 6, Discord/WhatsApp Faz 10 |
+
+Şablon motoru (`App\Services\Messaging\TemplateRenderer`) §6.2 söz dizimini eksiksiz uygular: değişken allowlist, filtreler (`upper, lower, title, date, datetime, relative, number, money, truncate(n), default("…")`), tek seviye `{{#if}}`, `{{{ }}}` yasağı, 20 KB / 50 ms sınırı. Mail kanalında değişken değerleri HTML + Markdown escape edilir; `link.*` değişkenleri yalnızca `http(s)` olabilir. DB şablonu render edilemezse kodda gömülü varsayılan (`lang/tr/messages.php`) kullanılır ve uyarı loglanır.

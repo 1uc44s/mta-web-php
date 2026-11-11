@@ -14,7 +14,7 @@ Laravel 13 · PHP 8.4 · MariaDB 10.11 · Blade + Tailwind CSS v4 + Alpine.js (C
 | 2 | Tasarım sistemi + public site | ✅ |
 | 3 | Kimlik doğrulama | ✅ |
 | 4 | RBAC, branşlar, yönetim paneli iskeleti | ✅ |
-| 5 | CMS, Akademi, mesaj şablon motoru | ⏳ |
+| 5 | CMS, Akademi, mesaj şablon motoru | ✅ |
 | 6 | Oyuncu paneli, destek, PWA | ⏳ |
 | 7 | MTA köprüsü + Lua resource | ⏳ |
 | 8 | Başvurular, moderasyon, oyun komutları | ⏳ |
@@ -145,7 +145,52 @@ Middleware zinciri: `web, auth, verified, active, staff, mfa, admin.idle (30 dk)
 | POST | `/admin/settings/{group}` | `admin.settings.update` | `settings.update` + PC; `security`, `mail`, `features.payments` yalnızca süper admin |
 | GET | `/panel/security/two-factor` | `panel.security.two-factor` | giriş yapmış kullanıcı (personel 2FA'yı kapatamaz) |
 
-**Artisan komutları:** `mrp:make-super-admin {email}` · `mrp:expire-roles` (saatlik) · `audit:verify` (günlük 03:30; bozuk zincirde çıkış kodu 1). Zamanlayıcı için sunucuda: `* * * * * php artisan schedule:run`.
+**Artisan komutları:** `mrp:make-super-admin {email}` · `mrp:expire-roles` (saatlik) · `audit:verify` (günlük 03:30; bozuk zincirde çıkış kodu 1) · `content:publish-scheduled` (dakikalık, Faz 5). Zamanlayıcı için sunucuda: `* * * * * php artisan schedule:run`.
+
+### İçerik yönetimi — CMS (Faz 5)
+
+**Kaynak deseni.** Aşağıdaki her `{kaynak}` için aynı rota seti üretilir (tanımlar: `App\Services\Content\ContentResourceRegistry`):
+`pages, news, news-categories, tags, systems, system-categories, jobs, factions, rule-categories, rules, faqs, events, navigation, social-links, academy-courses, academy-topics` → `/admin/content/{kaynak}`; duyurular → `/admin/announcements`.
+
+| Yöntem | URL | Ad | Yetki |
+|---|---|---|---|
+| GET | `/admin/content/{kaynak}` (`?status=draft\|in_review\|scheduled\|published\|archived&q=`) | `admin.content.{kaynak}.index` | `content.read` |
+| GET / POST | `/admin/content/{kaynak}/create`, `/admin/content/{kaynak}` | `….create`, `….store` | `content.create` |
+| GET / POST | `/admin/content/{kaynak}/{id}/edit`, `/admin/content/{kaynak}/{id}` | `….edit`, `….update` | `content.read` / `content.update` |
+| POST | `/admin/content/{kaynak}/{id}/submit-review` | `….submit-review` | `content.update` |
+| POST | `/admin/content/{kaynak}/{id}/publish` · `unpublish` · `archive` · `restore` | `….publish` … | `content.publish` (ileri tarihli `published_at` → `scheduled`) |
+| POST | `/admin/content/{kaynak}/{id}/delete` | `….destroy` | `content.delete` (sistem sayfası 403) |
+| POST | `/admin/content/{kaynak}/reorder` (`id`, `direction=up\|down`) | `….reorder` | `content.update` |
+| GET | `/admin/content/{kaynak}/{id}/preview` (imzalı, 30 dk) | `….preview` | `content.read` |
+
+Akademi kaynakları (`academy-*`) için tüm işlemler `academy.manage`; duyurular için `announcements.manage`, yayın için `announcements.publish`.
+
+| Yöntem | URL | Ad | Yetki |
+|---|---|---|---|
+| GET / POST | `/admin/content/pages/{page}/sections` | `admin.content.pages.sections(.store)` | `content.read` / `content.update` |
+| POST | `/admin/content/pages/{page}/sections/{section}` (`data` JSON, `is_visible`) · `/delete` · `/move` | `….sections.update/destroy/reorder` | `content.update` (şema doğrulaması) |
+| GET / POST | `/admin/content/pages/{page}/revisions`, `…/revisions/{revision}/restore` | `….revisions(.restore)` | `content.read` / `content.publish` |
+| GET | `/admin/content/rules/{rule}/revisions` | `admin.content.rules.revisions` | `content.read` |
+| GET / POST | `/admin/content/rules-version`, `/admin/content/rules/bump-version` (`version`, `note`) | `admin.content.rules.version`, `….bump-version` | `content.publish` |
+| GET / POST | `/admin/media`, `/admin/media/{ulid}`, `/admin/media/{ulid}/delete` | `admin.media.index/store/update/destroy` | `content.read` / `media.upload` (20/dk) / `media.delete` (kullanımdaysa 409) |
+| GET | `/admin/templates`, `/admin/templates/{id}/edit` | `admin.templates.index/edit` | `templates.read` |
+| POST | `/admin/templates/{id}` (`subject`, `body`) | `admin.templates.update` | `templates.manage` (söz dizimi + allowlist kayıtta doğrulanır) |
+| POST | `/admin/templates/{id}/preview` → JSON `{success, data: {subject, html}}` veya 422 `TEMPLATE_SYNTAX` | `admin.templates.preview` | `templates.read` |
+| POST | `/admin/templates/{id}/test-send`, `…/revisions/{revision}/restore` | `admin.templates.test-send` (5/10 dk), `….revisions.restore` | `templates.manage` |
+| GET / POST | `/admin/contact`, `/admin/contact/{ulid}`, `/admin/contact/{ulid}/status` | `admin.contact.index/show/status` | `contact.read` |
+
+**Oyuncu tarafı (Faz 5):**
+
+| Yöntem | URL | Ad | Not |
+|---|---|---|---|
+| GET | `/panel/academy` | `panel.academy` | Ders bazında ilerleme (tamamlanan / yayındaki konu) |
+| POST | `/panel/academy/topics/{id}/complete` | `panel.academy.complete` | İdempotent; konu sayfasında "Okudum" butonu |
+| POST | `/panel/rules/acknowledge` | `panel.rules.acknowledge` | Geçerli kural sürümünü onaylar (panelde bant) |
+| POST | `/panel/announcements/{ulid}/read` | `panel.announcements.read` | Duyuruyu okundu işaretler |
+
+**Medya:** Yüklenen görseller GD ile yeniden kodlanır (EXIF temizlenir), en fazla 2400 px orijinal + 480/960/1600 px **WebP** varyantları `storage/app/public/media/YYYY/MM/` altına yazılır. `public/storage` bağlantısı gerekir: `php artisan storage:link`.
+
+**Şablon söz dizimi:** `{{ user.username }}`, `{{ x | upper }}`, `{{ x | truncate(80) }}`, `{{ x | default("—") }}`, `{{#if x}} … {{/if}}`. Ham çıktı, ifade ve kod yoktur; bilinmeyen değişken kayıtta reddedilir (bkz. docs/CMS.md §6, §10).
 
 ## 3. JSON API (`/api/v1`)
 
@@ -182,6 +227,7 @@ Hata biçimi (tüm JSON uçları):
 | `0001_01_01_000002_create_jobs_table` | `jobs`, `job_batches`, `failed_jobs` | 1 |
 | `2026_11_11_090000_create_identity_tables` | `user_security_events`, `email_change_requests`, `consents` | 3 |
 | `2026_11_11_110000_create_access_control_tables` | `roles`, `permissions`, `role_permissions`, `user_roles`, `branches`, `branch_members`, `audit_logs` (+ trigger), `admin_activity_logs` | 4 |
+| `2026_11_12_090000_create_cms_messaging_tables` | `announcements`, `announcement_reads`, `academy_progress`, `rule_acknowledgements`, `message_templates`, `message_template_revisions`, `message_dispatches` | 5 |
 | `2026_11_11_100000_create_settings_and_servers_tables` | `system_settings`, `mta_servers` | 2 |
 | `2026_11_11_100100_create_content_tables` | `media`, `pages`, `page_sections`, `page_revisions`, `redirects`, `navigation_items`, `social_links`, `news_categories`, `news_posts`, `tags`, `news_post_tag`, `game_system_categories`, `game_systems`, `rule_categories`, `rules`, `rule_revisions`, `game_jobs`, `factions`, `faqs`, `community_events`, `academy_courses`, `academy_topics`, `academy_topic_rule`, `contact_messages` | 2 |
 
@@ -212,7 +258,21 @@ Hata biçimi (tüm JSON uçları):
 | `audit_logs` | `ulid`, `actor_type` (`user\|system\|scheduler\|bridge\|payment_provider`), `actor_id`, `action`, `target_type/id`, `severity` (`info\|warning\|critical`), `changes` JSON (hassas alanlar `[REDACTED]`), `reason`, `ip_masked`, `user_agent_summary`, `request_id`, `prev_hash`, `hash` | **Append-only + hash zinciri**: `hash = SHA256(prev_hash ‖ canonical_json(satır))`, `GET_LOCK('audit_chain')` ile serileştirilir |
 | `admin_activity_logs` | `user_id`, `route_name`, `method`, `target_type/id`, `ip_masked`, `created_at` | Tüm başarılı admin istekleri (görüntüleme dahil), 90 gün |
 
-**Seed sırası:** `ServerSeeder` → `AccessControlSeeder` (izinler, 9 sistem rolü + matris, 6 branş) → `ContentSeeder` → (`local` ise) `DemoSeeder`. İlk süper admin seed ile oluşturulmaz (bkz. §2 Yönetim paneli).
+**CMS, Akademi ve mesajlaşma tabloları (Faz 5):**
+
+| Tablo | Önemli kolonlar | Not |
+|---|---|---|
+| `announcements` | `ulid`, `title`, `body` (Markdown), `priority` (`info\|important\|critical`), `audience` (`all\|players`), `audience_role_ids` JSON, `channels` JSON (`public_banner\|panel\|email`), `starts_at`, `ends_at`, `email_dispatched_at` + yayın blok kolonları | E-posta kanalı yayında **bir kez** |
+| `announcement_reads` | PK (`announcement_id`, `user_id`), `read_at` | Fan-out yok; okundu bilgisi |
+| `academy_progress` | PK (`user_id`, `academy_topic_id`), `completed_at` | "Okudum" idempotent |
+| `rule_acknowledgements` | `user_id`, `version`, `acknowledged_at`, unique (`user_id`,`version`) | + `consents(type=rules_ack)` |
+| `message_templates` | `key`, `channel`, `locale`, `name`, `subject`, `body`, `variables` JSON (kod kaynaklı), `status`, `is_system`, `version`, `updated_by`, unique (`key`,`channel`,`locale`) | Seed: `lang/tr/messages.php` |
+| `message_template_revisions` | `message_template_id`, `version`, `subject`, `body`, `changed_by` | Her kayıtta önceki sürüm |
+| `message_dispatches` | `message_template_id`, `template_key`, `channel`, `user_id`, `recipient_masked` (`f***@g***.com`), `status` (`queued\|sent\|failed`), `error`, `attempts`, `queued_at`, `sent_at` | 180 gün |
+
+Faz 5'te mevcut tablolar da kullanılmaya başladı: `page_revisions` (sayfa düzenlemesinde snapshot), `rule_revisions` (kural düzenlemesinde), `media` (WebP varyantları `variants` JSON: genişlik → yol).
+
+**Seed sırası:** `ServerSeeder` → `AccessControlSeeder` (izinler, 9 sistem rolü + matris, 6 branş) → `MessageTemplateSeeder` (sistem e-posta şablonları) → `ContentSeeder` → (`local` ise) `DemoSeeder`. İlk süper admin seed ile oluşturulmaz (bkz. §2 Yönetim paneli).
 
 ---
 

@@ -89,5 +89,7 @@ final class AppServiceProvider extends ServiceProvider
         RateLimiter::for('two-factor', fn (Request $request): Limit => Limit::perMinute(5)->by('2fa:'.$request->session()->get('login.id', $request->ip())));
         RateLimiter::for('register', fn (Request $request): Limit => Limit::perHour(5)->by('register:'.$request->ip()));
         RateLimiter::for('verification', fn (Request $request): Limit => Limit::perHour(6)->by('verify:'.($request->user()?->getAuthIdentifier() ?? $request->ip())));
+        // docs/ROUTES.md T:uploads — dosya yükleme (medya, ileride ticket ekleri).
+        RateLimiter::for('uploads', fn (Request $request): Limit => Limit::perMinute(20)->by('uploads:'.($request->user()?->getAuthIdentifier() ?? $request->ip())));
     }
 }

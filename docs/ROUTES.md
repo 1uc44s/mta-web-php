@@ -141,7 +141,7 @@ Fortify'ın `updateProfileInformation` ve `updatePasswords` özellikleri **kapal
 | Yöntem | URI | Ad | V | Açıklama |
 |---|---|---|---|---|
 | GET | `/panel/academy` | `panel.academy` | | İlerleme özeti |
-| POST | `/panel/academy/topics/{topic}/complete` | `panel.academy.complete` | | İdempotent |
+| POST | `/panel/academy/topics/{topic}/complete` | `panel.academy.complete` | | İdempotent. `{topic}` = konu id'si (slug ders içinde benzersiz olduğundan) |
 | POST | `/panel/rules/acknowledge` | `panel.rules.acknowledge` | | Geçerli kural sürümünü onaylar |
 
 ### 5.4 Destek
@@ -344,12 +344,13 @@ Kaynağa özel rotalar ve yetki istisnaları:
 | POST | `/admin/content/pages/{page}/sections` | `admin.content.pages.sections.store` | `content.update` | `type` sistem şablonu kayıt defterinden |
 | POST | `/admin/content/pages/{page}/sections/{section}` | `admin.content.pages.sections.update` | `content.update` | JSON şema doğrulaması |
 | POST | `/admin/content/pages/{page}/sections/{section}/delete` | `admin.content.pages.sections.destroy` | `content.update` | |
-| POST | `/admin/content/pages/{page}/sections/reorder` | `admin.content.pages.sections.reorder` | `content.update` | |
-| GET | `/admin/content/pages/{page}/revisions` | `admin.content.pages.revisions` | `content.read` | Diff görünümü |
+| POST | `/admin/content/pages/{page}/sections/{section}/move` | `admin.content.pages.sections.reorder` | `content.update` | **Faz 5:** `direction=up\|down` ile komşuyla yer değiştirir (klavye erişilebilir; sürükle-bırak R2) |
+| GET | `/admin/content/pages/{page}/revisions` | `admin.content.pages.revisions` | `content.read` | Revizyon listesi (metin karşılaştırma) |
 | POST | `/admin/content/pages/{page}/revisions/{revision}/restore` | `admin.content.pages.revisions.restore` | `content.publish` | |
 | GET | `/admin/content/rules/{rule}/revisions` | `admin.content.rules.revisions` | `content.read` | |
+| GET | `/admin/content/rules-version` | `admin.content.rules.version` | `content.publish` | **Faz 5:** sürüm artırma formu (geçerli sürüm + not) |
 | POST | `/admin/content/rules/bump-version` | `admin.content.rules.bump-version` | `content.publish` | Kural seti sürümünü artırır → oyunculardan yeniden onay ister |
-| — | `factions` güncelleme | | `content.update` **veya** `factions.update_own` | `factions.update_own`: yalnızca üyesi olduğu fraksiyon branşının fraksiyonu ve yalnızca metin alanları |
+| — | `factions` güncelleme | | `content.update` **veya** `factions.update_own` | `factions.update_own`: yalnızca üyesi olduğu fraksiyon branşının fraksiyonu ve yalnızca metin alanları. **Faz 8'e ertelendi** (fraksiyon branşı + başvurularla birlikte); Faz 5'te yalnızca `content.update` |
 | — | `academy-*` | | `academy.manage` | `content.*` yerine |
 | GET | `/admin/media` | `admin.media.index` | `content.read` | Izgara + arama |
 | POST | `/admin/media` | `admin.media.store` | `media.upload` | T:uploads |

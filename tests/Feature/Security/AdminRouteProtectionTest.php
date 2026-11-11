@@ -4,13 +4,22 @@ declare(strict_types=1);
 
 use App\Enums\AuditAction;
 use App\Models\Branch;
+use App\Models\ContactMessage;
+use App\Models\Media;
+use App\Models\MessageTemplate;
+use App\Models\Page;
 use App\Models\Role;
+use App\Models\Rule;
 use App\Models\User;
 use App\Services\Audit\AuditLogger;
+use App\Services\Content\ContentResourceRegistry;
+use Database\Seeders\ContentSeeder;
+use Database\Seeders\MessageTemplateSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Routing\Route as RouteObject;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\URL;
 
 /*
  * docs/SRS.md SEC-010, FR-ADM-001/002: her admin.* rotası × (misafir, oyuncu, 2FA'sız personel, izinsiz personel).
@@ -26,17 +35,34 @@ function adminRouteCases(): array
     $role = Role::query()->where('slug', 'moderator')->firstOrFail();
     $branch = Branch::query()->firstOrFail();
     $log = app(AuditLogger::class)->record(AuditAction::BranchesUpdated, $branch, [], null, null, 'system');
+    $page = Page::query()->where('slug', 'home')->firstOrFail();
+    $media = Media::query()->create(['disk' => 'public', 'path' => 'media/yok.webp', 'variants' => [], 'original_name' => 'yok.png', 'mime' => 'image/webp', 'width' => 10, 'height' => 10, 'size_bytes' => 1, 'alt_text' => 'Deneme']);
+    $message = ContactMessage::query()->create(['name' => 'Ad', 'email' => 'a@example.com', 'subject' => 'Konu', 'body' => 'Metin', 'status' => 'new']);
 
-    $params = ['user' => $target->ulid, 'role' => $role->id, 'branch' => $branch->id, 'log' => $log->ulid, 'group' => 'site', 'uuid' => 'yok'];
+    $base = [
+        'user' => $target->ulid, 'role' => $role->id, 'branch' => $branch->id, 'log' => $log->ulid, 'group' => 'site', 'uuid' => 'yok',
+        'page' => $page->id, 'section' => $page->sections()->value('id'), 'revision' => 999999, 'rule' => Rule::query()->value('id'),
+        'template' => MessageTemplate::query()->value('id'), 'media' => $media->ulid, 'message' => $message->ulid,
+    ];
 
     $cases = [];
     foreach (Route::getRoutes() as $route) {
-        if (! str_starts_with((string) $route->getName(), 'admin.')) {
+        $name = (string) $route->getName();
+        if (! str_starts_with($name, 'admin.')) {
             continue;
         }
+        $params = $base;
+        $resource = $route->defaults['resource'] ?? null;
+        if (is_string($resource)) {
+            $params['id'] = ContentResourceRegistry::get($resource)['model']::query()->value('id') ?? 999999;
+        }
+        $params = array_intersect_key($params, array_flip($route->parameterNames()));
+        $url = str_ends_with($name, '.preview') ? URL::temporarySignedRoute($name, now()->addMinutes(5), $params) : route($name, $params);
         $can = collect($route->gatherMiddleware())->first(fn ($m) => is_string($m) && str_starts_with($m, 'can:'));
-        $url = route((string) $route->getName(), array_intersect_key($params, array_flip($route->parameterNames())));
-        $cases[] = ['route' => $route, 'method' => in_array('POST', $route->methods(), true) ? 'POST' : 'GET', 'url' => $url, 'can' => $can ? substr($can, 4) : null];
+        $cases[] = [
+            'route' => $route, 'method' => in_array('POST', $route->methods(), true) ? 'POST' : 'GET', 'url' => $url,
+            'can' => $can ? substr($can, 4) : null, 'missing' => ($params['id'] ?? 0) === 999999,
+        ];
     }
 
     return $cases;
@@ -44,6 +70,8 @@ function adminRouteCases(): array
 
 beforeEach(function (): void {
     staffUser(); // rolleri seed et
+    (new ContentSeeder)->run();
+    (new MessageTemplateSeeder)->run();
 });
 
 it('SEC-010: admin rotası kataloğu boş değildir ve dashboard dışındaki her rota can: taşır', function (): void {
@@ -100,9 +128,13 @@ it('FR-ADM-002: izni olmayan personel can: korumalı her rotada 403 alır', func
 it('FR-ADM-002: süper admin her GET admin sayfasını görüntüleyebilir', function (): void {
     $super = staffUser('super_admin');
 
+    $checked = 0;
     foreach (adminRouteCases() as $case) {
-        if ($case['method'] === 'GET') {
-            $this->actingAs($super)->get($case['url'])->assertOk();
+        if ($case['method'] === 'GET' && ! $case['missing']) {
+            $response = $this->actingAs($super)->get($case['url']);
+            expect($response->status())->toBe(200, $case['route']->getName().' → '.$response->status());
+            $checked++;
         }
     }
+    expect($checked)->toBeGreaterThan(50);
 });

@@ -7,6 +7,12 @@
     <div class="mx-auto grid max-w-[1240px] gap-12 px-4 py-14 sm:px-8 lg:grid-cols-[1fr_18rem]">
         <article class="min-w-0">
             <x-ui.prose :html="$html" />
+            @auth
+                {{-- docs/CMS.md §5.2: "Okudum" (idempotent) --}}
+                <form method="POST" action="{{ route('panel.academy.complete', $topic->id) }}" class="mt-10">@csrf
+                    <x-ui.button type="submit" variant="secondary" icon="check">Okudum, tamamlandı olarak işaretle</x-ui.button>
+                </form>
+            @endauth
             <nav aria-label="Konular arası gezinme" class="mt-14 grid gap-3 border-t border-border pt-6 sm:grid-cols-2">
                 @if ($previous)
                     <a href="{{ route('public.academy.topic', [$course->slug, $previous->slug]) }}" class="group rounded-md border border-border p-4 hover:border-border-strong">

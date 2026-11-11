@@ -36,6 +36,78 @@ final class SectionRegistry
         private readonly SettingsRepository $settings,
     ) {}
 
+    /** Türlerin ACP etiketleri (docs/CMS.md §4.2). */
+    public const LABELS = [
+        'hero' => 'Karşılama', 'server_status' => 'Canlı sunucu durumu', 'feature_grid' => 'Özellik kartları',
+        'world_gallery' => 'Dünyayı keşfet (galeri)', 'lifestyle_split' => 'Legal / illegal yaşam', 'onboarding_steps' => 'Yeni oyuncu adımları',
+        'community' => 'Topluluk', 'news_latest' => 'Son haberler', 'events_upcoming' => 'Yaklaşan etkinlikler', 'faq_list' => 'SSS',
+        'cta_banner' => 'Son çağrı', 'rich_text' => 'Serbest metin', 'stats_strip' => 'Doğrulanabilir sayılar',
+    ];
+
+    /**
+     * Bölüm veri şeması (Laravel doğrulama kuralları) — docs/CMS.md §4.1. Sayılar ve listeler kaynaktan hesaplanır;
+     * şema yalnızca editörün doldurabileceği alanları tanımlar. Şemada olmayan anahtar kaydedilmez.
+     *
+     * @return array<string, list<mixed>>
+     */
+    public static function schema(string $type): array
+    {
+        $head = [
+            'eyebrow' => ['nullable', 'string', 'max:40'],
+            'title' => ['required', 'string', 'max:80'],
+            'intro' => ['nullable', 'string', 'max:300'],
+        ];
+
+        return match ($type) {
+            'hero' => ['eyebrow' => $head['eyebrow'], 'title' => ['required', 'string', 'max:60'], 'title_accent' => ['nullable', 'string', 'max:60'], 'lead' => ['nullable', 'string', 'max:220'], 'secondary_label' => ['nullable', 'string', 'max:30']],
+            'server_status', 'news_latest', 'events_upcoming', 'faq_list' => $head + ['count' => ['nullable', 'integer', 'in:3,6']],
+            'feature_grid' => $head + [
+                'variant' => ['required', 'in:grid-3,grid-4,bento'],
+                'items' => ['required', 'array', 'min:1', 'max:9'],
+                'items.*.icon' => ['required', 'string', 'max:40', 'regex:/^[a-z0-9-]+$/'],
+                'items.*.title' => ['required', 'string', 'max:48'],
+                'items.*.text' => ['required', 'string', 'max:160'],
+                'items.*.system_slug' => ['nullable', 'string', 'exists:game_systems,slug'],
+            ],
+            'world_gallery' => $head + ['media_ids' => ['nullable', 'array', 'max:12'], 'media_ids.*' => ['integer', 'exists:media,id']],
+            'lifestyle_split' => $head + [
+                'columns' => ['required', 'array', 'size:2'],
+                'columns.*.label' => ['required', 'string', 'max:30'],
+                'columns.*.title' => ['required', 'string', 'max:80'],
+                'columns.*.text' => ['required', 'string', 'max:300'],
+                'columns.*.link_label' => ['nullable', 'string', 'max:40'],
+                'columns.*.link_route' => ['nullable', 'string', 'regex:/^public\.[a-z.-]+$/'],
+                'columns.*.link_params' => ['nullable', 'array'],
+                'columns.*.link_params.*' => ['string', 'max:40'],
+            ],
+            'onboarding_steps' => $head + [
+                'steps' => ['required', 'array', 'min:3', 'max:8'],
+                'steps.*.title' => ['required', 'string', 'max:48'],
+                'steps.*.text' => ['required', 'string', 'max:160'],
+            ],
+            'community' => $head,
+            'cta_banner' => ['eyebrow' => $head['eyebrow'], 'title' => $head['title'], 'text' => ['nullable', 'string', 'max:220'], 'secondary_label' => ['nullable', 'string', 'max:30']],
+            'rich_text' => ['eyebrow' => $head['eyebrow'], 'title' => ['nullable', 'string', 'max:80'], 'body' => ['required', 'string', 'max:20000']],
+            'stats_strip' => ['title' => ['nullable', 'string', 'max:80'], 'metrics' => ['nullable', 'array'], 'metrics.*' => ['in:registered_users,factions_count,systems_count']],
+            default => [],
+        };
+    }
+
+    /** @return array<string, mixed> Yeni bölüm için varsayılan veri. */
+    public static function defaults(string $type): array
+    {
+        return match ($type) {
+            'hero' => ['title' => 'Şehrin ritmi,', 'title_accent' => 'senin hikâyen.'],
+            'feature_grid' => ['title' => 'Şehirde neler var', 'variant' => 'grid-3', 'items' => [['icon' => 'star', 'title' => 'Başlık', 'text' => 'Kısa açıklama']]],
+            'lifestyle_split' => ['title' => 'Hangi tarafta duracaksın?', 'columns' => [['label' => 'Yasal', 'title' => 'Başlık', 'text' => 'Metin'], ['label' => 'Yeraltı', 'title' => 'Başlık', 'text' => 'Metin']]],
+            'onboarding_steps' => ['title' => 'İlk adımlar', 'steps' => [['title' => 'Adım 1', 'text' => 'Metin'], ['title' => 'Adım 2', 'text' => 'Metin'], ['title' => 'Adım 3', 'text' => 'Metin']]],
+            'rich_text' => ['body' => 'Metin'],
+            'stats_strip' => ['title' => 'Sayılarla şehir', 'metrics' => ['registered_users', 'factions_count', 'systems_count']],
+            'news_latest', 'events_upcoming' => ['title' => self::LABELS[$type], 'count' => 3],
+            default => ['title' => self::LABELS[$type] ?? 'Bölüm'],
+        };
+    }
+
     public function supports(string $type): bool
     {
         return in_array($type, self::TYPES, true) && view()->exists('sections.'.str_replace('_', '-', $type));

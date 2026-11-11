@@ -66,6 +66,17 @@ return [
         ],
     ],
 
+    'announcements.published' => [
+        'variables' => ['user.username', 'announcement.title', 'announcement.excerpt', 'link.announcement'],
+        'subject' => 'Duyuru: {{ announcement.title }}',
+        'greeting' => 'Merhaba {{ user.username }},',
+        'lines' => [
+            '{{ announcement.excerpt }}',
+        ],
+        'action' => ['label' => 'Duyuruyu panelde oku', 'url' => 'link.announcement'],
+        'outro' => [],
+    ],
+
     'security.password_changed' => [
         'variables' => ['user.username', 'event.time', 'event.device', 'link.security'],
         'subject' => 'Parolan değiştirildi',

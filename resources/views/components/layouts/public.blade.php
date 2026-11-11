@@ -13,6 +13,16 @@
         {{ __('public.skip_to_content') }}
     </a>
 
+    @foreach ($bannerAnnouncements as $banner)
+        {{-- Duyuru bandı (docs/SRS.md FR-ADM-011, kanal: public_banner) --}}
+        <div @class(['border-b', 'border-danger/40 bg-danger/10' => $banner['priority'] === 'critical', 'border-accent/30 bg-accent-soft' => $banner['priority'] !== 'critical'])>
+            <p class="mx-auto flex max-w-[1240px] items-center gap-2 px-4 py-2.5 text-sm text-text sm:px-8">
+                <x-lucide-megaphone class="size-4 shrink-0 {{ $banner['priority'] === 'critical' ? 'text-danger' : 'text-accent' }}" aria-hidden="true" />
+                <span class="sr-only">Duyuru:</span>{{ $banner['title'] }}
+            </p>
+        </div>
+    @endforeach
+
     @if ($site['maintenance.banner_enabled'] ?? false)
         <div class="border-b border-amber/30 bg-amber-soft">
             <p class="mx-auto flex max-w-[1240px] items-center gap-2 px-4 py-2.5 text-sm text-text sm:px-8">
