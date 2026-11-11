@@ -55,6 +55,16 @@
                     </a>
                 @endif
 
+                @auth
+                    <x-ui.button size="sm" variant="ghost" :href="route('panel.dashboard')" icon="layout-dashboard" class="max-sm:px-2">
+                        <span class="max-sm:sr-only">Panel</span>
+                    </x-ui.button>
+                @else
+                    <x-ui.button size="sm" variant="ghost" :href="route('login')" icon="log-in" class="max-sm:px-2">
+                        <span class="max-sm:sr-only">Giriş</span>
+                    </x-ui.button>
+                @endauth
+
                 <div class="hidden sm:block">
                     <x-ui.button size="sm" href="{{ route('public.start') }}#katil" data-dialog-open="join-dialog">
                         {{ __('public.join.cta') }}

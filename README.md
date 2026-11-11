@@ -12,7 +12,7 @@ Laravel 13 · PHP 8.4 · MariaDB 10.11 · Blade + Tailwind CSS v4 + Alpine.js (C
 | 0 | Dokümantasyon | ✅ |
 | 1 | Temel kurulum (Laravel, güvenlik başlıkları, kalite araçları) | ✅ |
 | 2 | Tasarım sistemi + public site | ✅ |
-| 3 | Kimlik doğrulama | ⏳ |
+| 3 | Kimlik doğrulama | ✅ |
 | 4 | RBAC, branşlar, yönetim paneli iskeleti | ⏳ |
 | 5 | CMS, Akademi, mesaj şablon motoru | ⏳ |
 | 6 | Oyuncu paneli, destek, PWA | ⏳ |
@@ -86,6 +86,29 @@ Tam katalog: [docs/ROUTES.md](docs/ROUTES.md).
 | GET | `/sitemap.xml`, `/robots.txt`, `/feed.xml` | `public.sitemap` … | |
 | GET | `/up` | — | Sağlık kontrolü |
 
+### Kimlik doğrulama (Faz 3)
+
+Kayıt ve e-posta doğrulama kendi controller'larımızdadır; giriş, çıkış, parola sıfırlama, 2FA ve parola onayı Fortify'dandır (docs/PRD.md D-06, D-15).
+
+| Yöntem | URL | Ad | Middleware / limit | Not |
+|---|---|---|---|---|
+| GET / POST | `/register` | `register`, `register.store` | guest · 5/saat/IP | Otomatik giriş yok. Kayıtlı e-postada aynı yanıt + hesap sahibine bilgi e-postası |
+| GET | `/register/check-email` | `register.check-email` | guest | "E-postanı kontrol et" |
+| GET | `/email/verify/{ulid}/{hash}` | `verification.verify` | signed · 6/dk | **Oturum gerekmez.** `hash = sha256(email)`, 60 dk geçerli; başarıda `/login` |
+| GET | `/email/verify` | `verification.notice` | auth | |
+| POST | `/email/verification-notification` | `verification.send` | auth · 6/saat | Yeniden gönder |
+| GET / POST | `/login` | `login`, `login.store` | guest · 5/dk (tanımlayıcı+IP), 30/saat/IP | `login` alanı: kullanıcı adı **veya** e-posta |
+| POST | `/logout` | `logout` | auth | Yanıtta `Clear-Site-Data: "cache"` |
+| GET / POST | `/forgot-password` | `password.request`, `password.email` | guest · 3/10 dk | Bilinmeyen e-postada da aynı yanıt |
+| GET / POST | `/reset-password/{token}`, `/reset-password` | `password.reset`, `password.update` | guest · 3/10 dk | Başarıda tüm oturumlar silinir, bildirim e-postası |
+| GET / POST | `/two-factor-challenge` | `two-factor.login`, `.store` | guest | TOTP veya kurtarma kodu |
+| GET / POST | `/user/confirm-password` | `password.confirm` | auth | Hassas işlemler öncesi |
+| GET | `/panel` | `panel.dashboard` | web, auth, active | Faz 3 iskeleti; tam panel Faz 6 |
+
+**Parola kuralları:** 10–128 karakter, sızıntı listesinde olmamalı (HIBP k-anonymity), kullanıcı adını / e-posta yerel kısmını içermemeli. Hash: **Argon2id**.
+**Askı:** `status=suspended` hesap girişte gerekçe + bitiş tarihiyle reddedilir; süresi dolan askı girişte kalkar; oturum açıkken askıya alınan kullanıcı `active` middleware ile sonraki istekte çıkarılır.
+**E-posta (yerel):** `MAIL_MAILER=log`, `QUEUE_CONNECTION=sync` → e-postalar `storage/logs/laravel-*.log` içine yazılır. Doğrulama bağlantısı `APP_URL` hostuyla imzalanır; bağlantıyı aynı hosttan açın.
+
 ## 3. JSON API (`/api/v1`)
 
 Hata biçimi (tüm JSON uçları):
@@ -116,9 +139,10 @@ Hata biçimi (tüm JSON uçları):
 
 | Migration | Tablolar | Faz |
 |---|---|---|
-| `0001_01_01_000000_create_users_table` | `users`*, `password_reset_tokens`, `sessions` | 1 (*Faz 3'te DATABASE §3.1'e göre yeniden yazılır) |
+| `0001_01_01_000000_create_users_table` | `users`, `password_reset_tokens`, `sessions` | 1 → 3 (DATABASE §3.1 şeması) |
 | `0001_01_01_000001_create_cache_table` | `cache`, `cache_locks` | 1 |
 | `0001_01_01_000002_create_jobs_table` | `jobs`, `job_batches`, `failed_jobs` | 1 |
+| `2026_11_11_090000_create_identity_tables` | `user_security_events`, `email_change_requests`, `consents` | 3 |
 | `2026_11_11_100000_create_settings_and_servers_tables` | `system_settings`, `mta_servers` | 2 |
 | `2026_11_11_100100_create_content_tables` | `media`, `pages`, `page_sections`, `page_revisions`, `redirects`, `navigation_items`, `social_links`, `news_categories`, `news_posts`, `tags`, `news_post_tag`, `game_system_categories`, `game_systems`, `rule_categories`, `rules`, `rule_revisions`, `game_jobs`, `factions`, `faqs`, `community_events`, `academy_courses`, `academy_topics`, `academy_topic_rule`, `contact_messages` | 2 |
 
@@ -126,6 +150,15 @@ Hata biçimi (tüm JSON uçları):
 `status` (`draft|in_review|scheduled|published|archived`), `published_at`, `sort`, `seo_title`, `meta_description`, `created_by`, `updated_by`, `created_at`, `updated_at`. Public'te yalnızca `status = published AND published_at <= now()` görünür.
 
 **Kısıtlar (Faz 2):** `chk_navigation_target` (`route_name` veya `url` zorunlu). `factions.application_type_id` ve `game_jobs.application_type_id` FK'leri `application_types` tablosuyla birlikte Faz 8'de eklenir.
+
+**Kimlik tabloları (Faz 3):**
+
+| Tablo | Önemli kolonlar | Not |
+|---|---|---|
+| `users` | `ulid` (public kimlik), `username` (20, unique, harf duyarsız), `email` (254, unique), `password` (argon2id), `status` (`active\|suspended\|banned\|pending_deletion`), `suspended_until`, `suspension_reason`, `two_factor_secret/recovery_codes/confirmed_at` (şifreli), `theme`, `reduced_effects`, `locale`, `last_login_at`, `deletion_requested_at` | |
+| `user_security_events` | `user_id` (null olabilir), `event`, `ip_masked`, `ip_hash` (HMAC), `user_agent_summary`, `identifier_hash` (HMAC, başarısız girişte), `metadata` JSON, `created_at` | **Append-only** (UPDATE/DELETE trigger ile engelli) |
+| `email_change_requests` | `user_id`, `new_email`, `token_hash` (unique), `expires_at`, `confirmed_at`, `cancelled_at` | Faz 6 akışı |
+| `consents` | `user_id` / `anon_id`, `type` (`terms\|kvkk_ack\|marketing…`), `version`, `granted`, `ip_masked` | **Append-only**; kayıtta `terms` + `kvkk_ack` |
 
 **Seed sırası:** `ServerSeeder` → `ContentSeeder` → (`local` ise) `DemoSeeder`.
 

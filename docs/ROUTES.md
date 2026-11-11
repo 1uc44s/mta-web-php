@@ -76,14 +76,15 @@ Statik: `/manifest.webmanifest`, `/sw.js`, `/offline.html`, `/build/*`, `/storag
 | GET | `/login` | `login` | guest | |
 | POST | `/login` | `login.store` | guest, T:login | E-posta veya kullanıcı adı |
 | POST | `/logout` | `logout` | auth | `Clear-Site-Data` |
-| GET | `/register` | `register` | guest, F:registration | |
-| POST | `/register` | `register.store` | guest, F:registration, T:register | |
+| GET | `/register` | `register` | guest, F:registration | **Özel** controller (Fortify değil) |
+| POST | `/register` | `register.store` | guest, F:registration, T:register | Her durumda aynı yanıt: `/register/check-email` (otomatik giriş yok, SEC-005) |
+| GET | `/register/check-email` | `register.check-email` | guest | "E-postanı kontrol et" ekranı |
 | GET | `/forgot-password` | `password.request` | guest | |
 | POST | `/forgot-password` | `password.email` | guest, T:password-reset | Genel yanıt |
 | GET | `/reset-password/{token}` | `password.reset` | guest | |
 | POST | `/reset-password` | `password.update` | guest, T:password-reset | |
-| GET | `/email/verify` | `verification.notice` | auth | |
-| GET | `/email/verify/{id}/{hash}` | `verification.verify` | auth, signed, T:6,1 | |
+| GET | `/email/verify` | `verification.notice` | auth | Doğrulanmamış girişli kullanıcı için bilgi ekranı |
+| GET | `/email/verify/{ulid}/{hash}` | `verification.verify` | signed, T:6,1 | **Özel**, oturum gerektirmez (kayıt sonrası otomatik giriş olmadığı için). `hash = sha256(email)`; başarıda `/login` + toast |
 | POST | `/email/verification-notification` | `verification.send` | auth, T:verification | |
 | GET | `/user/confirm-password` | `password.confirm` | auth | |
 | POST | `/user/confirm-password` | `password.confirm.store` | auth, T:5,1 | |
@@ -97,6 +98,8 @@ Statik: `/manifest.webmanifest`, `/sw.js`, `/offline.html`, `/build/*`, `/storag
 | GET | `/user/two-factor-secret-key` | `two-factor.secret-key` | auth, PC | |
 | GET | `/user/two-factor-recovery-codes` | `two-factor.recovery-codes` | auth, PC | |
 | POST | `/user/two-factor-recovery-codes` | `two-factor.regenerate-recovery-codes` | auth, PC | |
+
+**Faz 3 kararı (D-15):** Fortify yalnızca giriş, çıkış, parola sıfırlama, 2FA ve parola onayı için kullanılır. `registration` ve `emailVerification` özellikleri kapalıdır; kayıt ve doğrulama kendi controller'larımızdadır. Gerekçe: Fortify kayıt sonrası otomatik giriş yapar ve benzersiz e-posta hatası hesap varlığını ifşa eder (SEC-005).
 
 Fortify'ın `updateProfileInformation` ve `updatePasswords` özellikleri **kapalıdır**. Bu işlemler `/panel/security` altındaki kendi rotalarımızla yapılır (güvenlik olayı + bildirim kontrolü bizde kalır).
 

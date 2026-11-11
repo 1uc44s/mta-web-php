@@ -57,6 +57,13 @@ return [
     // Web'de gösterilebilecek karakter alanları (docs/SRS.md FR-ACC-009).
     'character_public_fields' => ['bio', 'job_label', 'faction_label', 'level', 'playtime_hours'],
 
+    // docs/SRS.md FR-AUTH-001: kayıtta kullanılamayan kullanıcı adları (büyük/küçük harf duyarsız karşılaştırılır).
+    'reserved_usernames' => [
+        'admin', 'administrator', 'root', 'system', 'sistem', 'support', 'destek', 'moderator', 'moderatör',
+        'yonetim', 'yönetim', 'staff', 'yetkili', 'meridyen', 'meridyenrp', 'mrp', 'official', 'resmi',
+        'null', 'undefined', 'api', 'panel', 'login', 'register',
+    ],
+
     'payments' => [
         'provider' => env('PAYMENTS_PROVIDER', 'fake'),
     ],

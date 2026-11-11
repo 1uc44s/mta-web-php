@@ -109,7 +109,7 @@ T1.4–T1.7 `php artisan serve` (`http://127.0.0.1:8000`) üzerinde yapıldı; v
 Ayrıntılı görev tabloları [ROADMAP.md](ROADMAP.md) içindedir. Faz başladığında görevler bu dosyanın §2 bölümüne taşınır ve alt adımlara bölünür.
 
 - [x] **Faz 2** Tasarım sistemi + public site — 2026-11-11, commit `9fdb1fe`. Kanıt: 108 test / 622 assertion yeşil, Larastan 0 hata, Pint temiz; tüm public rotalar 200; 375 px'te yatay taşma yok (header'daki responsive sınıf çakışması bulunup düzeltildi). Kapsam notları: `system_settings`, `mta_servers` ve Akademi tabloları planlanandan erken (Faz 2) oluşturuldu çünkü public sayfalar bunlara ihtiyaç duyuyor; ACP düzenleme ekranları Faz 4–5'te. Kalıcı logo ve OG görseli OD-01'i bekliyor (geçici SVG favicon ve logo bileşeni mevcut).
-- [ ] **Faz 3** Kimlik doğrulama (3.1–3.8)
+- [x] **Faz 3** Kimlik doğrulama — 2026-11-11. Kanıt: 142 test / 790 assertion yeşil (`tests/Feature/Auth/AuthFlowTest` 30+ senaryo: kayıt, rezerv ad [harf duyarsız], zayıf/kimlik içeren parola, enumerasyonsuz kayıt + `auth.already_registered`, imzalı/oturumsuz doğrulama, kullanıcı adı veya e-posta ile giriş, 5/dk throttle → 429, askı mesajı + süresi dolan askı, oturumdayken askı → çıkış, `Clear-Site-Data`, enumerasyonsuz şifre sıfırlama, sıfırlamada tüm oturumların silinmesi, 2FA kurtarma kodu), Larastan 0, Pint temiz. Tarayıcıda uçtan uca: kayıt → log'daki doğrulama bağlantısı → giriş → `/panel` (375 px taşma yok, CSP ihlali yok). Kapsam: 3.7 `MessageDispatcher` v1 (`lang/tr/messages.php` gömülü şablonlar, katı değişken listesi, kuyruklu `TemplatedMailNotification` 3 deneme 1/5/15 dk); 3.8 `RedactSensitiveData` log tap'i. Bulgular: test sırasında `sha1` mimari kuralına takıldı → doğrulama hash'i `sha256(email)`; Fortify bilinmeyen e-postada farklı yanıt veriyordu → `FailedPasswordResetLinkRequestResponse` başarı yanıtına bağlandı; `--no-reload` ile başlatılan `artisan serve` .env değişikliğini görmez (yeniden başlat). Doğrulama bağlantısı `APP_URL` hostuyla imzalanır.
 - [ ] **Faz 4** RBAC + branşlar + ACP iskeleti (4.1–4.11)
 - [ ] **Faz 5** CMS + Akademi + şablon motoru (5.1–5.9)
 - [ ] **Faz 6** Oyuncu paneli + destek + temel PWA (6.1–6.9)
@@ -130,7 +130,8 @@ Ayrıntılı görev tabloları [ROADMAP.md](ROADMAP.md) içindedir. Faz başlad�
 | `tests/Unit/Design/ContrastTest` | Token kontrast oranları (DESIGN §3.1) | 2 |
 | `tests/Feature/Public/*` | Public sayfalar, SEO, sitemap, yayın durumu filtresi | 2 |
 | `tests/Unit/Bridge/ServerStatusResolverTest` | online/stale/offline/maintenance sınırları (89 sn, 90 sn, 300 sn, 301 sn) | 2 |
-| `tests/Feature/Auth/*` | FR-AUTH-001..020 | 3 |
+| `tests/Feature/Auth/*` | FR-AUTH-001..016 (kayıt, doğrulama, giriş, askı, sıfırlama, 2FA) | 3 ✅ |
+| `tests/Unit/Messaging/DefaultTemplatesTest`, `tests/Unit/Logging/RedactSensitiveDataTest` | Katı şablon bağlamı · log redaksiyonu | 3 ✅ |
 | `tests/Feature/Security/AdminRouteProtectionTest` | Her `admin.*` rotası × izinsiz personel / oyuncu | 4 |
 | `tests/Feature/Security/RoleMatrixTest` | ADMIN §3 matrisi (veri sağlayıcılı) | 4 |
 | `tests/Unit/Audit/AuditChainTest` | Hash zinciri + kurcalama tespiti | 4 |
@@ -146,8 +147,8 @@ Ayrıntılı görev tabloları [ROADMAP.md](ROADMAP.md) içindedir. Faz başlad�
 | # | Senaryo | Faz | Durum |
 |---|---|---|---|
 | E2E-1 | Ziyaretçi ana sayfayı açar → "Nasıl Oynanır?" → `/start` | 2 | [ ] |
-| E2E-2 | Yeni oyuncu kayıt olur | 3 | [ ] |
-| E2E-3 | E-postasını doğrular (Mailpit) | 3 | [ ] |
+| E2E-2 | Yeni oyuncu kayıt olur | 3 | [x] (tarayıcı, 2026-11-11) |
+| E2E-3 | E-postasını doğrular (log mailer) | 3 | [x] (tarayıcı, 2026-11-11) |
 | E2E-4 | Giriş yapar | 3 | [ ] |
 | E2E-5 | Panelde bağlama kodu üretir | 7 | [ ] |
 | E2E-6 | Oyunda `/webbagla` ile hesabı bağlar | 7 | [ ] |

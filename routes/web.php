@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Auth\EmailVerificationController;
+use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Public\AcademyController;
 use App\Http\Controllers\Public\ContactController;
 use App\Http\Controllers\Public\EventController;
@@ -54,6 +56,24 @@ Route::get('/p/{slug}', PageController::class)->name('public.page');
 
 Route::post('/preferences/theme', [PreferenceController::class, 'theme'])->middleware('throttle:preferences')->name('public.preferences.theme');
 Route::post('/cookie-consent', [PreferenceController::class, 'cookieConsent'])->middleware('throttle:preferences')->name('public.cookie-consent');
+
+/*
+ * Kimlik doğrulama (docs/ROUTES.md §4). Giriş/çıkış/parola sıfırlama/2FA Fortify'dadır; kayıt ve doğrulama burada (D-15).
+ */
+Route::middleware('guest')->group(function (): void {
+    Route::get('/register', [RegisterController::class, 'create'])->name('register');
+    Route::post('/register', [RegisterController::class, 'store'])->middleware('throttle:register')->name('register.store');
+    Route::get('/register/check-email', [RegisterController::class, 'checkEmail'])->name('register.check-email');
+});
+
+Route::get('/email/verify/{ulid}/{hash}', [EmailVerificationController::class, 'verify'])
+    ->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
+
+Route::middleware('auth')->group(function (): void {
+    Route::get('/email/verify', [EmailVerificationController::class, 'notice'])->name('verification.notice');
+    Route::post('/email/verification-notification', [EmailVerificationController::class, 'send'])
+        ->middleware('throttle:verification')->name('verification.send');
+});
 
 Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('public.sitemap');
 Route::get('/robots.txt', [SeoController::class, 'robots'])->name('public.robots');
