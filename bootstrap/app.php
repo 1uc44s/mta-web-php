@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Middleware\AdminIdleTimeout;
 use App\Http\Middleware\AssignRequestId;
 use App\Http\Middleware\EnsureAccountActive;
+use App\Http\Middleware\EnsureFeatureEnabled;
 use App\Http\Middleware\EnsureStaff;
 use App\Http\Middleware\LogAdminActivity;
 use App\Http\Middleware\PrivateAreaHeaders;
@@ -59,6 +60,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin.activity' => LogAdminActivity::class,
             'private.headers' => PrivateAreaHeaders::class,
             'bridge' => VerifyBridgeSignature::class,
+            'feature' => EnsureFeatureEnabled::class,
         ]);
 
         // Girişli kullanıcı misafir sayfasına gelirse panele (Fortify home), misafir korumalı sayfaya gelirse girişe.

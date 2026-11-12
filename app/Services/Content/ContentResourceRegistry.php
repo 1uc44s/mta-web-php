@@ -7,6 +7,7 @@ namespace App\Services\Content;
 use App\Models\AcademyCourse;
 use App\Models\AcademyTopic;
 use App\Models\Announcement;
+use App\Models\ApplicationType;
 use App\Models\Branch;
 use App\Models\CommunityEvent;
 use App\Models\Faction;
@@ -24,6 +25,7 @@ use App\Models\SocialLink;
 use App\Models\SupportCategory;
 use App\Models\SupportMacro;
 use App\Models\Tag;
+use App\Support\ApplicationForms\ApplicationForms;
 use Illuminate\Database\Eloquent\Model;
 use InvalidArgumentException;
 
@@ -248,6 +250,25 @@ final class ContentResourceRegistry
                 ],
             ],
             // docs/ROUTES.md §6.4: destek kategorileri ve makroları CMS kaynak deseniyle (support.manage).
+            // Faz 8 — docs/ROUTES.md §6.5 `admin.application-types.*` (applications.types.manage). Form alanları kodda (FR-APP-002).
+            'application-types' => [
+                'model' => ApplicationType::class, 'label' => 'Başvuru türleri', 'singular' => 'Başvuru türü', 'family' => 'applications', 'title' => 'name',
+                'publishable' => false, 'sortable' => true, 'slug_from' => 'name', 'search' => ['name'], 'columns' => ['name', 'kind', 'branch_id', 'is_open'],
+                'path' => 'application-types', 'name' => 'application-types',
+                'fields' => [
+                    'name' => ['type' => 'text', 'label' => 'Ad', 'rules' => ['required', 'string', 'max:100']],
+                    'kind' => ['type' => 'select', 'label' => 'Tür', 'options' => ['faction' => 'Fraksiyon', 'staff' => 'Yetkili', 'special_role' => 'Özel rol', 'event' => 'Etkinlik', 'whitelist' => 'Whitelist'], 'rules' => ['required']],
+                    'form_key' => ['type' => 'select', 'label' => 'Form şeması', 'options' => ApplicationForms::options(), 'rules' => ['required']],
+                    'description' => ['type' => 'textarea', 'label' => 'Açıklama', 'rules' => ['nullable', 'string', 'max:2000'], 'wide' => true],
+                    'branch_id' => ['type' => 'belongs', 'label' => 'İnceleyen branş', 'model' => Branch::class, 'display' => 'name', 'rules' => ['required']],
+                    'faction_id' => ['type' => 'belongs', 'label' => 'Fraksiyon', 'model' => Faction::class, 'display' => 'name'],
+                    'is_open' => ['type' => 'bool', 'label' => 'Başvuruya açık'],
+                    'requires_linked_account' => ['type' => 'bool', 'label' => 'Bağlı oyun hesabı gerektirir'],
+                    'requires_character' => ['type' => 'bool', 'label' => 'Karakter seçimi gerektirir'],
+                    'min_account_age_days' => ['type' => 'number', 'label' => 'En az hesap yaşı (gün)', 'rules' => ['required', 'integer', 'min:0', 'max:3650'], 'default' => 0],
+                    'cooldown_days' => ['type' => 'number', 'label' => 'Ret sonrası bekleme (gün)', 'rules' => ['required', 'integer', 'min:0', 'max:365'], 'default' => 14],
+                ],
+            ],
             'support-categories' => [
                 'model' => SupportCategory::class, 'label' => 'Destek kategorileri', 'singular' => 'Kategori', 'family' => 'support', 'title' => 'name',
                 'publishable' => false, 'sortable' => true, 'slug_from' => 'name', 'search' => ['name'], 'columns' => ['name', 'branch_id', 'is_active'],
@@ -289,6 +310,7 @@ final class ContentResourceRegistry
             'academy' => 'academy.manage',
             'announcements' => $ability === 'publish' ? 'announcements.publish' : 'announcements.manage',
             'support' => 'support.manage',
+            'applications' => 'applications.types.manage',
             default => match ($ability) {
                 'read' => 'content.read',
                 'create' => 'content.create',

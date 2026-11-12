@@ -29,3 +29,8 @@ LINK_MESSAGES = {
     RATE_LIMITED = "Çok fazla deneme yaptın. Birkaç dakika sonra tekrar dene.",
     default = "Şu anda doğrulama yapılamıyor. Lütfen daha sonra tekrar dene.",
 }
+
+DEVICE_MESSAGES = {
+    pending = "Cihaz talebin alındı; yetkili onayından sonra panelde görünecek.",
+    active = "Bu cihaz zaten hesabınla ilişkilendirilmiş.",
+}

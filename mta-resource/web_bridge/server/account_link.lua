@@ -40,5 +40,48 @@ addCommandHandler("webbagla", function(player, _, code)
     end)
 end)
 
+-- /cihazbagla KOD — ARCHITECTURE §7.6. Serial yalnızca server-side getPlayerSerial ile okunur ve yalnızca istek
+-- gövdesinde gönderilir; asla loglanmaz (Util.log çağrılarında yer almaz).
+addCommandHandler("cihazbagla", function(player, _, code)
+    local now = getTickCount()
+    if lastUse[player] and now - lastUse[player] < CONFIG.LINK_COMMAND_COOLDOWN * 1000 then
+        reply(player, "Lütfen birkaç saniye bekle.", false)
+        return
+    end
+    lastUse[player] = now
+
+    local ref = CONFIG.getAccountRef(player)
+    if not ref then
+        reply(player, "Önce oyunda hesabına giriş yapmalısın.", false)
+        return
+    end
+
+    code = tostring(code or ""):upper():gsub("[%s%-]", "")
+    if not code:match("^[0-9A-Z]+$") or #code ~= 8 then
+        reply(player, "Kullanım: /cihazbagla KOD (paneldeki 8 karakterlik kod)", false)
+        return
+    end
+
+    local serial = getPlayerSerial(player)
+    if type(serial) ~= "string" or #serial ~= 32 then
+        reply(player, LINK_MESSAGES.default, false)
+        return
+    end
+
+    Request.send("POST", "/device-link/verify", {
+        event_id = Util.uuid(),
+        code = code,
+        account = { ref = ref },
+        serial = serial,
+    }, function(ok, data)
+        if not isElement(player) then return end
+        if ok and type(data) == "table" then
+            reply(player, data.status == "active" and DEVICE_MESSAGES.active or DEVICE_MESSAGES.pending, true)
+        else
+            reply(player, LINK_MESSAGES[data] or LINK_MESSAGES.default, false)
+        end
+    end)
+end)
+
 addEventHandler("onPlayerQuit", root, function() lastUse[source] = nil end)
 addEvent("onWebBridgeAccountLinked", false)

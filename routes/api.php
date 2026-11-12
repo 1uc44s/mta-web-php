@@ -28,4 +28,11 @@ Route::prefix('game')->name('api.game.')->controller(BridgeController::class)->g
     });
 
     Route::middleware(['throttle:bridge', 'bridge:account_link'])->post('/account-link/verify', 'verifyLink')->name('account-link.verify');
+    Route::middleware(['throttle:bridge', 'bridge:account_link'])->post('/device-link/verify', 'verifyDevice')->name('device-link.verify');
+
+    // Faz 8 — komut kuyruğu (pull). ARCHITECTURE §7.5
+    Route::middleware(['throttle:bridge', 'bridge:commands'])->group(function (): void {
+        Route::get('/commands/pending', 'commandsPending')->name('commands.pending');
+        Route::post('/commands/result', 'commandsResult')->name('commands.result');
+    });
 });

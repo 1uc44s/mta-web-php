@@ -24,6 +24,14 @@ final class AdminLayoutComposer
             ['label' => 'game.admin.accounts', 'route' => 'admin.game-accounts.index', 'icon' => 'gamepad-2', 'can' => 'game_accounts.read', 'match' => 'admin.game-accounts.*'],
             ['label' => 'game.admin.characters', 'route' => 'admin.characters.index', 'icon' => 'contact', 'can' => 'characters.read', 'match' => 'admin.characters.*'],
         ]],
+        ['label' => 'moderation.admin.group', 'items' => [
+            ['label' => 'applications.admin.queue', 'route' => 'admin.applications.index', 'icon' => 'clipboard-list', 'can' => 'applications.read', 'match' => 'admin.applications.*'],
+            ['label' => 'moderation.admin.sanctions', 'route' => 'admin.sanctions.index', 'icon' => 'gavel', 'can' => 'sanctions.read', 'match' => 'admin.sanctions.*'],
+            ['label' => 'moderation.admin.appeals', 'route' => 'admin.appeals.index', 'icon' => 'scale', 'can' => 'sanctions.appeals.review', 'match' => 'admin.appeals.*'],
+            ['label' => 'moderation.admin.commands', 'route' => 'admin.game-commands.index', 'icon' => 'terminal', 'can' => 'game_commands.read', 'match' => 'admin.game-commands.*'],
+            ['label' => 'game.device.admin_title', 'route' => 'admin.devices.index', 'icon' => 'monitor-smartphone', 'can' => 'devices.read', 'match' => 'admin.devices.*'],
+            ['label' => 'Başvuru türleri', 'route' => 'admin.application-types.index', 'icon' => 'list-checks', 'can' => 'applications.types.manage', 'match' => 'admin.application-types.*'],
+        ]],
         ['label' => 'support.title', 'items' => [
             ['label' => 'support.admin.queue', 'route' => 'admin.support.index', 'icon' => 'life-buoy', 'can' => 'support.read', 'match' => 'admin.support.*'],
         ]],

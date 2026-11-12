@@ -3,10 +3,13 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Panel\AcademyController;
+use App\Http\Controllers\Panel\ApplicationController;
 use App\Http\Controllers\Panel\CharacterController;
 use App\Http\Controllers\Panel\DashboardController;
+use App\Http\Controllers\Panel\DeviceController;
 use App\Http\Controllers\Panel\GameAccountController;
 use App\Http\Controllers\Panel\NotificationController;
+use App\Http\Controllers\Panel\SanctionController;
 use App\Http\Controllers\Panel\SecurityController;
 use App\Http\Controllers\Panel\SettingsController;
 use App\Http\Controllers\Panel\SupportController;
@@ -59,6 +62,31 @@ Route::get('game-accounts/link-status', [GameAccountController::class, 'status']
 Route::post('game-accounts/{link}/unlink-request', [GameAccountController::class, 'unlinkRequest'])->middleware('password.confirm')->whereNumber('link')->name('game-accounts.unlink-request');
 Route::get('characters', [CharacterController::class, 'index'])->name('characters.index');
 Route::get('characters/{character}', [CharacterController::class, 'show'])->where('character', '[0-9A-Za-z]{26}')->name('characters.show');
+
+// §5.3 Cihazlar (Faz 8, F:devices)
+Route::middleware('feature:devices')->prefix('devices')->name('devices.')->group(function (): void {
+    Route::get('/', [DeviceController::class, 'index'])->name('index');
+    Route::post('link-code', [DeviceController::class, 'linkCode'])->middleware(['verified', 'throttle:link-code'])->name('link-code');
+    Route::post('{device}/revoke', [DeviceController::class, 'revoke'])->middleware('password.confirm')->whereNumber('device')->name('revoke');
+});
+
+// §5.5 Başvurular (Faz 8, F:applications) — doğrulanmış e-posta
+Route::middleware(['feature:applications', 'verified'])->prefix('applications')->name('applications.')->group(function (): void {
+    Route::get('/', [ApplicationController::class, 'index'])->name('index');
+    Route::get('new/{type}', [ApplicationController::class, 'create'])->where('type', '[a-z0-9-]+')->name('create');
+    Route::post('new/{type}', [ApplicationController::class, 'store'])->where('type', '[a-z0-9-]+')->middleware('throttle:10,60')->name('store');
+    Route::get('{application}', [ApplicationController::class, 'show'])->where('application', '[0-9a-z]{26}')->name('show');
+    Route::post('{application}', [ApplicationController::class, 'update'])->where('application', '[0-9a-z]{26}')->name('update');
+    Route::post('{application}/messages', [ApplicationController::class, 'message'])->where('application', '[0-9a-z]{26}')->middleware('throttle:20,10')->name('messages.store');
+    Route::post('{application}/cancel', [ApplicationController::class, 'cancel'])->where('application', '[0-9a-z]{26}')->name('cancel');
+});
+
+// §5.6 Cezalar (Faz 8, F:sanctions)
+Route::middleware('feature:sanctions')->prefix('sanctions')->name('sanctions.')->group(function (): void {
+    Route::get('/', [SanctionController::class, 'index'])->name('index');
+    Route::get('{sanction}', [SanctionController::class, 'show'])->where('sanction', '[0-9a-z]{26}')->name('show');
+    Route::post('{sanction}/appeal', [SanctionController::class, 'appeal'])->where('sanction', '[0-9a-z]{26}')->middleware('throttle:5,60')->name('appeal');
+});
 
 // §5.4 Destek — doğrulanmış e-posta gerekir (panel.verified)
 Route::middleware('verified')->prefix('support')->name('support.')->group(function (): void {

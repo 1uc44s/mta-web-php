@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "resources/css/app.css"
+        ],
+        "createdAt": "2026-11-11T23:12:13.354Z",
+        "reason": "Claude: L228 is the .prose-mrp blockquote rule (2px quote rule on Markdown blockquotes, a typographic convention), not a card accent; added in Faz 2"
+      }
+    ]
+  }
+}

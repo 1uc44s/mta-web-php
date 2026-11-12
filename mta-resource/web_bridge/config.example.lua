@@ -8,7 +8,7 @@ CONFIG = {
 
     HEARTBEAT_SECONDS = 30,                   -- ARCHITECTURE §7.8
     COMMAND_POLL_SECONDS = 10,                -- Faz 8: /commands/pending
-    ENABLE_COMMANDS = false,                  -- Komut kuyruğu uçları Faz 8'de açılır; o zamana kadar false kalmalı
+    ENABLE_COMMANDS = true,                   -- Komut kuyruğu (Faz 8): /commands/pending + /commands/result (anahtarda `commands` kapsamı gerekir)
     REQUEST_TIMEOUT_MS = 8000,
     QUEUE_LIMIT = 500,                        -- Bellek içi olay kuyruğu üst sınırı
     LINK_COMMAND_COOLDOWN = 10,               -- /webbagla oyuncu başına bekleme (sn)

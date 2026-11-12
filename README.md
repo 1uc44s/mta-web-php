@@ -17,7 +17,7 @@ Laravel 13 · PHP 8.4 · MariaDB 10.11 · Blade + Tailwind CSS v4 + Alpine.js (C
 | 5 | CMS, Akademi, mesaj şablon motoru | ✅ |
 | 6 | Oyuncu paneli, destek, PWA | ✅ |
 | 7 | MTA köprüsü + Lua resource | ✅ |
-| 8 | Başvurular, moderasyon, oyun komutları | ⏳ |
+| 8 | Başvurular, moderasyon, oyun komutları, cihazlar | ✅ (özellik bayrakları varsayılan kapalı) |
 | 9 | Ekonomi ve ödeme | ⏳ |
 | 10 | Gelişmiş kanallar | ⏳ |
 | 11 | Sertleştirme ve yayın | 🟡 R1 yerel kısım ✅ (güvenlik testleri, audit, yedek/geri yükleme testi, izleme, operasyon dokümanı); production kurulumu, hukuk ve marka onayı açık |
@@ -272,6 +272,46 @@ Panel düzeni: masaüstünde sol menü, mobilde alt sekme çubuğu (Genel · Des
 
 **Lua resource:** [`mta-resource/web_bridge/`](mta-resource/web_bridge/README.md) — kurulum, ACL, `config.lua`, gamemode export'ları (`syncCharacters`, `queueEvent`), olaylar (`onWebBridgeRequestCharacters`, `onWebBridgeLinkRevoked`, `onWebBridgeMaintenanceChanged`). Oyun içi komut: `/webbagla KOD`.
 
+### Faz 8 — Başvurular, cezalar, oyun komutları, cihazlar
+
+Özellik bayrakları (`ACP → Ayarlar → features`): `features.applications`, `features.sanctions`, `features.devices` — **varsayılan kapalı**; kapalıyken panel rotaları 404 döner ve menüde görünmez. ACP ekranları bayraktan bağımsızdır.
+
+**Oyuncu paneli:**
+
+| Yöntem | URL | Ad | Not |
+|---|---|---|---|
+| GET | `/panel/applications` | `panel.applications.index` | Açık türler (uygunluk mesajıyla) + başvurularım. F:applications, doğrulanmış e-posta |
+| GET / POST | `/panel/applications/new/{slug}` | `panel.applications.create/store` | `action=save_draft\|submit`, `answers[...]`, `character` (ULID). 10/saat |
+| GET / POST | `/panel/applications/{ulid}` | `panel.applications.show/update` | Taslak bu adreste form olarak açılır; başkasının başvurusu 404 |
+| POST | `/panel/applications/{ulid}/messages` · `/cancel` | `panel.applications.messages.store/cancel` | Yanıt yalnızca `needs_info` iken; iptal `draft/submitted/needs_info` |
+| GET | `/panel/sanctions`, `/panel/sanctions/{ulid}` | `panel.sanctions.index/show` | Yalnızca `public_reason`, tür, tarih, süre; veren "Yönetim Ekibi". F:sanctions |
+| POST | `/panel/sanctions/{ulid}/appeal` (`body` ≥ 30) | `panel.sanctions.appeal` | Ceza başına 1 itiraz, 5/saat |
+| GET | `/panel/devices` | `panel.devices.index` | Cihazlar (parmak izi = HMAC'in ilk 8 karakteri). F:devices |
+| POST | `/panel/devices/link-code` | `panel.devices.link-code` | `device_link` kodu; bağlı hesap gerekir. Oyunda `/cihazbagla KOD` |
+| POST | `/panel/devices/{id}/revoke` | `panel.devices.revoke` | PC; yalnızca kendi bağlı hesabının cihazı |
+
+**ACP:**
+
+| Yöntem | URL | Ad | Yetki |
+|---|---|---|---|
+| GET | `/admin/applications` (`?filter=open\|mine\|decided\|all&type=`) | `admin.applications.index` | `applications.read` + branş kapsamı (`applications.all_branches` hepsini görür) |
+| GET | `/admin/applications/{ulid}` | `admin.applications.show` | Kapsam dışı → 404 |
+| POST | `/admin/applications/{ulid}/status` (`status=in_review\|needs_info\|approved\|rejected`, `note_public`, `note_internal`) | `admin.applications.status` | `applications.review`; `needs_info`/`rejected` için public not zorunlu; karar audit `applications.decided` |
+| POST | `/admin/applications/{ulid}/assign` · `/messages` (`visibility=public\|internal`) | `admin.applications.*` | `applications.review` |
+| — | `/admin/application-types…` | `admin.application-types.*` | `applications.types.manage` (CMS kaynak deseni; form şeması `App\Support\ApplicationForms`) |
+| GET | `/admin/sanctions` · `/create` · `/{ulid}` | `admin.sanctions.*` | `sanctions.read` / `sanctions.create` |
+| POST | `/admin/sanctions` (`type, user\|account\|character, duration_minutes, public_reason, internal_note, evidence_url, rule_id, appealable`) | `admin.sanctions.store` | `sanctions.create` + PC; `perm_ban` için `sanctions.ban_permanent` + kanıt bağlantısı |
+| POST | `/admin/sanctions/{ulid}/revoke` (`reason`) | `admin.sanctions.revoke` | `sanctions.revoke`; ban → `player.unban` komutu |
+| GET / POST | `/admin/appeals`, `/admin/appeals/{ulid}`, `/decide` (`decision=accepted\|rejected`, `note_public`) | `admin.appeals.*` | `sanctions.appeals.review`; cezayı veren karar veremez |
+| GET / POST | `/admin/game-commands`, `/admin/game-commands/{ulid}/cancel` | `admin.game-commands.*` | `game_commands.read`; elle komutta tür bazlı izin (`game_commands.warn/kick/ban_temp/ban_perm/announce`) + PC |
+| GET / POST | `/admin/devices`, `/{id}/approve` (PC), `/{id}/reject` | `admin.devices.*` | `devices.read` / `devices.approve`, gerekçe zorunlu |
+
+**Ceza → oyun komutu:** `warning→player.warn`, `mute→player.mute`, `jail→player.jail`, `kick→player.kick`, `temp_ban→player.ban{minutes}`, `perm_ban→player.ban{minutes:null}`; `web_suspension` kullanıcıyı askıya alır (oturumlar kapanır). İdempotency `sanction:{ulid}:apply|revoke`.
+
+**Zamanlayıcı:** `mrp:moderation-tick` (her dakika) — 2 dk sonuçsuz `dispatched` komut → `pending` (en fazla 3 deneme, sonra `failed` + audit `game_commands.failed`); süresi dolan cezalar → `expired`, web askısı kaldırılır.
+
+**Lua:** `/cihazbagla KOD` (serial yalnızca `getPlayerSerial` ile okunur, yalnızca istek gövdesinde gider), `config.lua` → `ENABLE_COMMANDS = true` (anahtarda `commands` kapsamı gerekir).
+
 ## 3. JSON API (`/api/v1`)
 
 Hata biçimi (tüm JSON uçları):
@@ -288,6 +328,9 @@ Hata biçimi (tüm JSON uçları):
 | POST | `/api/v1/game/player/connected` · `/player/disconnected` | Köprü, `events` | 120/dk | 7 |
 | POST | `/api/v1/game/accounts/sync` · `/characters/sync` | Köprü, `events` | 120/dk | 7 |
 | POST | `/api/v1/game/account-link/verify` | Köprü, `account_link` | 120/dk + hesap başına 5 yanlış/10 dk | 7 |
+| POST | `/api/v1/game/device-link/verify` | Köprü, `account_link` | 120/dk + hesap başına 5 yanlış/10 dk | 8 |
+| GET | `/api/v1/game/commands/pending` | Köprü, `commands` | 120/dk | 8 |
+| POST | `/api/v1/game/commands/result` | Köprü, `commands` | 120/dk | 8 |
 
 **Köprü imzası** (ARCHITECTURE §7.2): başlıklar `X-Bridge-Key`, `X-Bridge-Timestamp` (unix sn, ±300), `X-Bridge-Nonce` (32–64 hex, tek kullanım), `X-Bridge-Signature` = `hex(HMAC-SHA256(secret, "METHOD\nPATH\nTIMESTAMP\nNONCE\n" + hex(SHA256(body))))`. Sıra: biçim → anahtar aktif → zaman → gövde ≤ 64 KB → imza (`hash_equals`) → kapsam → nonce INSERT (imzadan **sonra**) → `last_used_at`. Hatalar: `401 SIGNATURE_INVALID`, `403 FORBIDDEN`, `409 REPLAY_DETECTED`, `413 PAYLOAD_TOO_LARGE`, `422 VALIDATION_ERROR`, `429 RATE_LIMITED`. Başarısızlıklar `storage/logs/security-*.log`'a (secret'sız); 5 dk'da 20'yi aşarsa kritik audit `bridge.signature_alert`.
 
@@ -305,6 +348,11 @@ Hata biçimi (tüm JSON uçları):
   "playtime_minutes": 5400, "faction_key": "lspd", "job_key": "taxi", "public_profile": { "bio": "…" } } ] }
 // POST /account-link/verify → {"data":{"linked":true,"web_username":"kaan_w"}} · 422 LINK_CODE_INVALID · 409 ACCOUNT_ALREADY_LINKED · 409 LINK_LIMIT_REACHED · 429 RATE_LIMITED
 { "event_id": "<uuid>", "code": "K7Q4-M2XD", "account": { "ref": "1042", "name": "kaan" } }
+// POST /device-link/verify (serial: MTA 32 hex; yalnızca HMAC(serial, BRIDGE_SERIAL_PEPPER) saklanır) → {"data":{"status":"pending_approval"}} · 422 LINK_CODE_INVALID · 503 (pepper yok)
+{ "event_id": "<uuid>", "code": "K7Q4-M2XD", "account": { "ref": "1042" }, "serial": "<32 hex>" }
+// GET /commands/pending → {"data":[{"id":"01jc…","type":"player.kick","payload":{"account_ref":"1042","reason":"…"},"expires_at":"…"}]}  (en fazla 20; dispatched olarak işaretlenir)
+// POST /commands/result → {"data":{"id":"01jc…","status":"succeeded","duplicate":false}}  (tekrar sonuç → duplicate:true)
+{ "id": "01jc…", "status": "failed", "detail": { "error": "player_offline" } }   // error: player_offline | unsupported_command | invalid_payload | timeout | failed
 ```
 
 Ortak HMAC test vektörleri: `mta-resource/web_bridge/tests/vectors.json` (Pest) = `tests/vectors.lua` (Lua öz-testi).
@@ -335,6 +383,7 @@ Ortak HMAC test vektörleri: `mta-resource/web_bridge/tests/vectors.json` (Pest)
 | `2026_11_12_090000_create_cms_messaging_tables` | `announcements`, `announcement_reads`, `academy_progress`, `rule_acknowledgements`, `message_templates`, `message_template_revisions`, `message_dispatches` | 5 |
 | `2026_11_12_100000_create_support_notification_tables` | `support_categories`, `support_ticket_sequence`, `support_tickets`, `support_messages`, `support_attachments`, `support_ticket_events`, `support_macros`, `user_notification_preferences`, `notifications` | 6 |
 | `2026_11_12_110000_create_bridge_game_tables` | `integration_credentials`, `bridge_nonces`, `server_heartbeats`, `server_stats_daily`, `mta_accounts`, `game_account_links`, `game_link_codes`, `characters`, `game_events`, `game_commands` (+ FK `support_tickets.character_id`) | 7 |
+| `2026_11_12_120000_create_moderation_application_tables` | `application_types`, `applications` (+ generated `open_key` unique), `application_answers`, `application_messages`, `application_status_history` (append-only trigger), `sanctions` (+ `chk_sanctions_target`), `sanction_appeals`, `mta_account_devices` (+ FK `factions/game_jobs.application_type_id`) | 8 |
 | `2026_11_11_100000_create_settings_and_servers_tables` | `system_settings`, `mta_servers` | 2 |
 | `2026_11_11_100100_create_content_tables` | `media`, `pages`, `page_sections`, `page_revisions`, `redirects`, `navigation_items`, `social_links`, `news_categories`, `news_posts`, `tags`, `news_post_tag`, `game_system_categories`, `game_systems`, `rule_categories`, `rules`, `rule_revisions`, `game_jobs`, `factions`, `faqs`, `community_events`, `academy_courses`, `academy_topics`, `academy_topic_rule`, `contact_messages` | 2 |
 
@@ -407,6 +456,20 @@ Faz 5'te mevcut tablolar da kullanılmaya başladı: `page_revisions` (sayfa dü
 | `characters` | `ulid`, `mta_server_id`, `mta_account_id`, `mta_character_ref` (sunucu içinde unique), `name`, `status`, `faction_id`, `game_job_id`, `level`, `playtime_minutes`, `public_profile` JSON (allowlist), `is_profile_hidden`, `last_seen_at`, `synced_at` | Salt okunur kopya |
 | `game_events` | `mta_server_id`, `event_id` (sunucu içinde unique), `type`, `mta_account_id`, `payload` (minimal), `status` (`received\|processed\|failed\|ignored`), `occurred_at`, `received_at`, `processed_at` | İdempotency defteri, 90 gün |
 | `game_commands` | `ulid`, `mta_server_id`, `type` (allowlist), `target_mta_account_id`, `payload`, `idempotency_key` (unique), `status` (`pending\|dispatched\|succeeded\|failed\|expired\|cancelled`), `attempts`, `result`, `requested_by`, `source_type/id`, `expires_at` | Faz 7: yalnızca `account.link_revoked`; pull uçları Faz 8 |
+**Başvuru, moderasyon ve cihaz tabloları (Faz 8):**
+
+| Tablo | Önemli kolonlar | Not |
+|---|---|---|
+| `application_types` | `slug` (unique), `name`, `kind` (`faction\|staff\|special_role\|event\|whitelist`), `form_key` (`faction_default\|staff_v1\|whitelist_v1`), `faction_id`, `branch_id` (inceleyen branş, RESTRICT), `is_open`, `requires_linked_account`, `requires_character`, `min_account_age_days`, `cooldown_days`, `sort` | ACP CMS kaynağı |
+| `applications` | `ulid`, `user_id`, `application_type_id`, `character_id`, `status` (`draft\|submitted\|in_review\|needs_info\|approved\|rejected\|cancelled`), **generated** `open_key` = açık durumlarda `user_id:type_id` + unique `uq_applications_open_key`, `assigned_to`, `submitted_at`, `decided_at`, `decided_by`, `decision_note_public` | Tür başına tek açık başvuru DB'de |
+| `application_answers` | `application_id` (CASCADE), `field_key`, `question_label` (anlık kopya), `answer`, unique (`application_id`,`field_key`) | |
+| `application_messages` | `application_id`, `author_id`, `visibility` (`public\|internal`), `body`, `created_at` | Oyuncu sorguları yalnızca `public` |
+| `application_status_history` | `application_id` (RESTRICT), `from_status`, `to_status`, `actor_id`, `note_public`, `note_internal`, `created_at` | **Append-only** (UPDATE/DELETE trigger ile engelli) |
+| `sanctions` | `ulid`, `user_id` / `mta_account_id` / `character_id` (en az biri, CHECK), `type` (`warning\|mute\|jail\|kick\|temp_ban\|perm_ban\|web_suspension`), `public_reason`, `internal_note`, `evidence_url`, `rule_id`, `starts_at`, `ends_at`, `status` (`active\|expired\|revoked`), `appealable`, `issued_by`, `revoked_by`, `revoked_at`, `revoke_reason` | `internal_note`/`evidence_url`/`issued_by` oyuncuya asla |
+| `sanction_appeals` | `ulid`, `sanction_id` (**unique** — ceza başına 1), `user_id`, `body`, `status` (`submitted\|in_review\|accepted\|rejected`), `reviewed_by` (≠ veren), `decision_note_public`, `internal_note`, `decided_at` | |
+| `mta_account_devices` | `mta_account_id`, `serial_hmac` CHAR(64) (HMAC, **ham serial yok**), `label`, `status` (`pending_approval\|active\|revoked`), `link_code_id`, `approved_by`, `approved_at`, `revoked_at`, unique (`mta_account_id`,`serial_hmac`) | |
+
+`game_link_codes.purpose` artık `account_link` veya `device_link`. `game_commands` kaynakları: `sanction`, `manual`, `game_account_link`.
 **Seed sırası:** `ServerSeeder` → `AccessControlSeeder` (izinler, 9 sistem rolü + matris, 6 branş, 5 destek kategorisi) → `MessageTemplateSeeder` (sistem e-posta şablonları) → `ContentSeeder` → (`local` ise) `DemoSeeder`. İlk süper admin seed ile oluşturulmaz (bkz. §2 Yönetim paneli).
 
 ---

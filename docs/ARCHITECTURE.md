@@ -545,7 +545,7 @@ R2'de Reverb'e geçildiğinde aynı olaylar private kanallarla yayınlanır (`pr
 | Zamanlama | Komut / Job | Amaç |
 |---|---|---|
 | Her dakika | `content:publish-scheduled` | Zamanlanmış içerikleri yayına al (FR-CMS-008) |
-| Her dakika | `bridge:requeue-stale-commands` | 2 dk sonuçsuz komutları yeniden kuyruğa al (FR-BRG-011) |
+| Her dakika | `mrp:moderation-tick` | 2 dk sonuçsuz komutları yeniden kuyruğa al / 3 denemede `failed` (FR-BRG-011) + süresi dolan cezaları `expired` yap, web askısını kaldır (FR-MOD-006) |
 | Her 5 dk | `admin:compute-dashboard-metrics` | Dashboard metrikleri cache (FR-ADM-010) |
 | Her 15 dk | `bridge:maintain` | 15 dk'dan eski nonce'lar, 30 gün+ heartbeat, 90 gün+ `game_events`, 7 gün+ bağlama kodları; süresi dolan komutlar `expired` (Faz 7: tek komutta birleştirildi) |
 | Saatlik | `users:expire-suspensions`, `roles:expire-temporary`, `branches:expire-members` | Süreli durumlar |

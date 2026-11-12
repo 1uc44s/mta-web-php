@@ -13,7 +13,7 @@ use Illuminate\Http\JsonResponse;
  */
 final class BridgeResponse
 {
-    /** @param  array<string, mixed>  $data */
+    /** @param  array<array-key, mixed>  $data  Nesne (`{…}`) veya liste (`[…]`, ör. `/commands/pending`) — ROUTES §7.2 */
     public static function ok(array $data = [], int $status = 200): JsonResponse
     {
         return new JsonResponse(['success' => true, 'data' => $data, 'requestId' => RequestId::current()], $status);

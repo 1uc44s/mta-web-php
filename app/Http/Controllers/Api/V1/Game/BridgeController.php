@@ -4,14 +4,18 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Game;
 
+use App\Actions\Bridge\GameCommandQueue;
 use App\Actions\Bridge\RecordHeartbeat;
 use App\Actions\Bridge\SyncCharacters;
 use App\Actions\Bridge\SyncPresence;
+use App\Actions\GameAccounts\ManageDevices;
 use App\Actions\GameAccounts\VerifyLinkCode;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Bridge\AccountLinkVerifyRequest;
 use App\Http\Requests\Bridge\AccountsSyncRequest;
 use App\Http\Requests\Bridge\CharactersSyncRequest;
+use App\Http\Requests\Bridge\CommandResultRequest;
+use App\Http\Requests\Bridge\DeviceLinkVerifyRequest;
 use App\Http\Requests\Bridge\HeartbeatRequest;
 use App\Http\Requests\Bridge\PlayerEventRequest;
 use App\Models\MtaServer;
@@ -60,6 +64,31 @@ final class BridgeController extends Controller
     {
         try {
             return BridgeResponse::ok($action->handle($this->server($request), $request->validated()));
+        } catch (BridgeException $e) {
+            return BridgeResponse::error($e->status, $e->errorCode, $e->getMessage());
+        }
+    }
+
+    public function verifyDevice(DeviceLinkVerifyRequest $request, ManageDevices $action): JsonResponse
+    {
+        try {
+            return BridgeResponse::ok($action->verify($this->server($request), $request->validated()));
+        } catch (BridgeException $e) {
+            return BridgeResponse::error($e->status, $e->errorCode, $e->getMessage());
+        }
+    }
+
+    public function commandsPending(Request $request, GameCommandQueue $queue): JsonResponse
+    {
+        return BridgeResponse::ok($queue->pending($this->server($request)));
+    }
+
+    public function commandsResult(CommandResultRequest $request, GameCommandQueue $queue): JsonResponse
+    {
+        $data = $request->validated();
+
+        try {
+            return BridgeResponse::ok($queue->result($this->server($request), (string) $data['id'], (string) $data['status'], (array) ($data['detail'] ?? [])));
         } catch (BridgeException $e) {
             return BridgeResponse::error($e->status, $e->errorCode, $e->getMessage());
         }

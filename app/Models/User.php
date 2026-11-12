@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\URL;
 use Laravel\Fortify\Contracts\TwoFactorAuthenticationProvider;
 use Laravel\Fortify\Fortify;
@@ -36,6 +37,8 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property bool $reduced_effects
  * @property CarbonImmutable|null $last_login_at
  * @property CarbonImmutable|null $deletion_requested_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  */
 final class User extends Authenticatable implements MustVerifyEmail
 {

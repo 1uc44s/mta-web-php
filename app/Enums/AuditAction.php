@@ -51,6 +51,15 @@ enum AuditAction: string
     case IntegrationsCredentialCreated = 'integrations.credential_created';
     case IntegrationsCredentialRevoked = 'integrations.credential_revoked';
     case IntegrationsServerUpdated = 'integrations.server_updated';
+    case DevicesApproved = 'devices.approved';
+    case DevicesRejected = 'devices.rejected';
+    case DevicesRevoked = 'devices.revoked';
+    case ApplicationsDecided = 'applications.decided';
+    case SanctionsCreated = 'sanctions.created';
+    case SanctionsRevoked = 'sanctions.revoked';
+    case SanctionsAppealDecided = 'sanctions.appeal_decided';
+    case GameCommandsDispatched = 'game_commands.dispatched';
+    case GameCommandsFailed = 'game_commands.failed';
 
     public function severity(): string
     {
@@ -61,7 +70,7 @@ enum AuditAction: string
             self::RolesCreated, self::RolesUpdated, self::RolesDeleted, self::RolesPermissionsSynced,
             self::SuperAdminAssigned, self::SuperAdminRevoked, self::SuperAdminBreakGlass, self::MfaReset,
             self::BridgeSignatureAlert, self::IntegrationsCredentialCreated, self::IntegrationsCredentialRevoked => 'critical',
-            self::AccountsLinked, self::AccountsUnlinkRequested => 'info',
+            self::AccountsLinked, self::AccountsUnlinkRequested, self::CharactersVisibilityChanged, self::ApplicationsDecided => 'info',
             default => 'warning',
         };
     }
@@ -75,6 +84,8 @@ enum AuditAction: string
             self::StaffOffboarded, self::MfaReset, self::RulesVersionBumped, self::SupportEscalated,
             self::AccountsUnlinked, self::AccountsUnlinkRejected, self::AccountsLinkRevoked, self::AccountsManualLinked,
             self::CharactersVisibilityChanged, self::IntegrationsCredentialRevoked,
+            self::DevicesApproved, self::DevicesRejected, self::DevicesRevoked, self::ApplicationsDecided,
+            self::SanctionsCreated, self::SanctionsRevoked, self::SanctionsAppealDecided,
         ], true);
     }
 }

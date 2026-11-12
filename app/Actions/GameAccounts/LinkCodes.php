@@ -21,6 +21,9 @@ final class LinkCodes
 {
     public const PURPOSE = 'account_link';
 
+    /** Faz 8 — ARCHITECTURE §7.6 cihaz/serial ilişkilendirme. */
+    public const DEVICE_PURPOSE = 'device_link';
+
     public function __construct(private readonly SettingsRepository $settings) {}
 
     public static function normalize(string $input): string
@@ -58,18 +61,22 @@ final class LinkCodes
     }
 
     /** @return array{code: string, display: string, expires_at: CarbonImmutable} */
-    public function issue(User $user): array
+    public function issue(User $user, string $purpose = self::PURPOSE): array
     {
-        if ($this->activeLinkCount($user) >= $this->maxLinks()) {
+        if ($purpose === self::PURPOSE && $this->activeLinkCount($user) >= $this->maxLinks()) {
             throw ValidationException::withMessages(['code' => __('game.errors.limit', ['max' => $this->maxLinks()])]);
+        }
+
+        if ($purpose === self::DEVICE_PURPOSE && $this->activeLinkCount($user) === 0) {
+            throw ValidationException::withMessages(['code' => __('game.errors.no_link_for_device')]);
         }
 
         $alphabet = (string) config('roleplay.link_code.alphabet');
         $length = (int) config('roleplay.link_code.length');
         $expiresAt = CarbonImmutable::now()->addMinutes((int) config('roleplay.link_code.ttl_minutes'));
 
-        return DB::transaction(function () use ($user, $alphabet, $length, $expiresAt): array {
-            $this->cancelPending($user);
+        return DB::transaction(function () use ($user, $purpose, $alphabet, $length, $expiresAt): array {
+            $this->cancelPending($user, $purpose);
 
             do {
                 $code = '';
@@ -81,7 +88,7 @@ final class LinkCodes
 
             GameLinkCode::query()->create([
                 'user_id' => $user->id,
-                'purpose' => self::PURPOSE,
+                'purpose' => $purpose,
                 'code_hash' => $hash,
                 'expires_at' => $expiresAt,
                 'created_at' => now(),
@@ -91,16 +98,16 @@ final class LinkCodes
         });
     }
 
-    public function cancelPending(User $user): int
+    public function cancelPending(User $user, string $purpose = self::PURPOSE): int
     {
-        return GameLinkCode::query()->where('user_id', $user->id)->where('purpose', self::PURPOSE)
+        return GameLinkCode::query()->where('user_id', $user->id)->where('purpose', $purpose)
             ->whereNull('used_at')->whereNull('cancelled_at')->where('expires_at', '>', now())
             ->update(['cancelled_at' => now()]);
     }
 
-    public function current(User $user): ?GameLinkCode
+    public function current(User $user, string $purpose = self::PURPOSE): ?GameLinkCode
     {
-        return GameLinkCode::query()->where('user_id', $user->id)->where('purpose', self::PURPOSE)->latest('id')->first();
+        return GameLinkCode::query()->where('user_id', $user->id)->where('purpose', $purpose)->latest('id')->first();
     }
 
     /**
@@ -108,9 +115,9 @@ final class LinkCodes
      *
      * @return array{state: string, expires_in: int, account_name?: string}
      */
-    public function status(User $user): array
+    public function status(User $user, string $purpose = self::PURPOSE): array
     {
-        $code = $this->current($user);
+        $code = $this->current($user, $purpose);
 
         if ($code === null || $code->cancelled_at !== null) {
             return ['state' => 'none', 'expires_in' => 0];

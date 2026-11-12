@@ -3,17 +3,21 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Admin\ActivityLogController;
+use App\Http\Controllers\Admin\ApplicationController;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\BranchController;
 use App\Http\Controllers\Admin\CharacterController;
 use App\Http\Controllers\Admin\ContactMessageController;
 use App\Http\Controllers\Admin\ContentController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\DeviceController;
 use App\Http\Controllers\Admin\GameAccountController;
+use App\Http\Controllers\Admin\GameCommandController;
 use App\Http\Controllers\Admin\IntegrationController;
 use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\PageSectionController;
 use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\Admin\SanctionController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\Admin\SupportController;
@@ -160,6 +164,36 @@ Route::prefix('game-accounts')->name('game-accounts.')->group(function (): void 
 Route::get('characters', [CharacterController::class, 'index'])->middleware('can:characters.read')->name('characters.index');
 Route::get('characters/{character}', [CharacterController::class, 'show'])->middleware('can:characters.read')->where('character', '[0-9a-z]{26}')->name('characters.show');
 Route::post('characters/{character}/visibility', [CharacterController::class, 'visibility'])->middleware('can:characters.review')->where('character', '[0-9a-z]{26}')->name('characters.visibility');
+
+// §6.6 Cihaz talepleri (Faz 8, R2)
+Route::get('devices', [DeviceController::class, 'index'])->middleware('can:devices.read')->name('devices.index');
+Route::post('devices/{device}/approve', [DeviceController::class, 'approve'])->middleware(['can:devices.approve', 'password.confirm'])->whereNumber('device')->name('devices.approve');
+Route::post('devices/{device}/reject', [DeviceController::class, 'reject'])->middleware('can:devices.approve')->whereNumber('device')->name('devices.reject');
+
+// §6.5 Başvurular (Faz 8) — branş kapsamı controller'da (Application::reviewableBy)
+Route::prefix('applications')->name('applications.')->group(function (): void {
+    Route::get('/', [ApplicationController::class, 'index'])->middleware('can:applications.read')->name('index');
+    Route::get('{application}', [ApplicationController::class, 'show'])->middleware('can:applications.read')->where('application', '[0-9a-z]{26}')->name('show');
+    Route::post('{application}/assign', [ApplicationController::class, 'assign'])->middleware('can:applications.review')->where('application', '[0-9a-z]{26}')->name('assign');
+    Route::post('{application}/status', [ApplicationController::class, 'status'])->middleware('can:applications.review')->where('application', '[0-9a-z]{26}')->name('status');
+    Route::post('{application}/messages', [ApplicationController::class, 'message'])->middleware('can:applications.review')->where('application', '[0-9a-z]{26}')->name('messages.store');
+});
+
+// §6.7 Cezalar, itirazlar ve oyun komutları (Faz 8)
+Route::prefix('sanctions')->name('sanctions.')->group(function (): void {
+    Route::get('/', [SanctionController::class, 'index'])->middleware('can:sanctions.read')->name('index');
+    Route::get('create', [SanctionController::class, 'create'])->middleware('can:sanctions.create')->name('create');
+    Route::post('/', [SanctionController::class, 'store'])->middleware(['can:sanctions.create', 'password.confirm'])->name('store');
+    Route::get('{sanction}', [SanctionController::class, 'show'])->middleware('can:sanctions.read')->where('sanction', '[0-9a-z]{26}')->name('show');
+    Route::post('{sanction}/revoke', [SanctionController::class, 'revoke'])->middleware('can:sanctions.revoke')->where('sanction', '[0-9a-z]{26}')->name('revoke');
+});
+Route::get('appeals', [SanctionController::class, 'appeals'])->middleware('can:sanctions.appeals.review')->name('appeals.index');
+Route::get('appeals/{appeal}', [SanctionController::class, 'appeal'])->middleware('can:sanctions.appeals.review')->where('appeal', '[0-9a-z]{26}')->name('appeals.show');
+Route::post('appeals/{appeal}/decide', [SanctionController::class, 'decide'])->middleware('can:sanctions.appeals.review')->where('appeal', '[0-9a-z]{26}')->name('appeals.decide');
+Route::get('game-commands', [GameCommandController::class, 'index'])->middleware('can:game_commands.read')->name('game-commands.index');
+// Tür bazlı izin controller'da (config/roleplay.php bridge.commands); burada en az okuma izni.
+Route::post('game-commands', [GameCommandController::class, 'store'])->middleware(['can:game_commands.read', 'password.confirm'])->name('game-commands.store');
+Route::post('game-commands/{command}/cancel', [GameCommandController::class, 'cancel'])->middleware('can:game_commands.read')->where('command', '[0-9a-z]{26}')->name('game-commands.cancel');
 
 // §6.11 MTA entegrasyonu (Faz 7) — secret yalnızca oluşturma yanıtında bir kez
 Route::prefix('integrations/mta')->name('integrations.mta')->middleware('can:integrations.manage')->group(function (): void {

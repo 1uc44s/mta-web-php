@@ -4,16 +4,22 @@ declare(strict_types=1);
 
 use App\Actions\Support\TicketWorkflow;
 use App\Enums\AuditAction;
+use App\Models\Application;
+use App\Models\ApplicationType;
 use App\Models\Branch;
 use App\Models\Character;
 use App\Models\ContactMessage;
 use App\Models\GameAccountLink;
+use App\Models\GameCommand;
 use App\Models\Media;
 use App\Models\MessageTemplate;
 use App\Models\MtaAccount;
+use App\Models\MtaAccountDevice;
 use App\Models\Page;
 use App\Models\Role;
 use App\Models\Rule;
+use App\Models\Sanction;
+use App\Models\SanctionAppeal;
 use App\Models\SupportAttachment;
 use App\Models\SupportCategory;
 use App\Models\User;
@@ -60,7 +66,16 @@ function adminRouteCases(): array
     $gameLink = GameAccountLink::query()->create(['user_id' => $target->id, 'mta_account_id' => $gameAccount->id, 'status' => 'active', 'verification_method' => 'ingame_code', 'linked_at' => now()]);
     $character = Character::query()->create(['mta_server_id' => $bridge['server']->id, 'mta_account_id' => $gameAccount->id, 'mta_character_ref' => 'c-1', 'name' => 'Karakter', 'synced_at' => now()]);
 
+    // Faz 8: başvuru, ceza, itiraz, komut, cihaz
+    $appType = ApplicationType::query()->create(['slug' => 'test', 'name' => 'Test', 'kind' => 'faction', 'form_key' => 'faction_default', 'branch_id' => $branch->id, 'is_open' => true]);
+    $application = Application::query()->create(['user_id' => $target->id, 'application_type_id' => $appType->id, 'status' => 'submitted', 'submitted_at' => now()]);
+    $sanction = Sanction::query()->create(['user_id' => $target->id, 'mta_account_id' => $gameAccount->id, 'type' => 'warning', 'public_reason' => 'Deneme', 'starts_at' => now(), 'status' => 'active', 'issued_by' => $target->id]);
+    $appeal = SanctionAppeal::query()->create(['sanction_id' => $sanction->id, 'user_id' => $target->id, 'body' => 'İtiraz metni', 'status' => 'submitted']);
+    $command = GameCommand::query()->create(['mta_server_id' => $bridge['server']->id, 'type' => 'player.warn', 'payload' => ['account_ref' => '1'], 'idempotency_key' => 'test:1', 'expires_at' => now()->addDay()]);
+    $device = MtaAccountDevice::query()->create(['mta_account_id' => $gameAccount->id, 'serial_hmac' => str_repeat('a', 64), 'status' => 'pending_approval']);
+
     $base = [
+        'application' => $application->ulid, 'sanction' => $sanction->ulid, 'appeal' => $appeal->ulid, 'command' => $command->ulid, 'device' => $device->id,
         'account' => $gameAccount->ulid, 'link' => $gameLink->id, 'character' => $character->ulid,
         'server' => $bridge['server']->id, 'credential' => $bridge['credential']->id,
         'user' => $target->ulid, 'role' => $role->id, 'branch' => $branch->id, 'log' => $log->ulid, 'group' => 'site', 'uuid' => 'yok',

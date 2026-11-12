@@ -55,11 +55,29 @@ return [
         'account' => 'Oyun hesabı',
     ],
 
+    'device' => [
+        'title' => 'Cihazlarım',
+        'intro' => 'Oyuna girdiğin bilgisayarları hesabınla ilişkilendir. Ham donanım kimliği (serial) saklanmaz; yalnızca geri çevrilemez bir parmak izi tutulur.',
+        'empty' => 'Kayıtlı cihazın yok.',
+        'generate' => 'Cihaz kodu oluştur',
+        'instruction' => 'Eklemek istediğin bilgisayarda oyuna gir ve şunu yaz:',
+        'fingerprint' => 'Parmak izi',
+        'status' => ['pending_approval' => 'Onay bekliyor', 'active' => 'Onaylı', 'revoked' => 'Kaldırıldı'],
+        'revoke' => 'Cihazı kaldır',
+        'revoked' => 'Cihaz kaldırıldı.',
+        'approved_notice' => 'Cihaz ilişkilendirme talebin onaylandı.',
+        'rejected_notice' => 'Cihaz ilişkilendirme talebin reddedildi.',
+        'admin_title' => 'Cihaz talepleri',
+        'approve' => 'Onayla',
+        'reject' => 'Reddet',
+    ],
+
     'errors' => [
         'limit' => 'Bağlanabilecek en fazla oyun hesabı sayısına (:max) ulaştın.',
         'unlink_state' => 'Bu bağlantı için kaldırma talebi gönderilemez.',
         'state' => 'Bu işlem bağlantının mevcut durumunda yapılamaz.',
         'already_linked' => 'Bu oyun hesabı zaten bir web hesabına bağlı.',
+        'no_link_for_device' => 'Cihaz eklemek için önce bir oyun hesabı bağlamalısın.',
         'max_keys' => 'Bir sunucuda aynı anda en fazla :max aktif anahtar olabilir. Önce eskisini iptal et.',
     ],
 
