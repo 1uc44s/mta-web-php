@@ -13,6 +13,7 @@ Schedule::command('mrp:expire-roles')->hourly()->withoutOverlapping();
 Schedule::command('mrp:maintenance-tick')->hourly()->withoutOverlapping();
 Schedule::command('audit:verify')->dailyAt('03:30')->withoutOverlapping();
 Schedule::command('model:prune')->daily();
+Schedule::command('wallet:reconcile')->dailyAt('02:00')->withoutOverlapping();
 Schedule::command('mrp:moderation-tick')->everyMinute()->withoutOverlapping();
 Schedule::command('mrp:health-check')->everyFiveMinutes()->withoutOverlapping();
 Schedule::command('bridge:maintain')->everyFifteenMinutes()->withoutOverlapping();

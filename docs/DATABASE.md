@@ -629,12 +629,29 @@ Ayarlar `SettingsRepository` ile okunur (cache, tag `settings`, değişiklikte t
 | reason | VARCHAR(1000) | | ≥ 20 karakter |
 | status | VARCHAR(16) | | `pending, approved, rejected, applied, cancelled` |
 | requires_second_approval | BOOLEAN | | Eşik üstü mü (talep anında hesaplanır) |
+| reversal_of_id | BIGINT UNSIGNED | ✓ | FK → wallet_transactions **RESTRICT**. Ters kayıt talebi (`admin.economy.reversal-request`) ise ters çevrilecek kayıt (Faz 9) |
 | requested_by | BIGINT UNSIGNED | | FK → users **RESTRICT** |
 | reviewed_by | BIGINT UNSIGNED | ✓ | FK → users **RESTRICT** |
 | reviewed_at | DATETIME | ✓ | |
 | review_note | VARCHAR(1000) | ✓ | |
 | wallet_transaction_id | BIGINT UNSIGNED | ✓ | FK → wallet_transactions **RESTRICT** |
 | created_at / updated_at | DATETIME | ✓ | |
+
+### 6.9 `wallet_reconciliation_runs` (Faz 9)
+
+| Kolon | Tip | Null | Açıklama |
+|---|---|---|---|
+| id | BIGINT UNSIGNED PK | | |
+| ulid | CHAR(26) | | |
+| triggered_by | BIGINT UNSIGNED | ✓ | FK → users **SET NULL** (zamanlayıcı = NULL) |
+| wallets_checked | INT UNSIGNED | | |
+| mismatches | INT UNSIGNED | | |
+| total_balance | BIGINT | | `SUM(wallets.balance)` |
+| ledger_net | BIGINT | | `SUM(credit) - SUM(debit)` |
+| details | JSON | ✓ | Fark bulunan cüzdanlar: `[{wallet_id, balance, ledger_net}]` (en fazla 100) |
+| started_at / finished_at | DATETIME | | |
+
+- Index: `idx_wrr_started (started_at)`. FR-WAL-007 raporu ACP'de bu tablodan okunur; fark varsa `wallet.reconciliation_mismatch` (critical) audit kaydı.
 
 ---
 

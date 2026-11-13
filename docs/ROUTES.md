@@ -57,7 +57,7 @@ Kısaltmalar: **PC** = `password.confirm`, **T:x** = `throttle:x`, **F:x** = `fe
 | GET | `/faq` | `public.faq` | | |
 | GET | `/contact` | `public.contact` | | |
 | POST | `/contact` | `public.contact.store` | T:contact | Honeypot + min. süre |
-| GET | `/privacy` · `/kvkk` · `/terms` · `/cookies` | `public.legal.{slug}` | | Yasal sayfalar |
+| GET | `/privacy` · `/kvkk` · `/terms` · `/cookies` · `/refund-policy` | `public.legal.{slug}` | | Yasal sayfalar (`refund-policy` Faz 9, ROADMAP 9.8) |
 | GET | `/refund-policy` | `public.legal.refund` | F:payments | |
 | GET | `/p/{page:slug}` | `public.page` | | Ek `standard` sayfalar |
 | POST | `/preferences/theme` | `public.preferences.theme` | T:60,1 | `theme`, `reduced_effects` → cookie (+ girişliyse hesap) |
@@ -188,6 +188,8 @@ Fortify'ın `updateProfileInformation` ve `updatePasswords` özellikleri **kapal
 | POST | `/panel/payments/checkout` | `panel.payments.checkout` | F:payments, T:10,60 | `package_id`, `idempotency_key` → 303 sağlayıcıya |
 | GET | `/panel/payments/{order:ulid}` | `panel.payments.show` | F:payments | Dönüş sayfası (bakiye yüklemez) |
 | GET | `/panel/payments/{order:ulid}/status` | `panel.payments.status` | F:payments, T:poll | JSON |
+| GET | `/payments/fake/{order:ulid}` | `payments.fake.show` | imzalı URL | **Yalnızca** `PAYMENTS_PROVIDER=fake` ve `APP_ENV≠production`: sahte ödeme ekranı (Faz 9, OD-04 kararına kadar) |
+| POST | `/payments/fake/{order:ulid}` | `payments.fake.complete` | imzalı URL | `outcome=succeeded\|failed` → `FakeProvider` imzalı webhook olayını **aynı** gelen kutusu yolundan işler |
 
 ### 5.8 Güvenlik ve hesap
 

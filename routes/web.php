@@ -8,6 +8,7 @@ use App\Http\Controllers\Public\AcademyController;
 use App\Http\Controllers\Public\ContactController;
 use App\Http\Controllers\Public\EventController;
 use App\Http\Controllers\Public\FactionController;
+use App\Http\Controllers\Public\FakeCheckoutController;
 use App\Http\Controllers\Public\FaqController;
 use App\Http\Controllers\Public\GameJobController;
 use App\Http\Controllers\Public\GameSystemController;
@@ -49,7 +50,13 @@ Route::get('/faq', FaqController::class)->name('public.faq');
 Route::get('/contact', [ContactController::class, 'show'])->name('public.contact');
 Route::post('/contact', [ContactController::class, 'store'])->middleware('throttle:contact')->name('public.contact.store');
 
-foreach (['privacy', 'kvkk', 'terms', 'cookies'] as $legal) {
+// Faz 9 — sahte ödeme ekranı (yalnızca PAYMENTS_PROVIDER=fake, production dışı; controller ayrıca denetler). ROUTES §5.7
+Route::middleware(['auth', 'signed', 'feature:payments'])->prefix('payments/fake')->name('payments.fake.')->group(function (): void {
+    Route::get('{order}', [FakeCheckoutController::class, 'show'])->where('order', '[0-9a-z]{26}')->name('show');
+    Route::post('{order}', [FakeCheckoutController::class, 'complete'])->where('order', '[0-9a-z]{26}')->name('complete');
+});
+
+foreach (['privacy', 'kvkk', 'terms', 'cookies', 'refund-policy'] as $legal) {
     Route::get('/'.$legal, PageController::class)->defaults('slug', $legal)->name('public.legal.'.$legal);
 }
 Route::get('/p/{slug}', PageController::class)->name('public.page');

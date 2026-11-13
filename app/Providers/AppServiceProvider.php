@@ -79,6 +79,8 @@ final class AppServiceProvider extends ServiceProvider
         RateLimiter::for('bridge', fn (Request $request): Limit => Limit::perMinute(120)->by('bridge:'.substr((string) $request->header('X-Bridge-Key', $request->ip()), 0, 40)));
         RateLimiter::for('bridge-heartbeat', fn (Request $request): Limit => Limit::perMinute(6)->by('bridge-hb:'.substr((string) $request->header('X-Bridge-Key', $request->ip()), 0, 40)));
         RateLimiter::for('link-code', fn (Request $request): Limit => Limit::perHour(5)->by('link-code:'.$request->user()?->getAuthIdentifier()));
+        // ROUTES §7.3: webhook uçları IP başına 300/dk (imza doğrulaması ayrıca).
+        RateLimiter::for('webhooks', fn (Request $request): Limit => Limit::perMinute(300)->by('hook:'.$request->ip()));
         RateLimiter::for('public-api', fn (Request $request): Limit => Limit::perMinute(60)->by('papi:'.$request->ip()));
         RateLimiter::for('preferences', fn (Request $request): Limit => Limit::perMinute(30)->by('pref:'.$request->ip()));
         RateLimiter::for('poll', fn (Request $request): Limit => Limit::perMinute(30)->by('poll:'.($request->user()?->getAuthIdentifier() ?? $request->ip())));

@@ -66,6 +66,8 @@ return [
 
     'payments' => [
         'provider' => env('PAYMENTS_PROVIDER', 'fake'),
+        // Production'da asla kullanılamayan sağlayıcılar (PaymentManager reddeder). OD-04: gerçek sağlayıcı eklenene kadar yalnızca fake.
+        'test_providers' => ['fake'],
     ],
 
     'pwa' => [

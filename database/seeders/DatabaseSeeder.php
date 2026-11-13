@@ -19,6 +19,7 @@ final class DatabaseSeeder extends Seeder
             AccessControlSeeder::class,
             MessageTemplateSeeder::class,
             ContentSeeder::class,
+            EconomySeeder::class,
         ]);
 
         if (app()->isLocal()) {

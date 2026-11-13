@@ -32,6 +32,13 @@ final class AdminLayoutComposer
             ['label' => 'game.device.admin_title', 'route' => 'admin.devices.index', 'icon' => 'monitor-smartphone', 'can' => 'devices.read', 'match' => 'admin.devices.*'],
             ['label' => 'Başvuru türleri', 'route' => 'admin.application-types.index', 'icon' => 'list-checks', 'can' => 'applications.types.manage', 'match' => 'admin.application-types.*'],
         ]],
+        ['label' => 'economy.admin.title', 'items' => [
+            ['label' => 'economy.admin.title', 'route' => 'admin.economy.index', 'icon' => 'wallet', 'can' => 'wallet.read', 'match' => 'admin.economy.index'],
+            ['label' => 'economy.admin.adjustments', 'route' => 'admin.economy.adjustments.index', 'icon' => 'scale', 'can' => 'wallet.read', 'match' => 'admin.economy.adjustments.*'],
+            ['label' => 'economy.admin.payments', 'route' => 'admin.payments.index', 'icon' => 'credit-card', 'can' => 'payments.read', 'match' => 'admin.payments.index'],
+            ['label' => 'economy.admin.reconciliation', 'route' => 'admin.payments.reconciliation', 'icon' => 'calculator', 'can' => 'payments.reconcile', 'match' => 'admin.payments.reconciliation*'],
+            ['label' => 'economy.admin.packages', 'route' => 'admin.economy.packages.index', 'icon' => 'package', 'can' => 'payments.packages.manage', 'match' => 'admin.economy.packages.*'],
+        ]],
         ['label' => 'support.title', 'items' => [
             ['label' => 'support.admin.queue', 'route' => 'admin.support.index', 'icon' => 'life-buoy', 'can' => 'support.read', 'match' => 'admin.support.*'],
         ]],

@@ -60,6 +60,17 @@ enum AuditAction: string
     case SanctionsAppealDecided = 'sanctions.appeal_decided';
     case GameCommandsDispatched = 'game_commands.dispatched';
     case GameCommandsFailed = 'game_commands.failed';
+    case WalletAdjustmentRequested = 'wallet.adjustment_requested';
+    case WalletAdjustmentApproved = 'wallet.adjustment_approved';
+    case WalletAdjustmentRejected = 'wallet.adjustment_rejected';
+    case WalletAdjustmentApplied = 'wallet.adjustment_applied';
+    case WalletReversalApplied = 'wallet.reversal_applied';
+    case WalletReconciliationMismatch = 'wallet.reconciliation_mismatch';
+    case PaymentsSucceeded = 'payments.succeeded';
+    case RefundsRequested = 'refunds.requested';
+    case RefundsApproved = 'refunds.approved';
+    case RefundsRejected = 'refunds.rejected';
+    case RefundsCompleted = 'refunds.completed';
 
     public function severity(): string
     {
@@ -69,7 +80,11 @@ enum AuditAction: string
             self::ContentDeleted, self::RulesVersionBumped => 'info',
             self::RolesCreated, self::RolesUpdated, self::RolesDeleted, self::RolesPermissionsSynced,
             self::SuperAdminAssigned, self::SuperAdminRevoked, self::SuperAdminBreakGlass, self::MfaReset,
-            self::BridgeSignatureAlert, self::IntegrationsCredentialCreated, self::IntegrationsCredentialRevoked => 'critical',
+            self::BridgeSignatureAlert, self::IntegrationsCredentialCreated, self::IntegrationsCredentialRevoked,
+            self::WalletAdjustmentRequested, self::WalletAdjustmentApproved, self::WalletAdjustmentRejected, self::WalletAdjustmentApplied,
+            self::WalletReversalApplied, self::WalletReconciliationMismatch,
+            self::RefundsRequested, self::RefundsApproved, self::RefundsRejected, self::RefundsCompleted => 'critical',
+            self::PaymentsSucceeded => 'info',
             self::AccountsLinked, self::AccountsUnlinkRequested, self::CharactersVisibilityChanged, self::ApplicationsDecided => 'info',
             default => 'warning',
         };
@@ -86,6 +101,8 @@ enum AuditAction: string
             self::CharactersVisibilityChanged, self::IntegrationsCredentialRevoked,
             self::DevicesApproved, self::DevicesRejected, self::DevicesRevoked, self::ApplicationsDecided,
             self::SanctionsCreated, self::SanctionsRevoked, self::SanctionsAppealDecided,
+            self::WalletAdjustmentRequested, self::WalletAdjustmentApproved, self::WalletAdjustmentRejected, self::WalletAdjustmentApplied,
+            self::WalletReversalApplied, self::RefundsRequested, self::RefundsApproved, self::RefundsRejected, self::RefundsCompleted,
         ], true);
     }
 }

@@ -16,6 +16,8 @@ use App\Models\MessageTemplate;
 use App\Models\MtaAccount;
 use App\Models\MtaAccountDevice;
 use App\Models\Page;
+use App\Models\PaymentOrder;
+use App\Models\Refund;
 use App\Models\Role;
 use App\Models\Rule;
 use App\Models\Sanction;
@@ -23,9 +25,13 @@ use App\Models\SanctionAppeal;
 use App\Models\SupportAttachment;
 use App\Models\SupportCategory;
 use App\Models\User;
+use App\Models\WalletAdjustmentRequest;
 use App\Services\Audit\AuditLogger;
 use App\Services\Content\ContentResourceRegistry;
+use App\Services\Wallet\LedgerService;
+use App\Services\Wallet\WalletService;
 use Database\Seeders\ContentSeeder;
+use Database\Seeders\EconomySeeder;
 use Database\Seeders\MessageTemplateSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Routing\Route as RouteObject;
@@ -74,8 +80,22 @@ function adminRouteCases(): array
     $command = GameCommand::query()->create(['mta_server_id' => $bridge['server']->id, 'type' => 'player.warn', 'payload' => ['account_ref' => '1'], 'idempotency_key' => 'test:1', 'expires_at' => now()->addDay()]);
     $device = MtaAccountDevice::query()->create(['mta_account_id' => $gameAccount->id, 'serial_hmac' => str_repeat('a', 64), 'status' => 'pending_approval']);
 
+    // Faz 9: cüzdan, ledger kaydı, düzeltme, sipariş, iade
+    (new EconomySeeder)->run();
+    $wallet = app(WalletService::class)->for($target);
+    $transaction = app(LedgerService::class)->post($wallet->id, 'credit', 100, 'promo', 'route-test', 'Test');
+    $order = PaymentOrder::query()->create(['order_number' => 'MRP-TEST-0001', 'user_id' => $target->id, 'wallet_id' => $wallet->id, 'provider' => 'fake',
+        'amount_minor' => 100, 'currency' => 'TRY', 'credit_amount' => 10, 'status' => 'succeeded', 'idempotency_key' => 'route-test']);
+    $economy = [
+        'wallet' => $wallet, 'transaction' => $transaction, 'order' => $order,
+        'adjustment' => WalletAdjustmentRequest::query()->create(['wallet_id' => $wallet->id, 'direction' => 'credit', 'amount' => 1, 'reason' => str_repeat('a', 20), 'requires_second_approval' => false, 'requested_by' => $target->id]),
+        'refund' => Refund::query()->create(['payment_order_id' => $order->id, 'amount_minor' => 50, 'reason' => 'Test iadesi', 'requested_by' => $target->id]),
+    ];
+
     $base = [
         'application' => $application->ulid, 'sanction' => $sanction->ulid, 'appeal' => $appeal->ulid, 'command' => $command->ulid, 'device' => $device->id,
+        'wallet' => $economy['wallet']->id, 'transaction' => $economy['transaction']->ulid, 'adjustment' => $economy['adjustment']->ulid,
+        'order' => $economy['order']->ulid, 'refund' => $economy['refund']->ulid,
         'account' => $gameAccount->ulid, 'link' => $gameLink->id, 'character' => $character->ulid,
         'server' => $bridge['server']->id, 'credential' => $bridge['credential']->id,
         'user' => $target->ulid, 'role' => $role->id, 'branch' => $branch->id, 'log' => $log->ulid, 'group' => 'site', 'uuid' => 'yok',

@@ -28,6 +28,8 @@ final class PanelLayoutComposer
             ['label' => 'Karakterlerim', 'route' => 'panel.characters.index', 'icon' => 'users', 'match' => 'panel.characters.*', 'tab' => false],
             ['label' => 'Cihazlarım', 'route' => 'panel.devices.index', 'icon' => 'monitor-smartphone', 'match' => 'panel.devices.*', 'tab' => false, 'feature' => 'devices'],
             ['label' => 'Başvurular', 'route' => 'panel.applications.index', 'icon' => 'clipboard-list', 'match' => 'panel.applications.*', 'tab' => false, 'feature' => 'applications'],
+            ['label' => 'Cüzdanım', 'route' => 'panel.wallet', 'icon' => 'wallet', 'match' => 'panel.wallet', 'tab' => false, 'feature' => 'wallet'],
+            ['label' => 'Kredi yükle', 'route' => 'panel.top-up', 'icon' => 'credit-card', 'match' => 'panel.top-up', 'tab' => false, 'feature' => 'payments'],
             ['label' => 'Cezalarım', 'route' => 'panel.sanctions.index', 'icon' => 'gavel', 'match' => 'panel.sanctions.*', 'tab' => false, 'feature' => 'sanctions'],
             ['label' => 'Destek', 'route' => 'panel.support.index', 'icon' => 'life-buoy', 'match' => 'panel.support.*', 'tab' => true],
             ['label' => 'Akademi', 'route' => 'panel.academy', 'icon' => 'graduation-cap', 'match' => 'panel.academy', 'tab' => true],

@@ -9,11 +9,13 @@ use App\Http\Controllers\Panel\DashboardController;
 use App\Http\Controllers\Panel\DeviceController;
 use App\Http\Controllers\Panel\GameAccountController;
 use App\Http\Controllers\Panel\NotificationController;
+use App\Http\Controllers\Panel\PaymentController;
 use App\Http\Controllers\Panel\SanctionController;
 use App\Http\Controllers\Panel\SecurityController;
 use App\Http\Controllers\Panel\SettingsController;
 use App\Http\Controllers\Panel\SupportController;
 use App\Http\Controllers\Panel\TwoFactorController;
+use App\Http\Controllers\Panel\WalletController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -86,6 +88,18 @@ Route::middleware('feature:sanctions')->prefix('sanctions')->name('sanctions.')-
     Route::get('/', [SanctionController::class, 'index'])->name('index');
     Route::get('{sanction}', [SanctionController::class, 'show'])->where('sanction', '[0-9a-z]{26}')->name('show');
     Route::post('{sanction}/appeal', [SanctionController::class, 'appeal'])->where('sanction', '[0-9a-z]{26}')->middleware('throttle:5,60')->name('appeal');
+});
+
+// §5.7 Cüzdan ve ödeme (Faz 9, F:wallet / F:payments; FR-PAY-006 kapalıyken 404)
+Route::middleware('feature:wallet')->group(function (): void {
+    Route::get('wallet', [WalletController::class, 'index'])->name('wallet');
+    Route::get('transactions', [WalletController::class, 'transactions'])->name('transactions');
+});
+Route::middleware(['feature:payments', 'verified'])->group(function (): void {
+    Route::get('top-up', [PaymentController::class, 'topUp'])->name('top-up');
+    Route::post('payments/checkout', [PaymentController::class, 'checkout'])->middleware('throttle:10,60')->name('payments.checkout');
+    Route::get('payments/{order}', [PaymentController::class, 'show'])->where('order', '[0-9a-z]{26}')->name('payments.show');
+    Route::get('payments/{order}/status', [PaymentController::class, 'status'])->where('order', '[0-9a-z]{26}')->middleware('throttle:poll')->name('payments.status');
 });
 
 // §5.4 Destek — doğrulanmış e-posta gerekir (panel.verified)

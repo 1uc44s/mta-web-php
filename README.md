@@ -18,7 +18,7 @@ Laravel 13 · PHP 8.4 · MariaDB 10.11 · Blade + Tailwind CSS v4 + Alpine.js (C
 | 6 | Oyuncu paneli, destek, PWA | ✅ |
 | 7 | MTA köprüsü + Lua resource | ✅ |
 | 8 | Başvurular, moderasyon, oyun komutları, cihazlar | ✅ (özellik bayrakları varsayılan kapalı) |
-| 9 | Ekonomi ve ödeme | ⏳ |
+| 9 | Ekonomi ve ödeme | ✅ FakeProvider ile (OD-03/OD-04 bekliyor; `features.wallet/payments` varsayılan kapalı) |
 | 10 | Gelişmiş kanallar | ⏳ |
 | 11 | Sertleştirme ve yayın | 🟡 R1 yerel kısım ✅ (güvenlik testleri, audit, yedek/geri yükleme testi, izleme, operasyon dokümanı); production kurulumu, hukuk ve marka onayı açık |
 
@@ -312,6 +312,49 @@ Panel düzeni: masaüstünde sol menü, mobilde alt sekme çubuğu (Genel · Des
 
 **Lua:** `/cihazbagla KOD` (serial yalnızca `getPlayerSerial` ile okunur, yalnızca istek gövdesinde gider), `config.lua` → `ENABLE_COMMANDS = true` (anahtarda `commands` kapsamı gerekir).
 
+### Faz 9 — Cüzdan, ödeme, iade, mutabakat
+
+Karar durumu: **OD-03** (cüzdan türleri) ve **OD-04** (ödeme sağlayıcısı) verilmediği için ROADMAP'e göre yalnızca `web_credit` (Meridyen Kredisi, MK) ve `FakeProvider` ile geliştirildi. `features.wallet` ve `features.payments` **varsayılan kapalı** (FR-PAY-006: kapalıyken tüm ödeme rotaları 404). `FakeProvider` production'da kullanılamaz (`config/roleplay.php payments.test_providers`).
+
+**Oyuncu paneli:**
+
+| Yöntem | URL | Ad | Not |
+|---|---|---|---|
+| GET | `/panel/wallet` | `panel.wallet` | Türlere göre bakiye kartları + son işlemler. F:wallet |
+| GET | `/panel/transactions` (`?direction=all\|credit\|debit`) | `panel.transactions` | Yalnızca kendi ledger kayıtları |
+| GET | `/panel/top-up` | `panel.top-up` | Paketler. F:payments, doğrulanmış e-posta |
+| POST | `/panel/payments/checkout` (`package_id`, `idempotency_key`) | `panel.payments.checkout` | 10/saat. **Tutar sunucuda paketten**; 303 → sağlayıcı |
+| GET | `/panel/payments/{ulid}` | `panel.payments.show` | Dönüş sayfası — bakiye **yüklemez**; `pending` iken 5 sn polling |
+| GET | `/panel/payments/{ulid}/status` | `panel.payments.status` | JSON `{status, pending}`; başkasının siparişi 404 |
+| GET / POST | `/payments/fake/{ulid}` (imzalı URL) | `payments.fake.show/complete` | Yalnızca `PAYMENTS_PROVIDER=fake` ve production dışı; sahibine özel; sonuç gerçek webhook yolundan işlenir |
+| GET | `/refund-policy` | `public.legal.refund-policy` | İade politikası (taslak, OD-08) |
+
+**Webhook:** `POST /webhooks/payments/{provider}` (`webhooks.payments`, 300/dk/IP, F:payments). İmza doğrulama (`fake`: `X-Fake-Signature = hex(HMAC-SHA256(gövde, APP_KEY türevi))`) → normalize → `payment_events` INSERT (unique `provider + provider_event_id`) → `ProcessPaymentEvent` job (`critical` kuyruğu). Geçersiz imza: **400 ve kayıt yok**. Tekrar olay: `200 {"received":true,"duplicate":true}`.
+
+**ACP:**
+
+| Yöntem | URL | Ad | Yetki |
+|---|---|---|---|
+| GET | `/admin/economy` | `admin.economy.index` | `wallet.read` — bugün/bu ay giriş-çıkış-gelir, toplam bakiye |
+| GET | `/admin/economy/transactions` (`?q=kullanıcı\|ULID`) | `admin.economy.transactions` | `wallet.read` — cursor pagination |
+| GET | `/admin/economy/wallets/{id}` | `admin.economy.wallets.show` | `wallet.read` |
+| GET / POST | `/admin/economy/adjustments` (`username, direction, amount, reason ≥ 20`) | `admin.economy.adjustments.*` | listeleme `wallet.read`; talep `wallet.adjust.request` + PC |
+| POST | `/admin/economy/adjustments/{ulid}/approve` · `/reject` | `admin.economy.adjustments.approve/reject` | `wallet.adjust.approve` (+ PC onayda). Eşik (`wallet.four_eyes_threshold`, 500) üstü → **farklı** onaylayıcı |
+| POST | `/admin/economy/transactions/{ulid}/reversal-request` (`reason`) | `admin.economy.reversal-request` | `wallet.adjust.request` + PC; dört göz akışına girer, kayıt bir kez ters çevrilir |
+| — | `/admin/economy/packages…` | `admin.economy.packages.*` | `payments.packages.manage` (CMS kaynak deseni; fiyat kuruş) |
+| GET | `/admin/payments` · `/admin/payments/{ulid}` | `admin.payments.index/show` | `payments.read` — webhook geçmişi ve iadeler dahil |
+| POST | `/admin/payments/{ulid}/refund-request` (`amount_minor`, `reason`) | `admin.payments.refund-request` | `payments.refund.request` + PC |
+| POST | `/admin/refunds/{ulid}/approve` · `/reject` | `admin.refunds.*` | `payments.refund.approve` (+ PC); talep eden onaylayamaz |
+| GET / POST | `/admin/payments/reconciliation`, `/run` | `admin.payments.reconciliation(.run)` | `payments.reconcile` |
+
+**Defter kuralları (`App\Services\Wallet\LedgerService`):** tek yazım noktası (mimari testi: `tests/Arch/ArchitectureTest.php`); transaction + `SELECT … FOR UPDATE`; `idempotency_key` unique (aynı anahtar → mevcut kayıt); debit bakiyeyi negatife düşüremez (servis + `CHECK`); ledger append-only (trigger); düzeltme yalnızca ters kayıt (`uq_wt_reversal_of`).
+
+**İade:** onayda iade edilecek kredi cüzdanda yoksa sağlayıcı çağrılmaz → `requires_review`. Başarılıysa ledger debit (`refund:{ulid}`), sipariş `refunded|partially_refunded`.
+
+**Zamanlayıcı:** `wallet:reconcile` (02:00) — her cüzdan için `SUM(credit) − SUM(debit) = balance` ve son kayıt `balance_after = balance`; fark varsa kritik audit `wallet.reconciliation_mismatch` + `payments.reconcile` yetkililerine panel bildirimi; komut çıkış kodu 1.
+
+**Gerçek sağlayıcı (OD-04 sonrası):** `App\Services\Payments\PaymentProvider` arayüzünü (`createCheckout`, `verifyWebhook`, `normalizeEvent`, `getPaymentStatus`, `refundPayment`) uygulayan adapter + `PaymentManager::PROVIDERS` eşlemesi + `.env` anahtarları.
+
 ## 3. JSON API (`/api/v1`)
 
 Hata biçimi (tüm JSON uçları):
@@ -384,6 +427,7 @@ Ortak HMAC test vektörleri: `mta-resource/web_bridge/tests/vectors.json` (Pest)
 | `2026_11_12_100000_create_support_notification_tables` | `support_categories`, `support_ticket_sequence`, `support_tickets`, `support_messages`, `support_attachments`, `support_ticket_events`, `support_macros`, `user_notification_preferences`, `notifications` | 6 |
 | `2026_11_12_110000_create_bridge_game_tables` | `integration_credentials`, `bridge_nonces`, `server_heartbeats`, `server_stats_daily`, `mta_accounts`, `game_account_links`, `game_link_codes`, `characters`, `game_events`, `game_commands` (+ FK `support_tickets.character_id`) | 7 |
 | `2026_11_12_120000_create_moderation_application_tables` | `application_types`, `applications` (+ generated `open_key` unique), `application_answers`, `application_messages`, `application_status_history` (append-only trigger), `sanctions` (+ `chk_sanctions_target`), `sanction_appeals`, `mta_account_devices` (+ FK `factions/game_jobs.application_type_id`) | 8 |
+| `2026_11_13_090000_create_wallet_payment_tables` | `wallet_types`, `wallets` (+ `CHECK balance >= 0`), `wallet_transactions` (append-only trigger + CHECK'ler), `payment_packages`, `payment_orders` (+ status CHECK), `payment_events`, `refunds`, `wallet_adjustment_requests`, `wallet_reconciliation_runs` | 9 |
 | `2026_11_11_100000_create_settings_and_servers_tables` | `system_settings`, `mta_servers` | 2 |
 | `2026_11_11_100100_create_content_tables` | `media`, `pages`, `page_sections`, `page_revisions`, `redirects`, `navigation_items`, `social_links`, `news_categories`, `news_posts`, `tags`, `news_post_tag`, `game_system_categories`, `game_systems`, `rule_categories`, `rules`, `rule_revisions`, `game_jobs`, `factions`, `faqs`, `community_events`, `academy_courses`, `academy_topics`, `academy_topic_rule`, `contact_messages` | 2 |
 
@@ -470,7 +514,20 @@ Faz 5'te mevcut tablolar da kullanılmaya başladı: `page_revisions` (sayfa dü
 | `mta_account_devices` | `mta_account_id`, `serial_hmac` CHAR(64) (HMAC, **ham serial yok**), `label`, `status` (`pending_approval\|active\|revoked`), `link_code_id`, `approved_by`, `approved_at`, `revoked_at`, unique (`mta_account_id`,`serial_hmac`) | |
 
 `game_link_codes.purpose` artık `account_link` veya `device_link`. `game_commands` kaynakları: `sanction`, `manual`, `game_account_link`.
-**Seed sırası:** `ServerSeeder` → `AccessControlSeeder` (izinler, 9 sistem rolü + matris, 6 branş, 5 destek kategorisi) → `MessageTemplateSeeder` (sistem e-posta şablonları) → `ContentSeeder` → (`local` ise) `DemoSeeder`. İlk süper admin seed ile oluşturulmaz (bkz. §2 Yönetim paneli).
+**Ekonomi ve ödeme tabloları (Faz 9):**
+
+| Tablo | Önemli kolonlar | Not |
+|---|---|---|
+| `wallet_types` | `key` (unique; `web_credit`), `name`, `unit_label` (`MK`), `is_purchasable`, `is_active`, `sort` | Seed: Meridyen Kredisi |
+| `wallets` | `user_id` + `wallet_type_id` (unique), `balance` BIGINT (`CHECK >= 0`), `version` (her post'ta +1), `status` (`active\|frozen`) | Yalnızca LedgerService yazar |
+| `wallet_transactions` | `ulid`, `wallet_id`, `direction` (`credit\|debit`, CHECK), `amount` (`> 0`), `balance_before`, `balance_after` (`>= 0`), `reason` (`topup\|purchase\|admin_adjustment\|refund\|reversal\|promo\|game_sync`), `source_type/id`, `reversal_of_id` (unique), `idempotency_key` (unique), `description`, `created_by`, `created_at` | **Append-only** (UPDATE/DELETE trigger) |
+| `payment_packages` | `wallet_type_id`, `name`, `credit_amount`, `bonus_amount`, `price_minor` (kuruş, `> 0`), `currency` (`TRY`), `is_active`, `sort` | Seed: Başlangıç 100 MK / 49,99 · Standart 250+25 / 119,99 · Destekçi 600+100 / 249,99 |
+| `payment_orders` | `ulid`, `order_number` (`MRP-YYYYMMDD-XXXX`), `user_id`, `wallet_id`, `payment_package_id`, `provider`, `provider_order_id`, `amount_minor`, `currency`, `credit_amount` (anlık kopya), `status` (`created\|pending\|requires_action\|succeeded\|failed\|cancelled\|refunded\|partially_refunded\|disputed`), `refunded_minor`, `idempotency_key` (unique), `failure_reason`, `expires_at`, `paid_at` | unique (`provider`,`provider_order_id`) |
+| `payment_events` | `provider`, `provider_event_id` (unique ikili), `payment_order_id`, `event_type` (`payment.succeeded\|payment.failed…`), `signature_valid`, `payload` (temizlenmiş), `status` (`received\|processed\|ignored\|failed`), `error` (`amount_mismatch`, `order_not_found`…), `received_at`, `processed_at` | Webhook gelen kutusu |
+| `refunds` | `ulid`, `payment_order_id`, `amount_minor`, `reason`, `status` (`requested\|approved\|processing\|succeeded\|failed\|rejected\|requires_review`), `provider_refund_id`, `wallet_transaction_id`, `requested_by`, `approved_by` (≠ talep eden) | |
+| `wallet_adjustment_requests` | `ulid`, `wallet_id`, `direction`, `amount`, `reason` (≥ 20), `status` (`pending\|approved\|rejected\|applied\|cancelled`), `requires_second_approval`, `reversal_of_id`, `requested_by`, `reviewed_by`, `review_note`, `wallet_transaction_id` | Dört göz |
+| `wallet_reconciliation_runs` | `ulid`, `triggered_by`, `wallets_checked`, `mismatches`, `total_balance`, `ledger_net`, `details` JSON, `started_at`, `finished_at` | FR-WAL-007 raporu |
+**Seed sırası:** `ServerSeeder` → `AccessControlSeeder` (izinler, 9 sistem rolü + matris, 6 branş, 5 destek kategorisi) → `MessageTemplateSeeder` (sistem e-posta şablonları) → `ContentSeeder` → `EconomySeeder` (web_credit + 3 paket) → (`local` ise) `DemoSeeder`. İlk süper admin seed ile oluşturulmaz (bkz. §2 Yönetim paneli).
 
 ---
 

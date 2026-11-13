@@ -19,12 +19,14 @@ use App\Models\NavigationItem;
 use App\Models\NewsCategory;
 use App\Models\NewsPost;
 use App\Models\Page;
+use App\Models\PaymentPackage;
 use App\Models\Rule;
 use App\Models\RuleCategory;
 use App\Models\SocialLink;
 use App\Models\SupportCategory;
 use App\Models\SupportMacro;
 use App\Models\Tag;
+use App\Models\WalletType;
 use App\Support\ApplicationForms\ApplicationForms;
 use Illuminate\Database\Eloquent\Model;
 use InvalidArgumentException;
@@ -250,6 +252,22 @@ final class ContentResourceRegistry
                 ],
             ],
             // docs/ROUTES.md §6.4: destek kategorileri ve makroları CMS kaynak deseniyle (support.manage).
+            // Faz 9 — docs/ROUTES.md §6.7 `admin.economy.packages.*` (payments.packages.manage). Fiyat kuruş cinsinden.
+            'payment-packages' => [
+                'model' => PaymentPackage::class, 'label' => 'Kredi paketleri', 'singular' => 'Paket', 'family' => 'economy', 'title' => 'name',
+                'publishable' => false, 'sortable' => true, 'slug_from' => null, 'search' => ['name'], 'columns' => ['name', 'credit_amount', 'price_minor', 'is_active'],
+                'path' => 'economy/packages', 'name' => 'economy.packages',
+                'fields' => [
+                    'name' => ['type' => 'text', 'label' => 'Ad', 'rules' => ['required', 'string', 'max:64']],
+                    'wallet_type_id' => ['type' => 'belongs', 'label' => 'Cüzdan türü', 'model' => WalletType::class, 'display' => 'name', 'rules' => ['required']],
+                    'credit_amount' => ['type' => 'number', 'label' => 'Kredi', 'rules' => ['required', 'integer', 'min:1', 'max:1000000']],
+                    'bonus_amount' => ['type' => 'number', 'label' => 'Bonus kredi', 'rules' => ['required', 'integer', 'min:0', 'max:1000000'], 'default' => 0],
+                    'price_minor' => ['type' => 'number', 'label' => 'Fiyat (kuruş, ör. 4999 = 49,99 TL)', 'rules' => ['required', 'integer', 'min:1', 'max:100000000']],
+                    'currency' => ['type' => 'select', 'label' => 'Para birimi', 'options' => ['TRY' => 'TRY'], 'rules' => ['required'], 'default' => 'TRY'],
+                    'is_active' => ['type' => 'bool', 'label' => 'Satışta'],
+                ],
+            ],
+
             // Faz 8 — docs/ROUTES.md §6.5 `admin.application-types.*` (applications.types.manage). Form alanları kodda (FR-APP-002).
             'application-types' => [
                 'model' => ApplicationType::class, 'label' => 'Başvuru türleri', 'singular' => 'Başvuru türü', 'family' => 'applications', 'title' => 'name',
@@ -310,6 +328,7 @@ final class ContentResourceRegistry
             'academy' => 'academy.manage',
             'announcements' => $ability === 'publish' ? 'announcements.publish' : 'announcements.manage',
             'support' => 'support.manage',
+            'economy' => 'payments.packages.manage',
             'applications' => 'applications.types.manage',
             default => match ($ability) {
                 'read' => 'content.read',

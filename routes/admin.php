@@ -11,11 +11,13 @@ use App\Http\Controllers\Admin\ContactMessageController;
 use App\Http\Controllers\Admin\ContentController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DeviceController;
+use App\Http\Controllers\Admin\EconomyController;
 use App\Http\Controllers\Admin\GameAccountController;
 use App\Http\Controllers\Admin\GameCommandController;
 use App\Http\Controllers\Admin\IntegrationController;
 use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\PageSectionController;
+use App\Http\Controllers\Admin\PaymentController as AdminPaymentController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SanctionController;
 use App\Http\Controllers\Admin\SettingsController;
@@ -194,6 +196,25 @@ Route::get('game-commands', [GameCommandController::class, 'index'])->middleware
 // Tür bazlı izin controller'da (config/roleplay.php bridge.commands); burada en az okuma izni.
 Route::post('game-commands', [GameCommandController::class, 'store'])->middleware(['can:game_commands.read', 'password.confirm'])->name('game-commands.store');
 Route::post('game-commands/{command}/cancel', [GameCommandController::class, 'cancel'])->middleware('can:game_commands.read')->where('command', '[0-9a-z]{26}')->name('game-commands.cancel');
+
+// §6.7 Ekonomi ve ödemeler (Faz 9). Dört göz Action'larda; kritik işlemler PC.
+Route::prefix('economy')->name('economy.')->group(function (): void {
+    Route::get('/', [EconomyController::class, 'index'])->middleware('can:wallet.read')->name('index');
+    Route::get('transactions', [EconomyController::class, 'transactions'])->middleware('can:wallet.read')->name('transactions');
+    Route::get('wallets/{wallet}', [EconomyController::class, 'wallet'])->middleware('can:wallet.read')->whereNumber('wallet')->name('wallets.show');
+    Route::get('adjustments', [EconomyController::class, 'adjustments'])->middleware('can:wallet.read')->name('adjustments.index');
+    Route::post('adjustments', [EconomyController::class, 'storeAdjustment'])->middleware(['can:wallet.adjust.request', 'password.confirm'])->name('adjustments.store');
+    Route::post('adjustments/{adjustment}/approve', [EconomyController::class, 'approve'])->middleware(['can:wallet.adjust.approve', 'password.confirm'])->where('adjustment', '[0-9a-z]{26}')->name('adjustments.approve');
+    Route::post('adjustments/{adjustment}/reject', [EconomyController::class, 'reject'])->middleware('can:wallet.adjust.approve')->where('adjustment', '[0-9a-z]{26}')->name('adjustments.reject');
+    Route::post('transactions/{transaction}/reversal-request', [EconomyController::class, 'reversalRequest'])->middleware(['can:wallet.adjust.request', 'password.confirm'])->where('transaction', '[0-9a-z]{26}')->name('reversal-request');
+});
+Route::get('payments', [AdminPaymentController::class, 'index'])->middleware('can:payments.read')->name('payments.index');
+Route::get('payments/reconciliation', [AdminPaymentController::class, 'reconciliation'])->middleware('can:payments.reconcile')->name('payments.reconciliation');
+Route::post('payments/reconciliation/run', [AdminPaymentController::class, 'runReconciliation'])->middleware('can:payments.reconcile')->name('payments.reconciliation.run');
+Route::get('payments/{order}', [AdminPaymentController::class, 'show'])->middleware('can:payments.read')->where('order', '[0-9a-z]{26}')->name('payments.show');
+Route::post('payments/{order}/refund-request', [AdminPaymentController::class, 'refundRequest'])->middleware(['can:payments.refund.request', 'password.confirm'])->where('order', '[0-9a-z]{26}')->name('payments.refund-request');
+Route::post('refunds/{refund}/approve', [AdminPaymentController::class, 'approveRefund'])->middleware(['can:payments.refund.approve', 'password.confirm'])->where('refund', '[0-9a-z]{26}')->name('refunds.approve');
+Route::post('refunds/{refund}/reject', [AdminPaymentController::class, 'rejectRefund'])->middleware('can:payments.refund.approve')->where('refund', '[0-9a-z]{26}')->name('refunds.reject');
 
 // §6.11 MTA entegrasyonu (Faz 7) — secret yalnızca oluşturma yanıtında bir kez
 Route::prefix('integrations/mta')->name('integrations.mta')->middleware('can:integrations.manage')->group(function (): void {
