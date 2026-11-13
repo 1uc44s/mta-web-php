@@ -20,7 +20,7 @@ Laravel 13 · PHP 8.4 · MariaDB 10.11 · Blade + Tailwind CSS v4 + Alpine.js (C
 | 8 | Başvurular, moderasyon, oyun komutları, cihazlar | ✅ (özellik bayrakları varsayılan kapalı) |
 | 9 | Ekonomi ve ödeme | ✅ FakeProvider ile (OD-03/OD-04 bekliyor; `features.wallet/payments` varsayılan kapalı) |
 | 10 | Gelişmiş kanallar (Reverb, Web Push, Discord, Akademi sınavı, KVKK dökümü) | ✅ özellikler varsayılan kapalı; WhatsApp atlandı (OD-05, R3) |
-| 11 | Sertleştirme ve yayın | 🟡 R1 yerel kısım ✅ (güvenlik testleri, audit, yedek/geri yükleme testi, izleme, operasyon dokümanı); production kurulumu, hukuk ve marka onayı açık |
+| 11 | Sertleştirme ve yayın | 🟡 R1 + R2 yerel kısım ✅ (güvenlik testleri, audit, yedek/geri yükleme testi, izleme, operasyon dokümanı); production kurulumu, hukuk ve marka onayı açık |
 
 ---
 
@@ -583,11 +583,11 @@ Ayrıntı: [docs/OPERATIONS.md](docs/OPERATIONS.md). Örnek production dosyalar�
 
 | Komut | Zamanlama | Görev |
 |---|---|---|
-| `php artisan mrp:health-check [--json]` | 5 dk | Başarısız iş (24 sa), kuyruk gecikmesi > 10 dk, disk < %10, MTA heartbeat > 5 dk → `security` log; alarm varsa çıkış kodu 1 |
+| `php artisan mrp:health-check [--json]` | 5 dk | Başarısız iş (24 sa), kuyruk gecikmesi > 10 dk, disk < %10, MTA heartbeat > 5 dk, **R2:** işlenmemiş ödeme olayı > 15 dk (kritik), başarısız oyun komutu (24 sa) → `security` log (+ `discord.ops_alerts` açıksa Discord); alarm varsa çıkış kodu 1 |
 | `php artisan audit:verify` | 03:30 | Audit hash zinciri |
 | `php artisan mrp:make-super-admin <kullanıcı>` | elle | Break-glass |
 
-**Yayın kapısı testleri:** `tests/Feature/Security/ReleaseGateTest.php` (SQL injection, session fixation, `X-Forwarded-For` ile hız sınırı atlatma, yansıyan XSS, sayfa başına sorgu sınırı, sağlık kontrolü). `composer audit` ve `npm audit` 0 açık.
+**Yayın kapısı testleri:** `tests/Feature/Security/ReleaseGateTest.php` (R1: SQL injection, session fixation, `X-Forwarded-For` ile hız sınırı atlatma, yansıyan XSS, sayfa başına sorgu sınırı, sağlık kontrolü) ve `ReleaseGateR2Test.php` (R2: **tüm panel rotalarında genel IDOR taraması** — başka oyuncunun başvuru/ceza/cihaz/ödeme/karakter/talep/ek/bildirim/oturum kaynağı → 403/404 ve veri değişmez; R2 ACP aramalarında SQL injection + yansıyan XSS; KVKK dökümü hız sınırı `X-Forwarded-For` ile atlatılamaz; sahte imzalı / bilinmeyen sağlayıcılı webhook kayıt oluşturmaz; R2 panel/ACP sayfalarında sorgu sınırı; `.env.example` gizli değer içermez; R2 sağlık alarmları). `composer audit` ve `npm audit` 0 açık.
 
 **Veritabanı kullanıcıları (production):** `meridyen_app` (yalnızca `SELECT/INSERT/UPDATE/DELETE`), `meridyen_migrate` (DDL + trigger, yalnızca dağıtımda), `meridyen_backup` (salt okunur + trigger dökümü). Uygulama kullanıcısı audit/consent trigger'larını değiştiremez.
 

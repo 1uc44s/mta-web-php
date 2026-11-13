@@ -68,6 +68,7 @@ php artisan mrp:health-check
 | Tarih | Ortam | Sonuç |
 |---|---|---|
 | 2026-11-12 | Yerel (MariaDB 10.11.16) | ✅ 72 tablo, 4 trigger; `permissions` 68, `roles` 9, `pages` 6, `migrations` 10 kaynakla birebir. Geçici veritabanı silindi |
+| 2026-11-13 | Yerel (MariaDB 10.11), R2 | ✅ 94 tablo, 8 trigger (audit, consent, başvuru geçmişi, `wallet_transactions` append-only); `permissions` 68, `roles` 9, `migrations` 13, `payment_packages` 3, `wallet_types` 1 kaynakla birebir; geri yüklenen DB'de `audit:verify` sağlam. Geçici veritabanı ve döküm silindi |
 
 ## 5. İzleme ve alarmlar
 
@@ -78,6 +79,8 @@ php artisan mrp:health-check
 | Kuyruk gecikmesi | `mrp:health-check` | En eski iş > 10 dk → critical |
 | Disk | `mrp:health-check` | Boş alan < %10 → critical |
 | MTA heartbeat | `mrp:health-check` (bakımda olmayan aktif sunucular) | > 5 dk sessiz → warning |
+| Ödeme olayı işlenmedi (R2) | `mrp:health-check` | `payment_events.status=received` 15 dk+ → critical (kredi bekleyen oyuncu; `critical` kuyruğu çalışıyor mu?) |
+| Başarısız oyun komutu (R2) | `mrp:health-check` | Son 24 saatte `game_commands.status=failed` ≥ 1 → warning (ACP → Oyun komutları) |
 | Köprü imza hataları | `BridgeAlerts` | 5 dk'da > 20 → kritik audit `bridge.signature_alert` |
 | Audit zinciri | `audit:verify` (günlük 03:30) | Kırılma → critical |
 | Uygulama hataları | `storage/logs/laravel-*.log` (redaksiyonlu) | Yeni hata türü |

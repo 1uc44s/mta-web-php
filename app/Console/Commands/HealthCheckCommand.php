@@ -29,6 +29,8 @@ final class HealthCheckCommand extends Command
 
     public const HEARTBEAT_WARN_SECONDS = 300;
 
+    public const PAYMENT_EVENT_STUCK_SECONDS = 900;
+
     public function handle(OpsAlerts $ops): int
     {
         $alerts = [];
@@ -55,6 +57,18 @@ final class HealthCheckCommand extends Command
             if ($silent === null || $silent > self::HEARTBEAT_WARN_SECONDS) {
                 $alerts[] = ['level' => 'warning', 'check' => 'heartbeat:'.$server->slug, 'value' => $silent];
             }
+        }
+
+        // R2 (Faz 11): işlenmeyen ödeme olayı = kredi bekleyen oyuncu → kritik; başarısız oyun komutu → uyarı.
+        $stuckPayments = DB::table('payment_events')->where('status', 'received')
+            ->where('received_at', '<', now()->subSeconds(self::PAYMENT_EVENT_STUCK_SECONDS))->count();
+        if ($stuckPayments > 0) {
+            $alerts[] = ['level' => 'critical', 'check' => 'payment_events_stuck', 'value' => $stuckPayments];
+        }
+
+        $failedCommands = DB::table('game_commands')->where('status', 'failed')->where('updated_at', '>=', now()->subDay())->count();
+        if ($failedCommands > 0) {
+            $alerts[] = ['level' => 'warning', 'check' => 'game_commands_failed', 'value' => $failedCommands];
         }
 
         foreach ($alerts as $alert) {

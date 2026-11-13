@@ -44,7 +44,8 @@ final class ApplicationFormRequest extends FormRequest
 
         $key = match (true) {
             is_string($type) => ApplicationType::query()->where('slug', $type)->value('form_key'),
-            is_string($application) => Application::query()->where('ulid', $application)->first()?->type?->form_key,
+            // Yalnızca oturum sahibinin başvurusu: başkasınınki doğrulamaya girmeden 404 (varlık sızmaz — R2 IDOR taraması).
+            is_string($application) => Application::query()->where('ulid', $application)->where('user_id', $this->user()?->getAuthIdentifier())->first()?->type?->form_key,
             default => null,
         };
 
