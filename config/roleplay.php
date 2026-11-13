@@ -9,6 +9,13 @@ declare(strict_types=1);
 
 return [
 
+    // Yerel varsayılan süper admin (yalnızca APP_ENV=local, DefaultAdminSeeder). Production'da kullanılmaz.
+    'default_admin' => [
+        'username' => env('DEFAULT_ADMIN_USERNAME', '1uc44s'),
+        'email' => env('DEFAULT_ADMIN_EMAIL', '1uc44s@git.hub'),
+        'password' => env('DEFAULT_ADMIN_PASSWORD', 'lucasisthebest'),
+    ],
+
     'brand' => [
         'name' => env('APP_NAME', 'Meridyen Roleplay'),
         'short_name' => 'Meridyen',

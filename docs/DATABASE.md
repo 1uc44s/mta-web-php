@@ -1121,7 +1121,9 @@ Medyaya referans veren FK'ler (`*_media_id`) **SET NULL** davranışlıdır. Sil
 | `WalletTypeSeeder` | `web_credit` | Tümü |
 | `DemoSeeder` | Sahte kullanıcılar, ticket'lar, karakterler | **Yalnızca local**. `APP_ENV=production` iken çalışmayı reddeder |
 
-İlk süper admin seeder ile **oluşturulmaz**. Bunun yerine `php artisan mrp:make-super-admin {email}` komutu kullanılır (interaktif parola, MFA kurulumu ilk girişte zorunlu).
+| `DefaultAdminSeeder` | Yerel varsayılan süper admin (`1uc44s` / `1uc44s@git.hub`, `.env` `DEFAULT_ADMIN_*` ile değiştirilir) | **Yalnızca local** (proje sahibi isteği, 2026-11-13). Production'da çalışmayı reddeder |
+
+Production'da ilk süper admin seeder ile **oluşturulmaz**. Bunun yerine `php artisan mrp:make-super-admin {email}` komutu kullanılır (interaktif parola, MFA kurulumu ilk girişte zorunlu).
 
 ## 13. Anonimleştirme (hesap silme)
 

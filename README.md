@@ -1,65 +1,294 @@
-# Meridyen Roleplay — Web Platformu
+# Roleplay Web Platformu (çalışma adı: Meridyen Roleplay)
 
-MTA:SA roleplay topluluğu için web platformu: public site, oyuncu paneli (`/panel`), yönetim paneli (`/admin`) ve MTA köprüsü (`/api/v1/game`).
-Laravel 13 · PHP 8.4 · MariaDB 10.11 · Blade + Tailwind CSS v4 + Alpine.js (CSP build).
+MTA:SA (Multi Theft Auto: San Andreas) roleplay topluluğu için web platformu:
 
-> **Tek doğruluk kaynağı:** [`docs/`](docs/README.md). Her özellik önce dokümana işlenir, sonra kodlanır. Bu README, her fazın sonunda güncellenen **teknik özettir**; ayrıntılar docs'tadır.
+- **Public site** — tanıtım, kurallar, haberler, Akademi, fraksiyonlar, meslekler, etkinlikler.
+- **Oyuncu paneli** (`/panel`) — hesap, oyun hesabı bağlama, karakterler, destek talepleri, başvurular, cezalar, cüzdan, bildirimler.
+- **Yönetim paneli** (`/admin`) — rol/izin, branşlar, CMS, destek kuyruğu, moderasyon, ekonomi, marka, sistem sağlığı, denetim kaydı.
+- **MTA köprüsü** (`/api/v1/game`) — HMAC imzalı oyun sunucusu ↔ web API'si ve `mta-resource/web_bridge` Lua kaynağı.
 
-## Faz durumu
+> **Marka adı kodda sabit değildir.** Site adı, kısa ad, slogan, logo ve sekme ikonu **ACP → Marka** ekranından değiştirilir (bkz. [§5](#5-marka-ad-logo-sekme-ikonu)).
+>
+> **Tek doğruluk kaynağı:** [`docs/`](docs/README.md). Her özellik önce dokümana işlenir, sonra kodlanır.
 
-| Faz | Kapsam | Durum |
-|---|---|---|
-| 0 | Dokümantasyon | ✅ |
-| 1 | Temel kurulum (Laravel, güvenlik başlıkları, kalite araçları) | ✅ |
-| 2 | Tasarım sistemi + public site | ✅ |
-| 3 | Kimlik doğrulama | ✅ |
-| 4 | RBAC, branşlar, yönetim paneli iskeleti | ✅ |
-| 5 | CMS, Akademi, mesaj şablon motoru | ✅ |
-| 6 | Oyuncu paneli, destek, PWA | ✅ |
-| 7 | MTA köprüsü + Lua resource | ✅ |
-| 8 | Başvurular, moderasyon, oyun komutları, cihazlar | ✅ (özellik bayrakları varsayılan kapalı) |
-| 9 | Ekonomi ve ödeme | ✅ FakeProvider ile (OD-03/OD-04 bekliyor; `features.wallet/payments` varsayılan kapalı) |
-| 10 | Gelişmiş kanallar (Reverb, Web Push, Discord, Akademi sınavı, KVKK dökümü) | ✅ özellikler varsayılan kapalı; WhatsApp atlandı (OD-05, R3) |
-| 11 | Sertleştirme ve yayın | 🟡 R1 + R2 yerel kısım ✅ (güvenlik testleri, audit, yedek/geri yükleme testi, izleme, operasyon dokümanı); production kurulumu, hukuk ve marka onayı açık |
+## İçindekiler
+
+1. [Teknolojiler ve sürümler](#1-teknolojiler-ve-sürümler)
+2. [Kurulum](#2-kurulum)
+3. [Varsayılan yönetici hesabı](#3-varsayılan-yönetici-hesabı)
+4. [Komutlar](#4-komutlar)
+5. [Marka (ad, logo, sekme ikonu)](#5-marka-ad-logo-sekme-ikonu)
+6. [Web rotaları (sayfalar ve formlar)](#6-web-rotaları-sayfalar-ve-formlar)
+7. [API dokümantasyonu](#7-api-dokümantasyonu)
+8. [Veritabanı](#8-veritabanı)
+9. [Operasyon ve production](#9-operasyon-ve-production)
+10. [Mimari notlar](#10-mimari-notlar)
+11. [Faz durumu](#11-faz-durumu)
 
 ---
 
-## 1. Kurulum (Windows + XAMPP)
+## 1. Teknolojiler ve sürümler
 
-**Gereksinimler:** PHP 8.4 (`intl, gd, zip, sodium, pdo_mysql` açık), MariaDB 10.11+ / MySQL 8.4, Composer 2, Node 20+.
+### 1.1 Diller
+
+| Dil | Kullanım |
+|---|---|
+| **PHP 8.4** | Uygulama (Laravel), `declare(strict_types=1)` her dosyada |
+| **Blade** (HTML) | Sunucu tarafı şablonlar — SPA yoktur |
+| **CSS** (Tailwind CSS v4) | Tasarım token'ları `resources/css/app.css` |
+| **JavaScript** (ES modülleri) | Küçük, framework'süz modüller + Alpine.js (CSP build) |
+| **SQL** (MariaDB / MySQL) | Migration'lar, trigger'lar (append-only defterler) |
+| **Lua 5.1** (MTA:SA) | Oyun sunucusu köprü kaynağı `mta-resource/web_bridge` |
+| **Bash / Nginx / Supervisor yapılandırması** | `deploy/` örnek production dosyaları |
+
+### 1.2 Sürümler (geliştirmede doğrulanmış)
+
+| Bileşen | Gereken | Doğrulanan sürüm |
+|---|---|---|
+| PHP | 8.3+ (8.4 önerilir) | 8.4.27 |
+| PHP eklentileri | `intl, gd, zip, sodium, pdo_mysql, mbstring, bcmath, openssl, fileinfo` | — |
+| Laravel Framework | ^13.17 | 13.42.0 |
+| Composer | 2.x | 2.11.2 |
+| MariaDB / MySQL | MariaDB 10.11+ veya MySQL 8.4+ | MariaDB 10.11.16 |
+| Node.js / npm | Node 20+ (22+ önerilir) | Node 24.20 / npm 11.19 |
+| Vite | ^8 | 8.3.8 |
+| Tailwind CSS | ^4 | 4.x |
+| MTA:SA sunucu | 1.6.0+ | — |
+
+### 1.3 Başlıca paketler
+
+**PHP (composer):** `laravel/framework` 13, `laravel/fortify` (giriş, 2FA, parola sıfırlama), `laravel/reverb` (WebSocket, isteğe bağlı), `intervention/image` 4 (görsel yeniden kodlama), `league/commonmark` (Markdown), `symfony/html-sanitizer` (XSS temizliği), `minishlink/web-push` (Web Push), `mallardduck/blade-lucide-icons` (ikonlar).
+**Geliştirme:** `pestphp/pest` 4 + `pest-plugin-laravel`, `larastan/larastan` 3 (seviye 6), `laravel/pint` (PSR-12), `phpunit/phpunit` 12.
+**JavaScript (npm):** `@alpinejs/csp`, `laravel-echo` + `pusher-js` (yalnızca Reverb açıkken, tembel yüklenir), `@fontsource-variable/archivo`, `@fontsource-variable/jetbrains-mono`, `tailwindcss` 4, `vite` 8, `laravel-vite-plugin` 3.
+
+---
+
+## 2. Kurulum
+
+### 2.1 Gereksinimler
+
+- PHP 8.4 + yukarıdaki eklentiler, Composer 2
+- MariaDB 10.11+ (veya MySQL 8.4+), `utf8mb4_unicode_ci`
+- Node.js 20+ ve npm
+- Git
+- (İsteğe bağlı) MTA:SA 1.6 sunucusu — oyun köprüsü için
+
+### 2.2 Yerel kurulum — Windows + XAMPP (adım adım)
+
+1. **XAMPP** kur (PHP 8.4 içeren sürüm). `C:\xampp\php\php.ini` içinde şu satırların başındaki `;` işaretini kaldır: `extension=intl`, `extension=gd`, `extension=zip`, `extension=sodium`, `extension=pdo_mysql`, `extension=fileinfo`. XAMPP Control Panel'den **MySQL**'i başlat.
+2. **Composer** ve **Node.js** kur. PATH'te `php` yoksa komutlarda `C:\xampp\php\php.exe` kullan (Git Bash'te `/c/xampp/php/php.exe`).
+3. Depoyu klonla:
+   ```bash
+   git clone https://github.com/1uc44s/mta-web-php.git C:/xampp/htdocs/roleplay-web
+   cd C:/xampp/htdocs/roleplay-web
+   ```
+4. Veritabanı ve kullanıcı oluştur (`C:\xampp\mysql\bin\mysql.exe -u root`):
+   ```sql
+   CREATE DATABASE roleplay_web CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   CREATE DATABASE roleplay_web_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   CREATE USER 'roleplay_app'@'localhost' IDENTIFIED BY '<güçlü-parola>';
+   GRANT ALL PRIVILEGES ON roleplay_web.* TO 'roleplay_app'@'localhost';
+   GRANT ALL PRIVILEGES ON roleplay_web_test.* TO 'roleplay_app'@'localhost';
+   ```
+   Not: migration'lar trigger oluşturur; MariaDB'de ikili log açıksa `SET GLOBAL log_bin_trust_function_creators = 1;` gerekebilir.
+5. Bağımlılıkları kur ve ortam dosyasını hazırla:
+   ```bash
+   composer install
+   npm install
+   cp .env.example .env
+   php artisan key:generate
+   ```
+6. `.env` içinde en az şunları doldur:
+   - `APP_ENV=local`, `APP_URL=http://localhost:8000` (veya vhost adresin)
+   - `DB_DATABASE=roleplay_web`, `DB_USERNAME=roleplay_app`, `DB_PASSWORD=<parola>`
+   - `BRIDGE_SERIAL_PEPPER` — 64 karakter hex: `php -r "echo bin2hex(random_bytes(32));"`
+7. Tabloları ve başlangıç verisini oluştur, ön yüzü derle:
+   ```bash
+   php artisan migrate --seed
+   php artisan storage:link
+   npm run build
+   ```
+   `APP_ENV=local` iken seed ayrıca örnek içerik (`DemoSeeder`) ve **varsayılan yönetici hesabını** (`DefaultAdminSeeder`, bkz. [§3](#3-varsayılan-yönetici-hesabı)) oluşturur.
+8. Çalıştır:
+   ```bash
+   php artisan serve --host=127.0.0.1 --port=8000
+   ```
+   Tarayıcı: `http://127.0.0.1:8000` · Oyuncu paneli: `/panel` · Yönetim paneli: `/admin`.
+9. (Önerilir) Arka plan işçileri — e-postalar, bildirimler ve ödeme olayları kuyruktan işlenir; zamanlanmış görevler zamanlayıcıyla çalışır:
+   ```bash
+   php artisan queue:work --queue=critical,default,mail,bulk
+   php artisan schedule:work
+   ```
+   Sunucu, kuyruk, log ve Vite'ı tek komutla başlatmak için: `composer dev`.
+
+**Apache vhost ile (`http://roleplay-web.test`):** `C:\Windows\System32\drivers\etc\hosts` dosyasına `127.0.0.1 roleplay-web.test`, `C:\xampp\apache\conf\extra\httpd-vhosts.conf` dosyasına `DocumentRoot "C:/xampp/htdocs/roleplay-web/public"` gösteren bir `<VirtualHost *:80>` ekle, Apache'yi yeniden başlat ve `.env` `APP_URL` değerini güncelle.
+
+### 2.3 Yerel kurulum — Linux / macOS
 
 ```bash
-composer install
-npm install
-cp .env.example .env
-php artisan key:generate
-```
-
-`.env` içinde doldur: `DB_PASSWORD`, `BRIDGE_SERIAL_PEPPER` (64 karakter hex: `php -r "echo bin2hex(random_bytes(32));"`).
-
-```bash
+git clone https://github.com/1uc44s/mta-web-php.git roleplay-web && cd roleplay-web
+composer install && npm install
+cp .env.example .env && php artisan key:generate
+# .env: DB_*, BRIDGE_SERIAL_PEPPER, APP_ENV=local
 php artisan migrate --seed
+php artisan storage:link
 npm run build
-php artisan serve --host=127.0.0.1 --port=8000
+composer dev        # serve + queue + logs + vite
 ```
 
-- Yerel ortamda (`APP_ENV=local`) `DemoSeeder` örnek içerik ekler. Örnek içerikler "Örnek içerik" notuyla işaretlidir.
-- XAMPP Apache ile `http://roleplay-web.test` kullanmak için hosts ve vhost adımları: [docs/TODO.md §2.1 / 1.6](docs/TODO.md).
-- Tasarım geliştirirken `npm run dev` çalıştır. Tailwind yalnızca derleme anında var olan sınıfları üretir; yeni view ekledikten sonra `npm run build` gerekir.
+### 2.4 Ortam değişkenleri (`.env`)
 
-### Komutlar
+| Değişken | Örnek / varsayılan | Açıklama |
+|---|---|---|
+| `APP_NAME` | `Meridyen Roleplay` | Yalnızca ilk değer; asıl ad ACP → Marka'dan gelir |
+| `APP_ENV` | `local` / `production` | `local` örnek içerik ve varsayılan admin üretir |
+| `APP_KEY` | `php artisan key:generate` | Şifreleme anahtarı (**gizli**) |
+| `APP_DEBUG` | `true` (yerel) / `false` (production) | Production'da mutlaka `false` |
+| `APP_URL` | `http://localhost:8000` | İmzalı bağlantılar bu adresle üretilir |
+| `DB_CONNECTION` | `mariadb` | `mariadb` veya `mysql` |
+| `DB_HOST` / `DB_PORT` | `127.0.0.1` / `3306` | |
+| `DB_DATABASE` / `DB_USERNAME` / `DB_PASSWORD` | | **Parola gizli**, repoya girmez |
+| `SESSION_DRIVER` | `database` | Oturumlar `sessions` tablosunda |
+| `SESSION_SECURE_COOKIE` | `false` (http) / `true` (https) | |
+| `CACHE_STORE` | `database` | Production'da `redis` olabilir |
+| `QUEUE_CONNECTION` | `database` | İşçi: `queue:work` |
+| `MAIL_MAILER` | `log` veya `smtp` | Yerelde Mailpit (`127.0.0.1:1025`) önerilir |
+| `BRIDGE_SERIAL_PEPPER` | 64 hex | Cihaz serial HMAC'i için (**gizli**, sonradan değiştirilmez) |
+| `PAYMENTS_PROVIDER` | `fake` | Gerçek sağlayıcı OD-04 sonrası |
+| `BROADCAST_CONNECTION` | `log` | Gerçek zaman için `reverb` |
+| `REVERB_APP_ID/KEY/SECRET`, `REVERB_HOST/PORT/SCHEME` | | Yalnızca Reverb açıkken |
+| `VAPID_SUBJECT/PUBLIC_KEY/PRIVATE_KEY` | `php artisan mrp:vapid-keys` | Web Push (özel anahtar gizli) |
+| `DISCORD_WEBHOOK_ANNOUNCEMENTS` / `DISCORD_WEBHOOK_OPS` | `https://discord.com/api/webhooks/…` | Gizli |
+| `DEFAULT_ADMIN_USERNAME/EMAIL/PASSWORD` | `1uc44s` / `1uc44s@git.hub` / `lucasisthebest` | Yalnızca `APP_ENV=local` (§3) |
+
+### 2.5 İsteğe bağlı özellikler
+
+Çoğu modül **varsayılan kapalıdır** ve ACP → Ayarlar → *features* grubundan açılır: `features.applications` (başvurular), `features.sanctions` (cezalar/itirazlar), `features.devices` (cihaz bağlama), `features.wallet` / `features.payments` (cüzdan/ödeme, sahte sağlayıcı), `features.push` (tarayıcı bildirimi), `features.academy_quiz` (Akademi sınavları). Kapalı bir özelliğin rotaları 404 döner ve menüde görünmez.
+
+| Özellik | Ek kurulum |
+|---|---|
+| Gerçek zaman (Reverb) | `.env` `BROADCAST_CONNECTION=reverb` + `REVERB_*`; `php artisan reverb:start` |
+| Web Push | `php artisan mrp:vapid-keys` → `.env` `VAPID_*` → `features.push`. HTTPS ve service worker gerekir (Windows/XAMPP'ta komut için `OPENSSL_CONF=C:\xampp\apache\conf\openssl.cnf`) |
+| Discord | `.env` `DISCORD_WEBHOOK_*` → ACP → Ayarlar → `discord.announcements` / `discord.ops_alerts` |
+| Ödeme (test) | `features.wallet` + `features.payments` — yalnızca `FakeProvider` (production'da kullanılamaz) |
+
+### 2.6 MTA:SA köprü kaynağı (`mta-resource/web_bridge`)
+
+1. `mta-resource/web_bridge` klasörünü MTA sunucusunun `mods/deathmatch/resources/` dizinine kopyala.
+2. `config.example.lua` → `config.lua` olarak kopyala.
+3. Web'de **ACP → MTA entegrasyonu** → sunucuyu seç → **Yeni anahtar oluştur**; çıkan `key_id` ve `secret` değerlerini `config.lua` içindeki `KEY_ID` / `SECRET` alanlarına yaz (secret yalnızca bir kez gösterilir). `BASE_URL` sitenin adresi olmalı (production'da `https://`; yerelde `http://127.0.0.1:8000`).
+4. `acl.xml` içinde kaynağa `function.fetchRemote` ve `function.kickPlayer` izni ver:
+   ```xml
+   <group name="WebBridge">
+       <acl name="WebBridge" />
+       <object name="resource.web_bridge" />
+   </group>
+   <acl name="WebBridge">
+       <right name="function.fetchRemote" access="true" />
+       <right name="function.kickPlayer" access="true" />
+   </acl>
+   ```
+5. Sunucu konsolunda `start web_bridge`. Başlangıçta HMAC öz-testi çalışır; ardından `/ping` ile saat farkı ölçülür (±300 sn aşılırsa istekler reddedilir — sunucu saatini NTP ile eşitle).
+6. Oyuncu oyunda `/webbagla KOD` yazarak web hesabını bağlar (kod oyuncu panelinde üretilir).
+
+Ayrıntılar: [mta-resource/web_bridge/README.md](mta-resource/web_bridge/README.md).
+
+### 2.7 Production kurulumu (özet)
+
+Nginx + PHP-FPM 8.4 + TLS, Supervisor ile kuyruk işçisi (ve isteğe bağlı Reverb), cron ile `schedule:run`, ayrı veritabanı kullanıcıları (uygulama: DDL/trigger yetkisi yok). Adım adım: [docs/OPERATIONS.md](docs/OPERATIONS.md) ve [`deploy/`](deploy/).
+
+```bash
+composer install --no-dev --optimize-autoloader
+npm ci && npm run build
+php artisan migrate --force
+php artisan db:seed --force          # production'da örnek içerik ve varsayılan admin OLUŞTURMAZ
+php artisan mrp:make-super-admin admin@alanadi.com   # ilk süper admin (parola interaktif sorulur)
+php artisan storage:link
+php artisan optimize
+```
+
+### 2.8 Sorun giderme
+
+| Belirti | Çözüm |
+|---|---|
+| Sayfa stilsiz | `npm run build` (yeni view sonrası da gerekir) |
+| `Vite manifest not found` | `npm run build` veya `npm run dev` |
+| Görseller görünmüyor | `php artisan storage:link` |
+| `.env` değişikliği etkisiz | `php artisan optimize:clear`; `artisan serve` sürecini yeniden başlat |
+| Testlerde "Access denied … roleplay_web_test" | Test veritabanını oluştur ve yetki ver (§2.2 adım 4); `pest --parallel` desteklenmez, `composer test` kullan |
+| `/admin` 404 | Hesap personel değil; süper admin rolü ver (§3) |
+| `/admin` 2FA sayfasına yönleniyor | Personel için 2FA zorunlu; Google Authenticator vb. ile kur |
+
+---
+
+## 3. Varsayılan yönetici hesabı
+
+`APP_ENV=local` iken `php artisan migrate --seed` (veya `php artisan db:seed --class=DefaultAdminSeeder`) şu **süper admin** hesabını oluşturur:
+
+| Alan | Değer |
+|---|---|
+| Kullanıcı adı | `1uc44s` |
+| E-posta | `1uc44s@git.hub` |
+| Parola | `lucasisthebest` |
+| Rol | Süper Admin (tüm izinler) |
+| Giriş adresi | `/login` (kullanıcı adı **veya** e-posta ile) → `/admin` |
+
+- İlk `/admin` girişinde **iki adımlı doğrulama (2FA) kurulumu zorunludur** (personel güvenlik kuralı). Kurulumdaki kurtarma kodlarını sakla.
+- Bilgiler `.env` ile değiştirilebilir: `DEFAULT_ADMIN_USERNAME`, `DEFAULT_ADMIN_EMAIL`, `DEFAULT_ADMIN_PASSWORD` (seed'den önce).
+- Seeder idempotenttir; hesap zaten varsa yeniden oluşturmaz.
+
+> ⚠️ **Güvenlik:** Bu bilgiler herkese açık depoda yazılıdır. `DefaultAdminSeeder` **production ortamında çalışmayı reddeder**. İnternete açık bir sunucuda bu hesap asla kullanılmamalıdır; orada ilk süper admin `php artisan mrp:make-super-admin {email}` ile, güçlü ve gizli bir parolayla oluşturulur. Yerel ortamı başkalarıyla paylaşırsan önce parolayı değiştir (Panel → Güvenlik).
+
+---
+
+## 4. Komutlar
+
+### 4.1 Geliştirme
 
 | Komut | Ne yapar |
 |---|---|
-| `composer test` | Pest (Unit + Feature + Arch). MariaDB test veritabanı `roleplay_web_test` kullanılır |
+| `composer dev` | Sunucu + kuyruk işçisi + log izleme + Vite (eşzamanlı) |
+| `composer test` | Pest (Unit + Feature + Arch). Test veritabanı `roleplay_web_test` |
 | `composer lint` / `composer lint:fix` | Laravel Pint (PSR-12 + `declare_strict_types`) |
 | `composer analyse` | Larastan seviye 6 |
-| `npm run build` | Vite production build |
+| `npm run dev` / `npm run build` | Vite geliştirme sunucusu / production derlemesi |
+| `php artisan migrate:fresh --seed` | Veritabanını sıfırla ve yeniden seed et (**tüm veri silinir**) |
 | `php artisan db:seed --class=ContentSeeder` | Sistem içeriklerini (ana sayfa, yasal sayfalar, kurallar, SSS, Akademi, menü) yeniden yükler |
+
+### 4.2 Uygulama komutları
+
+| Komut | Zamanlama | Görev |
+|---|---|---|
+| `php artisan mrp:make-super-admin {email}` | elle | Süper admin ata / oluştur (break-glass, parola interaktif) |
+| `php artisan mrp:vapid-keys` | elle | Web Push VAPID anahtar çifti üret |
+| `php artisan mrp:health-check [--json]` | 5 dk | Başarısız iş, kuyruk gecikmesi, disk, MTA heartbeat, ödeme olayı, oyun komutu alarmları |
+| `php artisan content:publish-scheduled` | her dakika | Zamanlanmış içerikleri yayınla |
+| `php artisan mrp:moderation-tick` | her dakika | Takılan oyun komutlarını yeniden kuyruğa al, süresi dolan cezaları kapat |
+| `php artisan bridge:maintain [--stats]` | 15 dk / 00:10 | Nonce, heartbeat, olay ve kod temizliği; günlük sunucu istatistiği |
+| `php artisan mrp:expire-roles` | saatlik | Süreli rol ve branş üyeliklerini bitir |
+| `php artisan wallet:reconcile` | 02:00 | Cüzdan mutabakatı |
+| `php artisan audit:verify` | 03:30 | Denetim kaydı hash zinciri doğrulaması |
+| `php artisan reverb:start` | sürekli (isteğe bağlı) | WebSocket sunucusu |
+
+Zamanlayıcı listesi: `php artisan schedule:list`. Production'da cron: `* * * * * php /var/www/meridyen/artisan schedule:run`.
 
 ---
 
-## 2. Web rotaları
+## 5. Marka (ad, logo, sekme ikonu)
+
+**ACP → Marka** (`/admin/branding`, görüntüleme `settings.read`, değiştirme `settings.update` + parola onayı):
+
+- **Site adı** — sekme başlığı, menü, footer, e-posta imzası ve PWA (telefona eklenen uygulama) adı. Kodda `config('app.name')` her istekte bu ayardan gelir (`App\Support\Brand`).
+- **Kısa ad** — logo yanındaki yazı ve ana sayfadaki dev arka plan kelimesi.
+- **Slogan** — footer ve manifest açıklaması.
+- **Logo** — PNG/JPG/WebP, ≤ 2 MB; sunucuda WebP'ye yeniden kodlanır (≤ 640×200). Yüklenmezse varsayılan işaret + kısa ad.
+- **Sekme ikonu (favicon)** — PNG/JPG/WebP, ≥ 64×64, ≤ 1 MB; kare kırpılır ve 32/180/192/512 px PNG üretilir.
+- **SVG kabul edilmez** (güvenlik). Yeni yüklemede eski dosya silinir; her değişiklik denetim kaydına yazılır.
+- CMS metinlerinde `{site}` (tam ad) ve `{site_short}` (kısa ad) yazılabilir; ad değişince metin kendiliğinden güncellenir.
+- Sunucu adı (oyun sunucusu kartı) ayrıdır: **ACP → MTA entegrasyonu**. Cüzdan birimi adı: **ACP → Ekonomi**.
+
+---
+## 6. Web rotaları (sayfalar ve formlar)
 
 Tam katalog: [docs/ROUTES.md](docs/ROUTES.md).
 
@@ -111,7 +340,7 @@ Kayıt ve e-posta doğrulama kendi controller'larımızdadır; giriş, çıkış
 
 ### Yönetim paneli — ACP (Faz 4)
 
-**İlk süper admini oluşturma** (seed ile oluşmaz):
+**Süper admin:** yerelde varsayılan hesap seed ile oluşur ([§3](#3-varsayılan-yönetici-hesabı)). Production'da veya ek süper admin için:
 
 ```bash
 php artisan mrp:make-super-admin sen@ornek.com
@@ -404,64 +633,197 @@ Public site grandroleplay.net'in **yapısal** dilini izleyen yeni bir görsel di
 
 Yeni ayarlar: `site.logo_path`, `site.icon_set` (yalnızca Marka ekranından; genel ayar formu bu anahtarları göstermez ve kabul etmez). `site.logo_media_id` kaldırıldı. Dosyalar `storage/app/public/branding/` altında; eski görsel yeni yüklemede silinir.
 
-## 3. JSON API (`/api/v1`)
-
-Hata biçimi (tüm JSON uçları):
-
-```json
-{ "success": false, "error": { "code": "VALIDATION_ERROR", "message": "…", "details": [{ "field": "code", "message": "…" }] }, "requestId": "01J…" }
-```
-
-| Yöntem | URL | Kimlik doğrulama | Limit | Faz |
-|---|---|---|---|---|
-| GET | `/api/v1/public/server-status` | Yok | 60/dk/IP | 2 |
-| GET | `/api/v1/game/ping` | Köprü imzası (her kapsam) | 120/dk/anahtar | 7 |
-| POST | `/api/v1/game/heartbeat` | Köprü, `heartbeat` | 6/dk/anahtar | 7 |
-| POST | `/api/v1/game/player/connected` · `/player/disconnected` | Köprü, `events` | 120/dk | 7 |
-| POST | `/api/v1/game/accounts/sync` · `/characters/sync` | Köprü, `events` | 120/dk | 7 |
-| POST | `/api/v1/game/account-link/verify` | Köprü, `account_link` | 120/dk + hesap başına 5 yanlış/10 dk | 7 |
-| POST | `/api/v1/game/device-link/verify` | Köprü, `account_link` | 120/dk + hesap başına 5 yanlış/10 dk | 8 |
-| GET | `/api/v1/game/commands/pending` | Köprü, `commands` | 120/dk | 8 |
-| POST | `/api/v1/game/commands/result` | Köprü, `commands` | 120/dk | 8 |
-
-**Köprü imzası** (ARCHITECTURE §7.2): başlıklar `X-Bridge-Key`, `X-Bridge-Timestamp` (unix sn, ±300), `X-Bridge-Nonce` (32–64 hex, tek kullanım), `X-Bridge-Signature` = `hex(HMAC-SHA256(secret, "METHOD\nPATH\nTIMESTAMP\nNONCE\n" + hex(SHA256(body))))`. Sıra: biçim → anahtar aktif → zaman → gövde ≤ 64 KB → imza (`hash_equals`) → kapsam → nonce INSERT (imzadan **sonra**) → `last_used_at`. Hatalar: `401 SIGNATURE_INVALID`, `403 FORBIDDEN`, `409 REPLAY_DETECTED`, `413 PAYLOAD_TOO_LARGE`, `422 VALIDATION_ERROR`, `429 RATE_LIMITED`. Başarısızlıklar `storage/logs/security-*.log`'a (secret'sız); 5 dk'da 20'yi aşarsa kritik audit `bridge.signature_alert`.
-
-Örnek gövdeler ve yanıtlar:
-
-```jsonc
-// POST /heartbeat → {"data":{"status":"online","maintenance":false}}
-{ "players": 87, "max_players": 300, "server_name": "Meridyen RP", "game_mode": "Roleplay", "map": "San Andreas", "resource_version": "1.0.0", "uptime_sec": 86400 }
-// POST /player/connected → {"data":{"duplicate":false}}  (aynı event_id → duplicate:true, yan etki yok)
-{ "event_id": "<uuid>", "occurred_at": "2026-11-11T18:40:00Z", "account": { "ref": "1042", "name": "kaan" } }
-// POST /accounts/sync (≤ 100; yalnızca web'de kayıtlı hesaplar güncellenir) → {"data":{"duplicate":false,"updated":1}}
-{ "event_id": "<uuid>", "accounts": [ { "ref": "1042", "name": "kaan", "last_seen_at": "…" } ] }
-// POST /characters/sync (≤ 20; bağlı değilse {"ignored":true}) → {"data":{"duplicate":false,"ignored":false,"synced":1}}
-{ "event_id": "<uuid>", "account_ref": "1042", "characters": [ { "ref": "c-551", "name": "Kaan Demir", "status": "active", "level": 12,
-  "playtime_minutes": 5400, "faction_key": "lspd", "job_key": "taxi", "public_profile": { "bio": "…" } } ] }
-// POST /account-link/verify → {"data":{"linked":true,"web_username":"kaan_w"}} · 422 LINK_CODE_INVALID · 409 ACCOUNT_ALREADY_LINKED · 409 LINK_LIMIT_REACHED · 429 RATE_LIMITED
-{ "event_id": "<uuid>", "code": "K7Q4-M2XD", "account": { "ref": "1042", "name": "kaan" } }
-// POST /device-link/verify (serial: MTA 32 hex; yalnızca HMAC(serial, BRIDGE_SERIAL_PEPPER) saklanır) → {"data":{"status":"pending_approval"}} · 422 LINK_CODE_INVALID · 503 (pepper yok)
-{ "event_id": "<uuid>", "code": "K7Q4-M2XD", "account": { "ref": "1042" }, "serial": "<32 hex>" }
-// GET /commands/pending → {"data":[{"id":"01jc…","type":"player.kick","payload":{"account_ref":"1042","reason":"…"},"expires_at":"…"}]}  (en fazla 20; dispatched olarak işaretlenir)
-// POST /commands/result → {"data":{"id":"01jc…","status":"succeeded","duplicate":false}}  (tekrar sonuç → duplicate:true)
-{ "id": "01jc…", "status": "failed", "detail": { "error": "player_offline" } }   // error: player_offline | unsupported_command | invalid_payload | timeout | failed
-```
-
-Ortak HMAC test vektörleri: `mta-resource/web_bridge/tests/vectors.json` (Pest) = `tests/vectors.lua` (Lua öz-testi).
-
-`GET /api/v1/public/server-status` yanıtı (15 sn cache, `ETag` / `304` destekli):
-
-```json
-{ "success": true, "data": { "server": "main", "name": "Meridyen Roleplay", "status": "offline", "label": "Çevrimdışı",
-  "players": null, "max_players": 300, "last_heartbeat_at": null, "freshness_seconds": null, "maintenance_note": null,
-  "connect": { "host": "127.0.0.1", "port": 22003, "uri": "mtasa://127.0.0.1:22003" } } }
-```
-
-`status`: `online` (son heartbeat < 90 sn) · `stale` (90 sn – 5 dk, son bilinen sayı) · `offline` (> 5 dk veya hiç yok, sayı gizli) · `maintenance` (admin bayrağı).
-
 ---
 
-## 4. Veritabanı
+## 7. API dokümantasyonu
+
+Temel adres: `{APP_URL}` (yerelde `http://127.0.0.1:8000`). Tüm JSON yanıtları UTF-8'dir ve her yanıtta `X-Request-Id` başlığı bulunur (destek / log eşleştirme için).
+
+### 7.1 Genel kurallar
+
+**Başarılı yanıt:**
+```json
+{ "success": true, "data": { "…": "…" }, "requestId": "01JC…" }
+```
+**Hata yanıtı:**
+```json
+{ "success": false, "error": { "code": "VALIDATION_ERROR", "message": "…", "details": [ { "field": "players", "message": "…" } ] }, "requestId": "01JC…" }
+```
+
+| HTTP | `error.code` | Anlamı |
+|---|---|---|
+| 400 | `BAD_REQUEST` | Bozuk istek / geçersiz webhook imzası |
+| 401 | `UNAUTHENTICATED` · `SIGNATURE_INVALID` | Oturum yok / köprü imzası, anahtar veya zaman damgası geçersiz |
+| 403 | `FORBIDDEN` | Yetki veya köprü anahtarı kapsamı yok |
+| 404 | `NOT_FOUND` | Kayıt yok / başkasına ait / özellik kapalı |
+| 409 | `CONFLICT` · `REPLAY_DETECTED` · `ACCOUNT_ALREADY_LINKED` | Çakışma / aynı nonce tekrar kullanıldı |
+| 413 | `PAYLOAD_TOO_LARGE` | Gövde > 64 KB (köprü) |
+| 419 | `SESSION_EXPIRED` | CSRF belirteci süresi doldu (oturumlu uçlar) |
+| 422 | `VALIDATION_ERROR` · `LINK_CODE_INVALID` | Alan doğrulaması |
+| 429 | `RATE_LIMITED` | Hız sınırı (`Retry-After` başlığına bak) |
+| 503 | `SERVICE_UNAVAILABLE` | Bakım modu |
+
+**Hız sınırları:** public API 60/dk/IP · köprü 120/dk/anahtar (heartbeat 6/dk) · webhook 300/dk/IP · panel yoklama uçları 30/dk/kullanıcı. `X-Forwarded-For` sahteciliği sınırı aşmaz.
+
+### 7.2 Public API (kimlik doğrulama yok)
+
+| Yöntem | URL | Açıklama |
+|---|---|---|
+| GET | `/api/v1/public/server-status` | Birincil sunucunun durumu. `?server=main` ile sunucu seçilir. 15 sn önbellek + `ETag` |
+
+```bash
+curl -s http://127.0.0.1:8000/api/v1/public/server-status -H "Accept: application/json"
+# Değişmediyse 304 almak için önceki yanıttaki ETag'i gönder:
+curl -s -i http://127.0.0.1:8000/api/v1/public/server-status -H 'If-None-Match: "<önceki ETag>"'
+```
+```json
+{
+  "success": true,
+  "data": {
+    "server": "main", "status": "online", "players": 87, "max_players": 300,
+    "last_heartbeat_at": "2026-11-11T18:42:10Z", "freshness_seconds": 12,
+    "connect": { "host": "play.example.com", "port": 22003, "uri": "mtasa://play.example.com:22003" }
+  }
+}
+```
+`status`: `online | stale | offline | maintenance`.
+
+Makine tarafından okunabilir diğer public dosyalar: `GET /sitemap.xml`, `GET /robots.txt`, `GET /feed.xml` (haber RSS), `GET /manifest.webmanifest` (PWA, marka ayarından), `GET /up` (sağlık kontrolü: 200).
+
+### 7.3 MTA köprü API'si (`/api/v1/game/*`, HMAC imzalı)
+
+Oyun sunucusu (Lua `web_bridge` kaynağı) ↔ web. Her istek ACP'de oluşturulan **anahtar** (`key_id` + `secret`) ile imzalanır. Tarayıcıdan çağrılmaz.
+
+**İmza:**
+```text
+canonical = METHOD + "\n" + PATH + "\n" + TIMESTAMP + "\n" + NONCE + "\n" + hex(sha256(BODY))
+signature = hex(hmac_sha256(secret, canonical))
+```
+- `METHOD` büyük harf (`GET`, `POST`); `PATH` sorgu dizesi olmadan istek yolu (`/api/v1/game/heartbeat`); GET'te `BODY` boş string.
+- `TIMESTAMP` unix saniye (UTC), sunucu saatiyle farkı ≤ 300 sn olmalı. `NONCE` 32 bayt rastgele (64 hex), **her istekte yeni** (tekrarı `409 REPLAY_DETECTED`).
+
+**Başlıklar:**
+
+| Başlık | Değer |
+|---|---|
+| `X-Bridge-Key` | Anahtar kimliği (`key_id`) |
+| `X-Bridge-Timestamp` | Unix saniye |
+| `X-Bridge-Nonce` | 64 hex |
+| `X-Bridge-Signature` | 64 hex HMAC-SHA256 |
+| `Content-Type` / `Accept` | `application/json` |
+
+**curl ile imzalı istek (Bash + OpenSSL):**
+```bash
+BASE=http://127.0.0.1:8000
+KEY="mrp_live_xxxxxxxxxxxxxxxx"
+SECRET="<64-hex-secret>"
+URI=/api/v1/game/heartbeat
+BODY='{"players":12,"max_players":300,"server_name":"Ana Sunucu","resource_version":"1.0.0","uptime_sec":3600}'
+
+TS=$(date +%s)
+NONCE=$(openssl rand -hex 32)
+BODY_HASH=$(printf '%s' "$BODY" | openssl dgst -sha256 -hex | awk '{print $NF}')
+SIG=$(printf 'POST\n%s\n%s\n%s\n%s' "$URI" "$TS" "$NONCE" "$BODY_HASH" | openssl dgst -sha256 -hmac "$SECRET" -hex | awk '{print $NF}')
+
+curl -s -X POST "$BASE$URI" \
+  -H "Content-Type: application/json" -H "Accept: application/json" \
+  -H "X-Bridge-Key: $KEY" -H "X-Bridge-Timestamp: $TS" \
+  -H "X-Bridge-Nonce: $NONCE" -H "X-Bridge-Signature: $SIG" \
+  --data "$BODY"
+```
+
+**PHP ile imzalı istek:**
+```php
+$body = json_encode(['players' => 12, 'max_players' => 300]);
+$ts = (string) time();
+$nonce = bin2hex(random_bytes(32));
+$canonical = "POST\n/api/v1/game/heartbeat\n{$ts}\n{$nonce}\n".hash('sha256', $body);
+$headers = [
+    'Content-Type: application/json', 'Accept: application/json',
+    'X-Bridge-Key: '.$keyId, "X-Bridge-Timestamp: {$ts}", "X-Bridge-Nonce: {$nonce}",
+    'X-Bridge-Signature: '.hash_hmac('sha256', $canonical, $secret),
+];
+$ch = curl_init('http://127.0.0.1:8000/api/v1/game/heartbeat');
+curl_setopt_array($ch, [CURLOPT_POST => true, CURLOPT_POSTFIELDS => $body, CURLOPT_HTTPHEADER => $headers, CURLOPT_RETURNTRANSFER => true]);
+echo curl_exec($ch);
+```
+
+**Uçlar** (anahtarın **kapsamı** — `heartbeat`, `events`, `account_link`, `commands` — ACP'de anahtar oluşturulurken seçilir):
+
+| Yöntem | URL | Kapsam | Gövde (özet) | Yanıt `data` |
+|---|---|---|---|---|
+| GET | `/api/v1/game/ping` | herhangi | — | `{"server":"main","time":1762867200}` (saat farkı teşhisi) |
+| POST | `/api/v1/game/heartbeat` | `heartbeat` | `{"players","max_players","server_name","game_mode","map","resource_version","uptime_sec"}` | `{"status":"online","maintenance":false}` |
+| POST | `/api/v1/game/player/connected` | `events` | `{"event_id","occurred_at","account":{"ref","name"}}` | `{"duplicate":false}` |
+| POST | `/api/v1/game/player/disconnected` | `events` | yukarıdaki + `"session_seconds"` | `{"duplicate":false}` |
+| POST | `/api/v1/game/accounts/sync` | `events` | `{"event_id","accounts":[{"ref","name","last_seen_at"}]}` (≤ 100) | Yalnızca web'e bağlı mevcut hesaplar güncellenir |
+| POST | `/api/v1/game/characters/sync` | `events` | `{"event_id","account_ref","characters":[{"ref","name","status","level","playtime_minutes","faction_key","job_key","public_profile","created_at","last_seen_at"}]}` | Bağlı değilse `{"ignored":true}` |
+| POST | `/api/v1/game/account-link/verify` | `account_link` | `{"event_id","code":"K7Q4M2XD","account":{"ref","name"}}` | `{"linked":true,"web_username":"…"}` · `422 LINK_CODE_INVALID` · `409 ACCOUNT_ALREADY_LINKED` |
+| POST | `/api/v1/game/device-link/verify` | `account_link` | `{"event_id","code","account":{"ref"},"serial":"<32 hex>"}` | `{"status":"pending_approval"}` (serial asla loglanmaz/döndürülmez) |
+| GET | `/api/v1/game/commands/pending` | `commands` | — | `[{"id","type":"player.kick","payload":{"account_ref","reason"},"expires_at"}]` |
+| POST | `/api/v1/game/commands/result` | `commands` | `{"id","status":"succeeded"\|"failed","detail":{"error":"player_offline"}}` | `{"id","status","duplicate":false}` |
+
+- `event_id` (UUID) idempotency anahtarıdır: aynı olay iki kez gelirse `{"duplicate":true}` döner, işlem tekrarlanmaz.
+- Komut türleri (allowlist): `player.warn`, `player.kick`, `player.mute`, `player.jail`, `player.ban` (`minutes`: sayı veya `null` = kalıcı), `player.unban`, `server.announce`, `account.link_revoked`.
+- Ayrıntılı sözleşmeler: [docs/ROUTES.md §7.2](docs/ROUTES.md), protokol: [docs/ARCHITECTURE.md §7](docs/ARCHITECTURE.md).
+
+### 7.4 Ödeme webhook'u
+
+| Yöntem | URL | Açıklama |
+|---|---|---|
+| POST | `/webhooks/payments/{provider}` | Sağlayıcı imzası doğrulanır → `payment_events` gelen kutusu → kuyruk işi (`critical`). Aynı olay ikinci kez gelirse `{"received":true,"duplicate":true}`, kredi bir kez yüklenir |
+
+Şu an yalnızca test sağlayıcısı `fake` vardır (`features.payments` açık ve production dışı). İmza: `X-Fake-Signature = hex(HMAC-SHA256(gövde, HMAC-SHA256("mrp.fake-payments.v1", APP_KEY)))`.
+
+```bash
+BODY='{"id":"evt_test_1","type":"charge.succeeded","order_id":"fake_<sipariş-ulid>","amount":4999,"currency":"TRY"}'
+SECRET=$(php -r 'require "vendor/autoload.php"; $app = require "bootstrap/app.php"; $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap(); echo hash_hmac("sha256", "mrp.fake-payments.v1", config("app.key"));')
+SIG=$(printf '%s' "$BODY" | openssl dgst -sha256 -hmac "$SECRET" -hex | awk '{print $NF}')
+curl -s -X POST http://127.0.0.1:8000/webhooks/payments/fake \
+  -H "Content-Type: application/json" -H "X-Fake-Signature: $SIG" --data "$BODY"
+```
+`type`: `charge.succeeded | charge.failed`. Tutar sunucudaki siparişle eşleşmezse kredi yüklenmez (`amount_mismatch`). Geçersiz imza: `400`, kayıt oluşmaz. Normalde bu webhook'u sahte ödeme ekranı (`/payments/fake/{ulid}`) kendisi gönderir.
+
+### 7.5 Oturumlu JSON uçları (tarayıcı, panel)
+
+Bu uçlar **web oturumu çerezi** ile çalışır (API anahtarı yoktur). POST isteklerinde `X-CSRF-TOKEN` başlığı (sayfadaki `<meta name="csrf-token">`) gerekir; çerezler `credentials: 'same-origin'` ile gönderilir.
+
+| Yöntem | URL | Ad | Yanıt / gövde |
+|---|---|---|---|
+| GET | `/panel/notifications/count` | `panel.notifications.count` | `{"unread":3}` + `ETag` (değişmediyse `304`). 30/dk |
+| GET | `/panel/game-accounts/link-status` | `panel.game-accounts.link-status` | `{"state":"none\|pending\|linked\|expired","expires_in":540,"account_name":"…"}` |
+| GET | `/panel/payments/{ulid}/status` | `panel.payments.status` | `{"status":"pending","pending":true}` (yalnızca kendi siparişi) |
+| POST | `/panel/push/subscriptions` | `panel.push.subscribe` | Gövde: `{"endpoint":"https://…","keys":{"p256dh":"…","auth":"…"},"contentEncoding":"aes128gcm"}` → `201` |
+| POST | `/panel/push/subscriptions/delete` | `panel.push.unsubscribe` | Gövde: `{"endpoint":"https://…"}` → `{"removed":true}` |
+| POST | `/panel/account/export` | `panel.account.export` | KVKK veri dökümü — JSON **dosyası** (parola onayı gerekir, 3/saat) |
+| GET | `/admin/support/counters` | `admin.support.counters` | `{"unassigned":2,"mine":1,"waiting_for_staff":4}` (`support.read`) |
+| POST | `/broadcasting/auth` | — | Reverb özel kanal yetkisi: form `socket_id`, `channel_name` (`private-user.{id}`, `private-support.ticket.{ulid}`, `private-staff.branch.{id}`) |
+
+Tarayıcıdan örnek:
+```js
+const csrf = document.querySelector('meta[name="csrf-token"]').content;
+const res = await fetch('/panel/push/subscriptions', {
+  method: 'POST',
+  credentials: 'same-origin',
+  headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
+  body: JSON.stringify({ endpoint, keys: { p256dh, auth }, contentEncoding: 'aes128gcm' }),
+});
+```
+
+Formlu sayfa uçları (giriş, kayıt, destek, başvuru, ACP işlemleri) klasik HTML form POST'larıdır (`_token` alanı ile) — tam liste [§6](#6-web-rotaları-sayfalar-ve-formlar).
+
+### 7.6 Gerçek zaman kanalları (Reverb, isteğe bağlı)
+
+`BROADCAST_CONNECTION=reverb` iken istemci sayfadaki `<meta name="mrp-realtime">` etiketinden (public anahtar, host, port, şema) bağlanır. Olaylar yalnızca kimlik alanı taşır, mesaj gövdesi taşımaz.
+
+| Kanal | Kim dinler | Olay | Yük |
+|---|---|---|---|
+| `private-user.{id}` | Yalnızca o kullanıcı | Laravel bildirim yayını | Bildirim başlığı / URL |
+| `private-support.ticket.{ulid}` | Talep sahibi + kapsamlı personel | `.support.message` | `{"ticket":"…","author":"player\|staff"}` |
+| `private-staff.branch.{id}` | Branş üyeleri / `support.all_branches` | `.support.queue` | `{"branch":3}` |
+
+---
+## 8. Veritabanı
 
 Şema kaynağı: [docs/DATABASE.md](docs/DATABASE.md), ilişkiler: [docs/ERD.md](docs/ERD.md). Motor InnoDB, `utf8mb4_unicode_ci`, tüm zamanlar UTC, para `BIGINT` minor unit.
 
@@ -588,11 +950,13 @@ Faz 5'te mevcut tablolar da kullanılmaya başladı: `page_revisions` (sayfa dü
 
 `user_notification_preferences.channel` artık `push` da alır; `user_security_events.event` için `data_exported` eklendi.
 
-**Seed sırası:** `ServerSeeder` → `AccessControlSeeder` (izinler, 9 sistem rolü + matris, 6 branş, 5 destek kategorisi) → `MessageTemplateSeeder` (sistem e-posta şablonları) → `ContentSeeder` → `EconomySeeder` (web_credit + 3 paket) → (`local` ise) `DemoSeeder`. İlk süper admin seed ile oluşturulmaz (bkz. §2 Yönetim paneli).
+**Seed sırası:** `ServerSeeder` → `AccessControlSeeder` (izinler, 9 sistem rolü + matris, 6 branş, 5 destek kategorisi) → `MessageTemplateSeeder` (sistem e-posta şablonları) → `ContentSeeder` → `EconomySeeder` (web_credit + 3 paket) → (`local` ise) `DemoSeeder` + `DefaultAdminSeeder` (varsayılan süper admin, bkz. [§3](#3-varsayılan-yönetici-hesabı)). Production'da ilk süper admin `php artisan mrp:make-super-admin {email}` ile oluşturulur.
 
 ---
 
-## 5. Operasyon (Faz 11 R1)
+---
+
+## 9. Operasyon ve production
 
 Ayrıntı: [docs/OPERATIONS.md](docs/OPERATIONS.md). Örnek production dosyaları: [`deploy/`](deploy/) — `nginx/meridyen.conf` (Faz 10: `/app/` wss proxy), `supervisor/meridyen-worker.conf`, `supervisor/meridyen-reverb.conf` (Faz 10), `cron/meridyen`, `backup.sh` (şifreli günlük döküm + dosyalar).
 
@@ -606,7 +970,9 @@ Ayrıntı: [docs/OPERATIONS.md](docs/OPERATIONS.md). Örnek production dosyalar�
 
 **Veritabanı kullanıcıları (production):** `meridyen_app` (yalnızca `SELECT/INSERT/UPDATE/DELETE`), `meridyen_migrate` (DDL + trigger, yalnızca dağıtımda), `meridyen_backup` (salt okunur + trigger dökümü). Uygulama kullanıcısı audit/consent trigger'larını değiştiremez.
 
-## 6. Mimari notlar
+---
+
+## 10. Mimari notlar
 
 - **Güvenlik başlıkları (global):** nonce'lu CSP (`unsafe-inline` / `unsafe-eval` yok), `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, `COOP`, `X-Frame-Options: DENY`, `X-Request-Id`. Production + HTTPS'te HSTS.
 - **CSRF:** Laravel token + `VerifyOrigin` (cross-site `Sec-Fetch-Site` / `Origin` → 419). İstisna yalnızca `webhooks/*`.
@@ -614,3 +980,22 @@ Ayrıntı: [docs/OPERATIONS.md](docs/OPERATIONS.md). Örnek production dosyalar�
 - **Markdown:** CommonMark (`html_input: escape`) + Symfony HtmlSanitizer allowlist → `SafeHtml` (Htmlable). Blade'de `{!! !!}` kullanılmaz (mimari testiyle zorlanır).
 - **Tema:** `mrp_theme` / `mrp_effects` cookie'leri sunucuda okunur ve `<html data-theme data-effects>` olarak render edilir (flaş yok). `prefers-reduced-motion` ve düşük efekt modu animasyonları kapatır.
 - **Tasarım sistemi:** [docs/DESIGN.md](docs/DESIGN.md) — "Gece Haritası". Token'lar `resources/css/app.css`, bileşenler `resources/views/components/{ui,brand}`.
+
+---
+
+## 11. Faz durumu
+
+| Faz | Kapsam | Durum |
+|---|---|---|
+| 0 | Dokümantasyon | ✅ |
+| 1 | Temel kurulum (Laravel, güvenlik başlıkları, kalite araçları) | ✅ |
+| 2 | Tasarım sistemi + public site | ✅ |
+| 3 | Kimlik doğrulama | ✅ |
+| 4 | RBAC, branşlar, yönetim paneli iskeleti | ✅ |
+| 5 | CMS, Akademi, mesaj şablon motoru | ✅ |
+| 6 | Oyuncu paneli, destek, PWA | ✅ |
+| 7 | MTA köprüsü + Lua resource | ✅ |
+| 8 | Başvurular, moderasyon, oyun komutları, cihazlar | ✅ (özellik bayrakları varsayılan kapalı) |
+| 9 | Ekonomi ve ödeme | ✅ FakeProvider ile (OD-03/OD-04 bekliyor; `features.wallet/payments` varsayılan kapalı) |
+| 10 | Gelişmiş kanallar (Reverb, Web Push, Discord, Akademi sınavı, KVKK dökümü) | ✅ özellikler varsayılan kapalı; WhatsApp atlandı (OD-05, R3) |
+| 11 | Sertleştirme ve yayın | 🟡 R1 + R2 yerel kısım ✅ (güvenlik testleri, audit, yedek/geri yükleme testi, izleme, operasyon dokümanı); production kurulumu, hukuk ve marka onayı açık |

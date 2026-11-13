@@ -170,6 +170,9 @@ Kozmetik roller (`is_staff=false`, ör. "Destekçi", "Etkinlik Kazananı") ACP'd
 2. Komut `audit(roles.super_admin_break_glass, critical, actor_type=system)` yazar ve tüm süper adminlere bildirim gönderir.
 3. İlk girişte MFA kurulumu zorunludur.
 
+### 4.4 Yerel varsayılan süper admin (yalnızca geliştirme)
+Proje sahibinin isteğiyle (2026-11-13) `APP_ENV=local` iken `php artisan migrate --seed` bir süper admin oluşturur: kullanıcı adı `1uc44s`, e-posta `1uc44s@git.hub`, parola `lucasisthebest` (`.env`: `DEFAULT_ADMIN_USERNAME/EMAIL/PASSWORD`). Parola kurallarını atlar; `/admin` ilk girişte 2FA kurulumu ister. `DefaultAdminSeeder` production'da çalışmayı reddeder. Bu bilgiler herkese açık depoda yazılı olduğundan **hiçbir paylaşılan / internete açık ortamda kullanılmaz**; böyle bir ortamda ilk iş parola değiştirilir veya hesap silinir.
+
 ## 5. Branş (birim) atama mekanizması
 
 ### 5.1 Branş nedir?
