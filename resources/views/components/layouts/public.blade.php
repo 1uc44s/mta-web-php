@@ -13,6 +13,9 @@
         {{ __('public.skip_to_content') }}
     </a>
 
+    {{-- Yüzen menünün yüksekliği kadar boşluk: duyuru bantları ve içerik menünün altında kalmaz. --}}
+    <div aria-hidden="true" class="h-[5.25rem] sm:h-24"></div>
+
     @foreach ($bannerAnnouncements as $banner)
         {{-- Duyuru bandı (docs/SRS.md FR-ADM-011, kanal: public_banner) --}}
         <div @class(['border-b', 'border-danger/40 bg-danger/10' => $banner['priority'] === 'critical', 'border-accent/30 bg-accent-soft' => $banner['priority'] !== 'critical'])>
@@ -33,19 +36,20 @@
         </div>
     @endif
 
-    <header data-site-header class="sticky top-0 z-40 border-b border-transparent bg-bg/80 backdrop-blur-md transition-colors duration-[var(--dur-base)] data-[scrolled=true]:border-border">
-        <div class="mx-auto flex h-16 max-w-[1240px] items-center gap-6 px-4 sm:px-8">
-            <a href="{{ route('public.home') }}" class="shrink-0 rounded-sm" aria-label="{{ config('app.name') }} — {{ __('public.home') }}">
+    {{-- v2: sayfanın üstünde yüzen cam hap menü (docs/DESIGN.md §7.1). --}}
+    <header data-site-header class="pointer-events-none fixed inset-x-0 top-3 z-40 px-3 sm:top-4 sm:px-6">
+        <div class="glass glass-strong pointer-events-auto mx-auto flex h-16 max-w-[1240px] items-center gap-4 rounded-pill pr-2 pl-5 shadow-2 sm:pl-6">
+            <a href="{{ route('public.home') }}" class="shrink-0 rounded-pill" aria-label="{{ config('app.name') }} — {{ __('public.home') }}">
                 <x-brand.logo />
             </a>
 
-            <nav aria-label="{{ __('public.main_navigation') }}" class="hidden flex-1 lg:block">
+            <nav aria-label="{{ __('public.main_navigation') }}" class="hidden flex-1 justify-center xl:flex">
                 <ul class="flex items-center gap-1">
                     @foreach ($navItems as $item)
                         <li>
                             <a href="{{ $item['href'] }}" @if ($item['new_tab']) target="_blank" rel="noopener" @endif
                                @if ($item['active']) aria-current="page" @endif
-                               class="relative rounded-md px-3 py-2 text-sm text-text-muted transition-colors hover:text-text aria-[current=page]:text-text aria-[current=page]:after:absolute aria-[current=page]:after:inset-x-3 aria-[current=page]:after:-bottom-[13px] aria-[current=page]:after:h-0.5 aria-[current=page]:after:bg-accent">
+                               class="inline-flex min-h-10 items-center rounded-pill px-4 text-sm font-semibold text-text-muted transition-colors hover:bg-surface-3 hover:text-text aria-[current=page]:bg-accent aria-[current=page]:text-accent-fg">
                                 {{ $item['label'] }}
                             </a>
                         </li>
@@ -55,7 +59,7 @@
 
             <div class="ml-auto flex items-center gap-2">
                 {{-- Responsive görünürlük sarmalayıcıda: bileşenin kendi display sınıfıyla çakışmasın. --}}
-                <div class="hidden sm:block"><x-brand.status-pill :status="$serverStatus" compact /></div>
+                <div class="hidden 2xl:block"><x-brand.status-pill :status="$serverStatus" compact /></div>
 
                 @include('components.layouts.partials.theme-menu')
 
@@ -81,7 +85,7 @@
                     </x-ui.button>
                 </div>
 
-                <button type="button" data-dialog-open="nav-drawer" class="grid size-10 place-items-center rounded-md text-text hover:bg-surface-2 lg:hidden" aria-label="{{ __('public.open_menu') }}" aria-controls="nav-drawer">
+                <button type="button" data-dialog-open="nav-drawer" class="ml-auto grid size-11 place-items-center rounded-full text-text hover:bg-surface-3 xl:hidden" aria-label="{{ __('public.open_menu') }}" aria-controls="nav-drawer">
                     <x-lucide-menu class="size-5" aria-hidden="true" />
                 </button>
             </div>

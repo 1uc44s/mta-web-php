@@ -23,7 +23,7 @@ final class SettingsRequest extends FormRequest
     {
         $group = (string) $this->route('group');
 
-        return array_filter(app(SettingsRepository::class)->catalog(), fn (array $m): bool => $m['group'] === $group);
+        return array_filter(app(SettingsRepository::class)->catalog(), fn (array $m): bool => $m['group'] === $group && ! ($m['managed'] ?? false));
     }
 
     /** @return array<string, mixed> */

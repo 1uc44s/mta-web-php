@@ -6,7 +6,7 @@
             <x-ui.prose :html="$description" />
         </article>
         <aside class="space-y-4 lg:sticky lg:top-24 lg:self-start">
-            <div class="rounded-lg border border-border bg-surface-1 p-5">
+            <div class="glass rounded-[var(--radius-xl)] p-5">
                 <x-ui.badge :tone="$faction->applications_open ? 'accent' : 'neutral'" :icon="$faction->applications_open ? 'door-open' : 'door-closed'">
                     {{ $faction->applications_open ? __('public.pages.factions.applications_open') : __('public.pages.factions.applications_closed') }}
                 </x-ui.badge>

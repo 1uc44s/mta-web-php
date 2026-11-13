@@ -13,7 +13,7 @@
             <ul class="grid gap-4 md:grid-cols-2">
                 @foreach ($factions as $faction)
                     @php($illegal = $faction->type === 'illegal')
-                    <li class="group relative isolate overflow-hidden rounded-lg border border-border bg-surface-1 p-6 transition-colors hover:border-border-strong sm:p-7">
+                    <li class="group relative isolate overflow-hidden glass rounded-[var(--radius-xl)] p-6 transition-colors hover:border-border-strong sm:p-7">
                         <span aria-hidden="true" class="absolute inset-x-0 top-0 h-px {{ $illegal ? 'bg-amber/50' : 'bg-accent/50' }}"></span>
                         <div class="flex items-start gap-4">
                             <span class="grid size-12 shrink-0 place-items-center overflow-hidden rounded-md border border-border bg-surface-2">

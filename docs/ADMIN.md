@@ -264,11 +264,12 @@ sequenceDiagram
 
 | Grup | Anahtar | Tip | Varsayılan | Public | Açıklama |
 |---|---|---|---|---|---|
-| site | `site.name` | string | `Meridyen Roleplay` | ✓ | Marka adı (D-13) |
+| site | `site.name` | string | `Meridyen Roleplay` | ✓ | Marka adı (D-13). Sitenin her yerinde, sekme başlığında, e-posta imzasında ve PWA manifestinde kullanılır |
 | site | `site.short_name` | string | `Meridyen` | ✓ | PWA kısa adı |
 | site | `site.tagline` | string | `Şehrin ritmi senin hikâyen.` | ✓ | Slogan (taslak) |
 | site | `site.description` | string | — | ✓ | Varsayılan meta açıklama |
-| site | `site.logo_media_id` | int | null | ✓ | |
+| site | `site.logo_path` | string | null | ✓ | **ACP → Marka** ekranından yönetilir (genel ayar formunda görünmez). `public` disk yolu, yeniden kodlanmış WebP |
+| site | `site.icon_set` | string | null | ✓ | **ACP → Marka** — favicon/PWA ikon klasörü (`branding/icons-…`; 32/180/192/512 PNG) |
 | site | `site.og_default_media_id` | int | null | ✓ | |
 | site | `site.contact_email` | string | — | ✓ | |
 | site | `site.data_controller` | json | — | ✓ | KVKK veri sorumlusu bilgileri |
@@ -385,6 +386,7 @@ Ekip
   └─ Roller ve izinler              roles.read
 Sistem
   ├─ Ayarlar                        settings.read
+  ├─ Marka (ad, logo, sekme ikonu)  settings.read (değiştirme settings.update + PC)
   ├─ MTA entegrasyonu               integrations.manage
   ├─ Sistem sağlığı                 settings.read
   ├─ Audit log                      audit.read

@@ -1,14 +1,22 @@
-@props(['name' => config('app.name'), 'compact' => false])
-{{-- İşaret: daire içinde sağa kaydırılmış tek boylam yayı (küre üzerindeki meridyen) — docs/DESIGN.md §2. --}}
+@props(['compact' => false])
+{{-- Marka logosu — docs/DESIGN.md §2 (v2). ACP → Marka'dan yüklenen logo varsa o; yoksa gün batımı işareti
+     (çizgili güneş diski, ufuk çizgisi) + kısa ad. Ad ve görsel kodda sabit değildir. --}}
+@php
+    $logo = \App\Support\Brand::logoUrl();
+    $short = \App\Support\Brand::shortName();
+@endphp
 <span {{ $attributes->class(['inline-flex items-center gap-2.5 text-text']) }}>
-    <svg viewBox="0 0 32 32" fill="none" class="size-7 shrink-0" aria-hidden="true" focusable="false">
-        <circle cx="16" cy="16" r="13" stroke="currentColor" stroke-width="2" />
-        <path d="M19.5 3.6C12.4 8.3 12.4 23.7 19.5 28.4" class="stroke-accent" stroke-width="2.25" stroke-linecap="round" />
-        <path d="M3.5 16h25" stroke="currentColor" stroke-width="1.25" stroke-opacity=".45" />
-    </svg>
-    @unless ($compact)
-        <span class="font-display text-[1.05rem] leading-none font-extrabold tracking-[0.04em] uppercase font-expanded">
-            {{ \Illuminate\Support\Str::of($name)->before(' ')->upper() }}
-        </span>
-    @endunless
+    @if ($logo)
+        <img src="{{ $logo }}" alt="{{ \App\Support\Brand::name() }}" class="h-8 w-auto max-w-[11rem] object-contain" height="32">
+    @else
+        <svg viewBox="0 0 32 32" fill="none" class="size-8 shrink-0" aria-hidden="true" focusable="false">
+            <circle cx="16" cy="16" r="15" class="fill-accent-soft" />
+            <path d="M6.5 19a9.5 9.5 0 0 1 19 0Z" class="fill-accent" />
+            <path d="M5 21.5h22M8 24.5h16M11 27.5h10" class="stroke-accent" stroke-width="1.6" stroke-linecap="round" />
+            <path d="M5 19h22" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+        </svg>
+        @unless ($compact)
+            <span class="font-display text-[1.05rem] leading-none font-black tracking-[0.02em] uppercase font-expanded">{{ $short }}</span>
+        @endunless
+    @endif
 </span>

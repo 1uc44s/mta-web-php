@@ -9,7 +9,7 @@ declare(strict_types=1);
  */
 
 return [
-    'salutation' => 'Meridyen ekibi',
+    'salutation' => ':name ekibi',
 
     'auth.verify_email' => [
         'variables' => ['user.username', 'link.verify', 'expires_minutes'],

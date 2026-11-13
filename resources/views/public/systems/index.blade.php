@@ -14,7 +14,7 @@
                 </div>
                 <ul class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     @foreach ($category->systems as $system)
-                        <li class="group relative rounded-lg border border-border bg-surface-1 p-6 transition-colors hover:border-border-strong hover:bg-surface-2">
+                        <li class="group relative glass rounded-[var(--radius-xl)] p-6 transition-colors hover:border-border-strong hover:bg-surface-2">
                             <h3 class="font-medium text-text"><a href="{{ route('public.systems.show', $system->slug) }}" class="after:absolute after:inset-0">{{ $system->name }}</a></h3>
                             <p class="mt-2 text-sm text-text-muted">{{ $system->summary }}</p>
                             <x-lucide-arrow-up-right class="absolute top-6 right-6 size-4 text-text-subtle group-hover:text-accent" aria-hidden="true" />

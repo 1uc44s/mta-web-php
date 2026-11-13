@@ -16,7 +16,7 @@ final class ServerSeeder extends Seeder
     public function run(): void
     {
         MtaServer::query()->firstOrCreate(['slug' => 'main'], [
-            'name' => 'Meridyen Roleplay',
+            'name' => 'Ana Sunucu', // ACP → MTA entegrasyonundan değiştirilir (marka adından bağımsız)
             'connect_host' => '127.0.0.1',
             'connect_port' => 22003,
             'max_players' => 300,

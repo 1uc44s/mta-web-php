@@ -1,38 +1,43 @@
-{{-- CMS §4.2 hero. Veri: eyebrow, title, title_accent, lead, secondary_label. Birincil CTA her zaman "Oyuna Katıl". --}}
-<section class="relative isolate overflow-hidden border-b border-border">
-    <div aria-hidden="true" class="absolute inset-0 -z-20 bg-[radial-gradient(55%_60%_at_78%_40%,var(--c-accent-soft),transparent_70%)]"></div>
-    <x-brand.meridian-globe class="pointer-events-none absolute top-1/2 right-[-22rem] -z-10 size-[58rem] -translate-y-1/2 text-grid-line lg:right-[-12rem] lg:size-[70rem]" />
+{{-- CMS §4.2 hero (v2 "Gün Batımı Bulvarı"). Veri: eyebrow, title, title_accent, lead, secondary_label, pillars[]. Birincil CTA her zaman "Oyuna Katıl". --}}
+@php
+    $pillars = ! empty($pillars) && is_array($pillars) ? array_slice($pillars, 0, 3) : __('home.pillars');
+@endphp
+<section class="glow-sunset relative isolate overflow-hidden pt-6 lg:pt-2">
+    <x-ui.ghost-word class="top-2 -left-6 text-[clamp(6rem,22vw,22rem)] lg:top-0">{{ \App\Support\Brand::shortName() }}</x-ui.ghost-word>
 
-    {{-- Rota çizgisi: soldan durum kartına uzanan kesikli turkuaz yol (dekoratif) --}}
-    <svg aria-hidden="true" focusable="false" viewBox="0 0 1440 820" preserveAspectRatio="none" class="pointer-events-none absolute inset-0 -z-10 hidden h-full w-full lg:block">
-        <path d="M-40 760 C 260 700, 420 790, 640 640 S 960 330, 1120 360" fill="none" class="stroke-accent/40" stroke-width="1.5" stroke-dasharray="5 9" vector-effect="non-scaling-stroke" />
-        <circle cx="640" cy="640" r="4" class="fill-accent/60" />
-        <circle cx="1120" cy="360" r="5" class="fill-accent" />
-    </svg>
-
-    <div class="mx-auto grid max-w-[1240px] items-center gap-12 px-4 pt-16 pb-20 sm:px-8 lg:min-h-[min(82svh,820px)] lg:grid-cols-12 lg:py-24">
+    <div class="mx-auto grid max-w-[1240px] items-center gap-12 px-4 pb-20 sm:px-8 lg:min-h-[min(92svh,900px)] lg:grid-cols-12 lg:pb-24">
         <div class="lg:col-span-7">
-            <x-brand.eyebrow :number="$number">{{ $eyebrow ?? 'San Andreas · Roleplay' }}</x-brand.eyebrow>
-            <h1 class="mt-6 font-display text-display font-extrabold font-expanded tracking-tight text-text">
+            <div data-reveal><x-brand.eyebrow>{{ $eyebrow ?? \App\Support\Brand::shortName().' · Roleplay' }}</x-brand.eyebrow></div>
+            <h1 class="mt-7 font-display text-display font-black font-wide tracking-[-0.03em] text-text" data-reveal data-reveal-delay="1">
                 {{ $title ?? config('app.name') }}
                 @if (! empty($title_accent))
                     <span class="block text-accent">{{ $title_accent }}</span>
                 @endif
             </h1>
             @if (! empty($lead))
-                <p class="mt-6 max-w-[52ch] text-lg text-text-muted sm:text-xl">{{ $lead }}</p>
+                <p class="mt-7 max-w-[54ch] text-lg text-text-muted sm:text-xl" data-reveal data-reveal-delay="2">{{ $lead }}</p>
             @endif
-            <div class="mt-10 flex flex-wrap items-center gap-3">
-                <x-ui.button size="lg" href="{{ route('public.start') }}#katil" data-dialog-open="join-dialog" icon="gamepad-2">
+            <div class="mt-10 flex flex-wrap items-center gap-3" data-reveal data-reveal-delay="3">
+                <x-ui.button size="lg" href="{{ route('public.start') }}#katil" data-dialog-open="join-dialog" icon="play">
                     {{ __('public.join.cta') }}
                 </x-ui.button>
                 <x-ui.button size="lg" variant="secondary" href="{{ route('public.start') }}" icon-right="arrow-right">
                     {{ $secondary_label ?? __('public.join.how_to_play') }}
                 </x-ui.button>
             </div>
+            <ul class="mt-12 grid max-w-xl gap-3 sm:grid-cols-3" data-reveal data-reveal-delay="3">
+                @foreach ($pillars as $pillar)
+                    <li class="glass rounded-[var(--radius-xl)] px-4 py-3.5">
+                        <p class="font-display font-black font-wide text-accent">{{ $pillar['title'] ?? '' }}</p>
+                        <p class="mt-1 text-sm text-text-muted">{{ $pillar['text'] ?? '' }}</p>
+                    </li>
+                @endforeach
+            </ul>
         </div>
-        <div class="lg:col-span-5">
-            <x-brand.server-card :status="$status" class="lg:ml-auto lg:max-w-md" />
+
+        <div class="relative lg:col-span-5">
+            <x-brand.skyline class="mx-auto max-w-[34rem] opacity-90 lg:max-w-none" />
+            <x-brand.server-card :status="$status" class="relative -mt-24 sm:mx-auto sm:max-w-md lg:absolute lg:right-0 lg:-bottom-10 lg:mt-0 lg:w-[20rem]" />
         </div>
     </div>
 </section>

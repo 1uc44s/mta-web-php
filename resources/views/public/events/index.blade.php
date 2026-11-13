@@ -7,7 +7,7 @@
             @if ($upcoming->isEmpty())
                 <x-ui.empty-state :title="__('public.pages.events.empty')" icon="calendar-x" class="mt-4" />
             @else
-                <ul class="mt-4 divide-y divide-border rounded-lg border border-border bg-surface-1">
+                <ul class="mt-4 divide-y divide-border glass rounded-[var(--radius-xl)]">
                     @foreach ($upcoming as $event)@include('public.events.partials.row', ['event' => $event])@endforeach
                 </ul>
             @endif
@@ -15,7 +15,7 @@
         @if ($past->isNotEmpty())
             <section aria-labelledby="past-title">
                 <h2 id="past-title" class="eyebrow">{{ __('public.pages.events.past') }}</h2>
-                <ul class="mt-4 divide-y divide-border rounded-lg border border-border bg-surface-1 opacity-80">
+                <ul class="mt-4 divide-y divide-border glass rounded-[var(--radius-xl)] opacity-80">
                     @foreach ($past as $event)@include('public.events.partials.row', ['event' => $event])@endforeach
                 </ul>
             </section>

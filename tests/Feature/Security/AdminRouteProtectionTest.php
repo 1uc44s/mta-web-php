@@ -101,6 +101,7 @@ function adminRouteCases(): array
     $question = AcademyQuestion::query()->create(['academy_quiz_id' => $quiz->id, 'body' => 'Soru?']);
 
     $base = [
+        'asset' => 'logo',
         'quiz' => $quiz->id, 'question' => $question->id,
         'application' => $application->ulid, 'sanction' => $sanction->ulid, 'appeal' => $appeal->ulid, 'command' => $command->ulid, 'device' => $device->id,
         'wallet' => $economy['wallet']->id, 'transaction' => $economy['transaction']->ulid, 'adjustment' => $economy['adjustment']->ulid,

@@ -152,13 +152,14 @@ it('ROUTES-6.2: yetkili KVKK talebiyle hesabı anonimleştirir (gerekçe + parol
 });
 
 it('FR-PWA-001/003: manifest geçerli; SW panel/admin/api yollarını asla cache’lemez', function (): void {
-    $manifest = json_decode((string) file_get_contents(public_path('manifest.webmanifest')), true);
+    // Manifest marka ayarlarından üretilir (pwa.manifest rotası, docs/DESIGN.md §2).
+    $manifest = $this->get(route('pwa.manifest'))->assertOk()->assertHeader('Content-Type', 'application/manifest+json')->json();
     expect($manifest['start_url'])->toBe('/panel?source=pwa')
         ->and($manifest['display'])->toBe('standalone')
         ->and(collect($manifest['icons'])->pluck('purpose')->all())->toContain('maskable');
 
     foreach ($manifest['icons'] as $icon) {
-        expect(file_exists(public_path(ltrim($icon['src'], '/'))))->toBeTrue($icon['src']);
+        expect(file_exists(public_path(ltrim((string) parse_url($icon['src'], PHP_URL_PATH), '/'))))->toBeTrue($icon['src']);
     }
 
     $sw = (string) file_get_contents(public_path('sw.js'));

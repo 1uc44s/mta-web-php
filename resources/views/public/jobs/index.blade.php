@@ -12,7 +12,7 @@
         @else
             <ul class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 @foreach ($jobs as $job)
-                    <li class="group relative flex flex-col rounded-lg border border-border bg-surface-1 p-6 transition-colors hover:border-border-strong hover:bg-surface-2 {{ $job->is_active ? '' : 'opacity-70' }}">
+                    <li class="group relative flex flex-col glass rounded-[var(--radius-xl)] p-6 transition-colors hover:border-border-strong hover:bg-surface-2 {{ $job->is_active ? '' : 'opacity-70' }}">
                         <div class="flex items-center justify-between gap-3">
                             <x-ui.badge :tone="$job->class === 'legal' ? 'accent' : ($job->class === 'event' ? 'amber' : 'neutral')">{{ __('public.pages.jobs.classes.'.$job->class) }}</x-ui.badge>
                             @unless ($job->is_active)<x-ui.badge icon="lock">{{ __('public.pages.jobs.inactive') }}</x-ui.badge>@endunless

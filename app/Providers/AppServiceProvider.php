@@ -11,6 +11,7 @@ use App\Services\Content\MarkdownRenderer;
 use App\Services\Push\PushTransport;
 use App\Services\Push\WebPushTransport;
 use App\Services\Settings\SettingsRepository;
+use App\Support\Brand;
 use App\Support\ConfigValidator;
 use App\View\Composers\AdminLayoutComposer;
 use App\View\Composers\PanelLayoutComposer;
@@ -43,6 +44,9 @@ final class AppServiceProvider extends ServiceProvider
         // docs/RULES.md §3–4: değişmez tarihler, lazy loading ve sessiz atama yasağı (production hariç).
         Date::use(CarbonImmutable::class);
         Model::shouldBeStrict(! $this->app->isProduction());
+
+        // docs/DESIGN.md §2: marka adı ACP → Marka (`site.name`) ayarından; ayar okunamazsa .env APP_NAME kalır.
+        config(['app.name' => Brand::name()]);
 
         Paginator::defaultView('components.ui.pagination');
 

@@ -7,7 +7,7 @@
         @else
             <ol class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 @foreach ($courses as $course)
-                    <li class="group relative flex flex-col rounded-lg border border-border bg-surface-1 p-6 transition-colors hover:border-border-strong hover:bg-surface-2">
+                    <li class="group relative flex flex-col glass rounded-[var(--radius-xl)] p-6 transition-colors hover:border-border-strong hover:bg-surface-2">
                         <div class="flex items-center justify-between">
                             <span class="font-mono text-xs text-text-subtle">{{ str_pad((string) $loop->iteration, 2, '0', STR_PAD_LEFT) }}</span>
                             <div class="flex gap-2">

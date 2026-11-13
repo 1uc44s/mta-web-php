@@ -22,7 +22,7 @@
 
             <ol class="relative min-w-0 space-y-6">
                 @foreach ($steps as $step)
-                    <li id="adim-{{ $loop->iteration }}" class="relative scroll-mt-24 rounded-lg border border-border bg-surface-1 p-6 sm:p-8">
+                    <li id="adim-{{ $loop->iteration }}" class="relative scroll-mt-24 glass rounded-[var(--radius-xl)] p-6 sm:p-8">
                         <div class="flex items-center gap-4">
                             <span class="grid size-11 shrink-0 place-items-center rounded-full border-2 font-mono text-sm font-semibold {{ $loop->first ? 'border-accent bg-accent text-accent-fg' : 'border-border-input text-text' }}">
                                 {{ str_pad((string) $loop->iteration, 2, '0', STR_PAD_LEFT) }}

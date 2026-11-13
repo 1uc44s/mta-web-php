@@ -15,6 +15,7 @@ use App\Models\SocialLink;
 use App\Models\User;
 use App\Services\Bridge\ServerStatusResolver;
 use App\Services\Settings\SettingsRepository;
+use App\Support\Brand;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -59,7 +60,8 @@ final class SectionRegistry
         ];
 
         return match ($type) {
-            'hero' => ['eyebrow' => $head['eyebrow'], 'title' => ['required', 'string', 'max:60'], 'title_accent' => ['nullable', 'string', 'max:60'], 'lead' => ['nullable', 'string', 'max:220'], 'secondary_label' => ['nullable', 'string', 'max:30']],
+            'hero' => ['eyebrow' => $head['eyebrow'], 'title' => ['required', 'string', 'max:60'], 'title_accent' => ['nullable', 'string', 'max:60'], 'lead' => ['nullable', 'string', 'max:220'], 'secondary_label' => ['nullable', 'string', 'max:30'],
+                'pillars' => ['nullable', 'array', 'max:3'], 'pillars.*.title' => ['required', 'string', 'max:24'], 'pillars.*.text' => ['required', 'string', 'max:60']],
             'server_status', 'news_latest', 'events_upcoming', 'faq_list' => $head + ['count' => ['nullable', 'integer', 'in:3,6']],
             'feature_grid' => $head + [
                 'variant' => ['required', 'in:grid-3,grid-4,bento'],
@@ -126,7 +128,7 @@ final class SectionRegistry
     public function viewData(PageSection $section): ?array
     {
         /** @var array<string, mixed> $data */
-        $data = $section->data ?? [];
+        $data = Brand::fillArray($section->data ?? []);
 
         return match ($section->type) {
             'server_status' => ['status' => $this->status->primary()],

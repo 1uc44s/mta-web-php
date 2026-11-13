@@ -389,6 +389,21 @@ Tümü **varsayılan kapalı**: `features.push`, `features.academy_quiz`, `disco
 **Komutlar:** `php artisan mrp:vapid-keys` (VAPID anahtar çifti, yalnızca ekrana; Windows/XAMPP'ta EC anahtar üretimi için `OPENSSL_CONF=C:
 mpp\apache\conf\openssl.cnf` gerekir), `php artisan reverb:start` (production: `deploy/supervisor/meridyen-reverb.conf`).
 
+### Tasarım v2 ve marka yönetimi (2026-11-13)
+
+Public site grandroleplay.net'in **yapısal** dilini izleyen yeni bir görsel dile geçti ("Gün Batımı Bulvarı", docs/DESIGN.md v2). Referans sitenin rengi, metinleri ve görselleri kullanılmadı. Değişenler: gün batımı turuncusu vurgu, yüzen cam hap menü, dev soluk arka plan kelimeleri, iki tonlu ağır başlık, kodla çizilmiş şehir ufku, cam kartlar, mavi (yasal) / kırmızı (yeraltı) seçim panelleri, ışımalı çağrı bandı, dev marka adlı footer ve bölüm belirme animasyonu (azaltılmış harekette kapalı, JS yoksa içerik görünür). Token'lar panel ve ACP'ye de yansır; kontrast `tests/Unit/Design/ContrastTest.php` ile denetlenir.
+
+**Marka (ACP → Marka):** site adı, kısa ad, slogan, logo ve sekme ikonu. Kodda marka adı sabit değildir: `config('app.name')` açılışta `site.name` ayarından gelir (`App\Support\Brand`). CMS metinlerinde `{site}` / `{site_short}` yer tutucuları güncel adla doldurulur.
+
+| Yöntem | URL | Ad | Yetki |
+|---|---|---|---|
+| GET | `/admin/branding` | `admin.branding` | `settings.read` |
+| POST | `/admin/branding` (`name`, `short_name`, `tagline`, `logo`, `icon`) | `admin.branding.update` | `settings.update` + PC. PNG/JPG/WebP; logo ≤ 2 MB → WebP ≤ 640×200; ikon ≥ 64×64, ≤ 1 MB → PNG 32/180/192/512. **SVG kabul edilmez** |
+| POST | `/admin/branding/{logo\|icon}/remove` | `admin.branding.remove` | `settings.update` + PC |
+| GET | `/manifest.webmanifest` | `pwa.manifest` | Herkese açık; ad ve ikonlar marka ayarından (eski statik `public/manifest.webmanifest` kaldırıldı) |
+
+Yeni ayarlar: `site.logo_path`, `site.icon_set` (yalnızca Marka ekranından; genel ayar formu bu anahtarları göstermez ve kabul etmez). `site.logo_media_id` kaldırıldı. Dosyalar `storage/app/public/branding/` altında; eski görsel yeni yüklemede silinir.
+
 ## 3. JSON API (`/api/v1`)
 
 Hata biçimi (tüm JSON uçları):

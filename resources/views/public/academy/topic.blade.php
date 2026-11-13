@@ -9,7 +9,7 @@
             <x-ui.prose :html="$html" />
             @if ($quiz)
                 {{-- Faz 10: aktif sınavı olan konu yalnızca sınavla tamamlanır (DATABASE §10.17). --}}
-                <div class="mt-10 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface-1 p-5">
+                <div class="mt-10 flex flex-wrap items-center gap-3 glass rounded-[var(--radius-xl)] p-5">
                     <p class="text-text-muted">{{ __('academy.quiz.topic_cta') }}</p>
                     <x-ui.button :href="route('panel.academy.quiz', $topic->id)" icon="list-checks">{{ __('academy.quiz.start') }}</x-ui.button>
                 </div>
@@ -38,7 +38,7 @@
         </article>
         @if ($topic->rules->isNotEmpty())
             <aside class="lg:sticky lg:top-24 lg:self-start">
-                <div class="rounded-lg border border-border bg-surface-1 p-5">
+                <div class="glass rounded-[var(--radius-xl)] p-5">
                     <h2 class="eyebrow">{{ __('public.pages.academy.related_rules') }}</h2>
                     <ul class="mt-3 space-y-2">
                         @foreach ($topic->rules as $rule)

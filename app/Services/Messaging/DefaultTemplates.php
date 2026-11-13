@@ -62,7 +62,7 @@ final class DefaultTemplates
             'lines' => array_map($fill, $lines),
             'action' => $action === null ? null : ['label' => $fill($action['label']), 'url' => (string) $context[$action['url']]],
             'outro' => array_map($fill, $outro),
-            'salutation' => (string) __('messages.salutation'),
+            'salutation' => (string) __('messages.salutation', ['name' => config('app.name')]),
         ];
     }
 }

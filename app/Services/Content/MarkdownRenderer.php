@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Content;
 
+use App\Support\Brand;
 use App\Support\SafeHtml;
 use Illuminate\Support\Facades\Cache;
 use League\CommonMark\Environment\Environment;
@@ -27,7 +28,7 @@ final class MarkdownRenderer
 
     public function render(?string $markdown): SafeHtml
     {
-        $markdown = trim((string) $markdown);
+        $markdown = Brand::fill(trim((string) $markdown)); // {site} / {site_short} (docs/CMS.md Ek)
 
         if ($markdown === '') {
             return new SafeHtml('');

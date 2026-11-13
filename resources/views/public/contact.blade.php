@@ -3,7 +3,7 @@
     <x-ui.page-header :eyebrow="__('public.contact.eyebrow')" :title="__('public.contact.title')" :intro="__('public.contact.intro')"
                       :crumbs="[['label' => __('public.contact.eyebrow')]]" />
     <div class="mx-auto grid max-w-[1240px] gap-12 px-4 py-14 sm:px-8 lg:grid-cols-[1fr_20rem]">
-        <form method="POST" action="{{ route('public.contact.store') }}" class="space-y-5 rounded-lg border border-border bg-surface-1 p-6 sm:p-8" novalidate>
+        <form method="POST" action="{{ route('public.contact.store') }}" class="space-y-5 glass rounded-[var(--radius-xl)] p-6 sm:p-8" novalidate>
             @csrf
             <input type="hidden" name="form_token" value="{{ $formToken }}">
             {{-- Honeypot: insanlar görmez, botlar doldurur --}}
@@ -36,7 +36,7 @@
             </div>
         </form>
         <aside class="space-y-4">
-            <div class="rounded-lg border border-border bg-surface-1 p-5">
+            <div class="glass rounded-[var(--radius-xl)] p-5">
                 <h2 class="eyebrow">{{ __('public.contact.response_time') }}</h2>
                 <p class="mt-2 text-sm text-text-muted">{{ $site['support.expected_response_text'] ?? '' }}</p>
             </div>

@@ -14,7 +14,7 @@
                 {{-- Rota çizgisi: mobilde dikey, masaüstünde yatay --}}
                 <span aria-hidden="true" class="absolute top-10 bottom-[-2rem] left-5 border-l-2 border-dashed border-accent/40 md:top-5 md:right-[-1.5rem] md:bottom-auto md:left-10 md:border-t-2 md:border-l-0"></span>
             @endunless
-            <span class="relative z-10 grid size-10 place-items-center rounded-full border-2 font-mono text-sm font-semibold
+            <span class="relative z-10 grid size-10 place-items-center rounded-full border-2 font-display text-sm font-black
                 {{ $loop->first ? 'border-accent bg-accent text-accent-fg' : 'border-border-input bg-bg text-text' }}">
                 {{ str_pad((string) $loop->iteration, 2, '0', STR_PAD_LEFT) }}
             </span>

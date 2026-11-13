@@ -414,7 +414,11 @@ Kaynağa özel rotalar ve yetki istisnaları:
 | GET | `/admin/activity-logs` | `admin.activity-logs.index` | `activity.read` | |
 | GET | `/admin/settings` | `admin.settings.index` | `settings.read` | Gruplar |
 | GET | `/admin/settings/{group}` | `admin.settings.edit` | `settings.read` | |
-| POST | `/admin/settings/{group}` | `admin.settings.update` | `settings.update` | PC. Değişen her anahtar audit'e yazılır |
+| POST | `/admin/settings/{group}` | `admin.settings.update` | `settings.update` | PC. Değişen her anahtar audit'e yazılır. `site.logo_path` / `site.icon_set` bu formda yoktur |
+| GET | `/admin/branding` | `admin.branding` | `settings.read` | Marka: ad, kısa ad, slogan, logo ve sekme ikonu önizlemesi |
+| POST | `/admin/branding` (`name`, `short_name`, `tagline`, `logo` dosya, `icon` dosya) | `admin.branding.update` | `settings.update` | PC. Görseller yeniden kodlanır (SVG yok); audit `settings.updated` |
+| POST | `/admin/branding/{asset}/remove` (`logo` \| `icon`) | `admin.branding.remove` | `settings.update` | PC. Varsayılana döner |
+| GET | `/manifest.webmanifest` | `pwa.manifest` | — | PWA manifesti marka ayarlarından üretilir (önbellek 1 saat) |
 | GET | `/admin/integrations/mta` | `admin.integrations.mta` | `integrations.manage` | Sunucular, credential'lar, son heartbeat |
 | POST | `/admin/integrations/mta/servers` | `admin.integrations.mta.servers.store` | `integrations.manage` | PC |
 | POST | `/admin/integrations/mta/servers/{server}` | `admin.integrations.mta.servers.update` | `integrations.manage` | PC |

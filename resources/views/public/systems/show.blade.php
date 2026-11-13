@@ -17,7 +17,7 @@
         </article>
         <aside class="space-y-4 lg:sticky lg:top-24 lg:self-start">
             @unless ($requirements->isEmpty())
-                <div class="rounded-lg border border-border bg-surface-1 p-5">
+                <div class="glass rounded-[var(--radius-xl)] p-5">
                     <h2 class="eyebrow">{{ __('public.pages.systems.requirements') }}</h2>
                     <x-ui.prose :html="$requirements" class="mt-3 text-sm" />
                 </div>

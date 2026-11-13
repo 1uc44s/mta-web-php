@@ -17,7 +17,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="color-scheme" content="dark light">
-    <meta name="theme-color" content="#0b0d10">
+    <meta name="theme-color" content="#0e0b10">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @if ($theme === 'system')
         <script nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'</script>
@@ -29,10 +29,14 @@
         @if ($description)<meta name="description" content="{{ $description }}">@endif
         @if ($robots)<meta name="robots" content="{{ $robots }}">@endif
     @endif
-    <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
+    @if (\App\Support\Brand::hasCustomIcon())
+        <link rel="icon" href="{{ \App\Support\Brand::iconUrl(32) }}" type="image/png" sizes="32x32">
+    @else
+        <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
+    @endif
     {{-- PWA (docs/SRS.md FR-PWA-001/002): SW yalnızca güvenli bağlamda ve production'da (veya PWA_DEV=true) kaydedilir. --}}
-    <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
-    <link rel="apple-touch-icon" href="{{ asset('icons/icon-192.png') }}">
+    <link rel="manifest" href="{{ route('pwa.manifest') }}">
+    <link rel="apple-touch-icon" href="{{ \App\Support\Brand::iconUrl(180) }}">
     <meta name="mrp-sw" content="{{ (app()->isProduction() || config('roleplay.pwa.register_in_dev')) ? asset('sw.js') : '' }}">
     {{-- Gerçek zaman + Web Push (Faz 10, ARCHITECTURE §9/§8.1): yalnızca oturum açık ve özellik etkinken; secret asla. --}}
     @auth

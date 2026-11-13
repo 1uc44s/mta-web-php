@@ -134,7 +134,7 @@ SectionType::make('feature_grid')
 
 | Anahtar | Ad | Veri | Notlar |
 |---|---|---|---|
-| `hero` | Karşılama | logo varyantı, slogan (≤ 60), açıklama (≤ 220), birincil CTA etiketi, ikincil CTA etiketi + hedef, arka plan medyası (görsel veya ≤ 8 sn sessiz video + poster), canlı rozet göster | Birincil CTA her zaman "Oyuna Katıl" panelini açar. Video düşük efekt modunda poster olarak gösterilir |
+| `hero` | Karşılama | logo varyantı, slogan (≤ 60), vurgu satırı (≤ 60), açıklama (≤ 220), en fazla 3 ilke `pillars[{title ≤ 24, text ≤ 60}]` (v2), birincil CTA etiketi, ikincil CTA etiketi + hedef, arka plan medyası (görsel veya ≤ 8 sn sessiz video + poster), canlı rozet göster | Birincil CTA her zaman "Oyuna Katıl" panelini açar. Video düşük efekt modunda poster olarak gösterilir |
 | `server_status` | Canlı sunucu durumu | başlık, açıklama, gösterilecek alanlar (oyuncu, kapasite, harita, mod, son heartbeat) | Veri köprüden gelir, editör sayı **giremez** |
 | `feature_grid` | Özellik kartları | §4.1 | Brief §4.2 Bölüm 3 |
 | `world_gallery` | Dünyayı keşfet | başlık, görseller (3–12), opsiyonel video | Lightbox klavye erişilebilir |
@@ -321,3 +321,8 @@ Faz 5'te teslim edilen ACP deneyimi §9'daki hedefin sade bir ilk sürümüdür.
 | Mesaj kanalları | Yalnızca `mail` (+ `message_dispatches` logu). Duyurularda `public_banner` ve `panel` kanalı kendi ekranlarında gösterilir | `panel` bildirimi Faz 6, Discord/WhatsApp Faz 10 |
 
 Şablon motoru (`App\Services\Messaging\TemplateRenderer`) §6.2 söz dizimini eksiksiz uygular: değişken allowlist, filtreler (`upper, lower, title, date, datetime, relative, number, money, truncate(n), default("…")`), tek seviye `{{#if}}`, `{{{ }}}` yasağı, 20 KB / 50 ms sınırı. Mail kanalında değişken değerleri HTML + Markdown escape edilir; `link.*` değişkenleri yalnızca `http(s)` olabilir. DB şablonu render edilemezse kodda gömülü varsayılan (`lang/tr/messages.php`) kullanılır ve uyarı loglanır.
+
+
+## Ek: Marka yer tutucuları (2026-11-13)
+
+Bölüm verisinde ve Markdown gövdelerinde `{site}` (tam ad) ve `{site_short}` (kısa ad) yazılabilir; render sırasında **ACP → Marka** ayarındaki güncel adla değiştirilir (`App\Support\Brand::fill`). Böylece marka adı değişince içerik elle düzeltilmez. Seed içeriği bu yer tutucuları kullanır.

@@ -60,7 +60,12 @@ final class ContentSeeder extends Seeder
                 'eyebrow' => 'San Andreas · Roleplay',
                 'title' => 'Şehrin ritmi,',
                 'title_accent' => 'senin hikâyen.',
-                'lead' => 'Meridyen, MTA:SA üzerinde sesli iletişimin, kuralların ve karakter gelişiminin önemsendiği bir roleplay şehri. Bir meslek seç, bir tarafa katıl ya da kendi yolunu çiz.',
+                'pillars' => [
+                    ['title' => 'Sesli', 'text' => 'Yakınlık tabanlı ses ve telsiz'],
+                    ['title' => 'Kurallı', 'text' => 'Yazılı, adil ve şeffaf kurallar'],
+                    ['title' => 'Yaşayan', 'text' => 'Meslekler, ekonomi ve fraksiyonlar'],
+                ],
+                'lead' => '{site_short}, MTA:SA üzerinde sesli iletişimin, kuralların ve karakter gelişiminin önemsendiği bir roleplay şehri. Bir meslek seç, bir tarafa katıl ya da kendi yolunu çiz.',
             ]],
             ['feature_grid', [
                 'eyebrow' => 'Şehirde neler var',
@@ -96,7 +101,7 @@ final class ContentSeeder extends Seeder
                     ['title' => 'Karakterini yarat', 'text' => 'Bir geçmiş, bir hedef ve ilk sahnen.'],
                 ],
             ]],
-            ['stats_strip', ['title' => 'Sayılarla Meridyen', 'metrics' => ['registered_users', 'factions_count', 'systems_count']]],
+            ['stats_strip', ['title' => 'Sayılarla {site_short}', 'metrics' => ['registered_users', 'factions_count', 'systems_count']]],
             ['news_latest', ['eyebrow' => 'Haberler', 'title' => 'Şehirden son gelişmeler', 'count' => 3]],
             ['events_upcoming', ['eyebrow' => 'Etkinlikler', 'title' => 'Takvimde neler var?', 'count' => 3]],
             ['community', ['eyebrow' => 'Topluluk', 'title' => 'Hikâyeler Discord’da da devam ediyor', 'intro' => 'Duyurular, etkinlik çağrıları ve yeni oyunculara yardım eden bir topluluk.']],
@@ -115,11 +120,11 @@ final class ContentSeeder extends Seeder
         $draft = "> **Taslak:** Bu metin örnek yapıdadır ve hukuki kontrol bekliyor (docs/PRD.md OD-08). Yayına almadan önce gerçek veri akışına göre güncellenmelidir.\n\n";
 
         $pages = [
-            'about' => ['Hakkımızda', 'standard', "## Neden Meridyen?\n\nMeridyen, oyuncuların karakterlerine ve birbirlerine saygı duyduğu, kuralların herkes için aynı işlediği bir roleplay şehri olarak kuruldu. Amacımız kısa süreli kaos değil, uzun soluklu hikâyeler.\n\n## Roleplay yaklaşımımız\n\n- **Karakter önce gelir.** Kararlarını karakterinin geçmişi ve hedefleri belirler.\n- **Sonuçlar gerçektir.** Yaptıklarının şehirde kalıcı etkileri olur.\n- **Herkes sahnenin parçası.** Kazanmak değil, iyi bir sahne kurmak önemlidir.\n\n## Topluluk değerlerimiz\n\nSaygı, şeffaflık ve tutarlılık. Yönetim kararları kayıt altındadır, cezalar gerekçelidir ve itiraz edilebilir.\n\n## Geliştirme yaklaşımı\n\nOyunda olmayan bir özelliği varmış gibi göstermeyiz. Bu sitede gördüğün sistemler sunucuda gerçekten çalışır."],
+            'about' => ['Hakkımızda', 'standard', "## Neden {site_short}?\n\n{site_short}, oyuncuların karakterlerine ve birbirlerine saygı duyduğu, kuralların herkes için aynı işlediği bir roleplay şehri olarak kuruldu. Amacımız kısa süreli kaos değil, uzun soluklu hikâyeler.\n\n## Roleplay yaklaşımımız\n\n- **Karakter önce gelir.** Kararlarını karakterinin geçmişi ve hedefleri belirler.\n- **Sonuçlar gerçektir.** Yaptıklarının şehirde kalıcı etkileri olur.\n- **Herkes sahnenin parçası.** Kazanmak değil, iyi bir sahne kurmak önemlidir.\n\n## Topluluk değerlerimiz\n\nSaygı, şeffaflık ve tutarlılık. Yönetim kararları kayıt altındadır, cezalar gerekçelidir ve itiraz edilebilir.\n\n## Geliştirme yaklaşımı\n\nOyunda olmayan bir özelliği varmış gibi göstermeyiz. Bu sitede gördüğün sistemler sunucuda gerçekten çalışır."],
             'privacy' => ['Gizlilik Politikası', 'legal', $draft."## Hangi verileri işliyoruz?\n\nKullanıcı adı, e-posta adresi, parola özeti (parolanın kendisi değil), oturum ve güvenlik kayıtları, bağlı oyun hesabı referansları ile destek ve başvuru içerikleri.\n\n## Ne amaçla?\n\nHesabının güvenliği, oyun hesabınla eşleştirme, destek taleplerinin yanıtlanması ve yasal yükümlülükler.\n\n## Saklama süreleri\n\nGüvenlik kayıtları 180 gün, kapatılmış destek talepleri 2 yıl saklanır. Ayrıntılar KVKK aydınlatma metnindedir."],
             'kvkk' => ['KVKK Aydınlatma Metni', 'legal', $draft."## Veri sorumlusu\n\nVeri sorumlusu bilgileri yayından önce bu bölüme eklenecektir.\n\n## İşleme amaçları ve hukuki sebepler\n\nKişisel verilerin, üyelik sözleşmesinin kurulması ve ifası, bilgi güvenliğinin sağlanması ve yasal yükümlülüklerin yerine getirilmesi amaçlarıyla işlenir.\n\n## Haklarınız\n\n6698 sayılı Kanun'un 11. maddesi kapsamındaki haklarını kullanmak için iletişim sayfasındaki kanaldan başvurabilirsin."],
             'terms' => ['Kullanım Koşulları', 'legal', $draft."## Hesap\n\nHesabının güvenliğinden sen sorumlusun. Hesabını başkasıyla paylaşmamalısın.\n\n## Davranış\n\nSunucu ve topluluk kurallarına uymayı kabul edersin. Kural ihlalleri ceza ile sonuçlanabilir; cezalar gerekçelidir ve itiraz edilebilir.\n\n## Değişiklikler\n\nBu koşullar güncellenebilir; önemli değişiklikler panel üzerinden duyurulur."],
-            'refund-policy' => ['İade Politikası', 'legal', $draft."## Kapsam\n\nBu politika web panelinden satın alınan Meridyen Kredisi (MK) paketleri için geçerlidir.\n\n## İade koşulları\n\nKullanılmamış krediler için ödeme tarihinden itibaren 14 gün içinde destek talebiyle iade isteyebilirsin. İade, ödemenin yapıldığı yönteme yapılır ve hesabından ilgili kredi düşülür; kredi harcanmışsa iade yapılamaz.\n\n## Süreç\n\nİade talepleri iki ayrı yetkilinin onayıyla işlenir. Sonuç panelde bildirim olarak gösterilir.\n\n## Oyun içi değer\n\nKrediler yalnızca web hesabında kullanılır; nakde veya oyun içi paraya çevrilemez."],
+            'refund-policy' => ['İade Politikası', 'legal', $draft."## Kapsam\n\nBu politika web panelinden satın alınan {site_short} Kredisi (MK) paketleri için geçerlidir.\n\n## İade koşulları\n\nKullanılmamış krediler için ödeme tarihinden itibaren 14 gün içinde destek talebiyle iade isteyebilirsin. İade, ödemenin yapıldığı yönteme yapılır ve hesabından ilgili kredi düşülür; kredi harcanmışsa iade yapılamaz.\n\n## Süreç\n\nİade talepleri iki ayrı yetkilinin onayıyla işlenir. Sonuç panelde bildirim olarak gösterilir.\n\n## Oyun içi değer\n\nKrediler yalnızca web hesabında kullanılır; nakde veya oyun içi paraya çevrilemez."],
             'cookies' => ['Çerez Politikası', 'legal', $draft."## Zorunlu çerezler\n\nOturum, güvenlik (CSRF) ve tercih (tema, çerez onayı) çerezleri sitenin çalışması için gereklidir.\n\n## Analitik çerezler\n\nYalnızca açık onay verirsen çalışır. Tercihini sayfanın altındaki çerez bildiriminden değiştirebilirsin."],
         ];
 

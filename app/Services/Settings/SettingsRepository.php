@@ -79,10 +79,10 @@ final class SettingsRepository
         $this->memo = null;
     }
 
-    /** @return array<string, array{group: string, type: string, default: mixed, public?: bool, secret?: bool, super?: bool}> */
+    /** @return array<string, array{group: string, type: string, default: mixed, public?: bool, secret?: bool, super?: bool, managed?: bool}> */
     public function catalog(): array
     {
-        /** @var array<string, array{group: string, type: string, default: mixed, public?: bool, secret?: bool, super?: bool}> */
+        /** @var array<string, array{group: string, type: string, default: mixed, public?: bool, secret?: bool, super?: bool, managed?: bool}> */
         return config('settings', []);
     }
 }

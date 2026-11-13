@@ -13,6 +13,7 @@ use App\Http\Controllers\Public\FaqController;
 use App\Http\Controllers\Public\GameJobController;
 use App\Http\Controllers\Public\GameSystemController;
 use App\Http\Controllers\Public\HomeController;
+use App\Http\Controllers\Public\ManifestController;
 use App\Http\Controllers\Public\NewsController;
 use App\Http\Controllers\Public\PageController;
 use App\Http\Controllers\Public\PreferenceController;
@@ -82,6 +83,7 @@ Route::middleware('auth')->group(function (): void {
         ->middleware('throttle:verification')->name('verification.send');
 });
 
+Route::get('/manifest.webmanifest', ManifestController::class)->name('pwa.manifest');
 Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('public.sitemap');
 Route::get('/robots.txt', [SeoController::class, 'robots'])->name('public.robots');
 Route::get('/feed.xml', [SeoController::class, 'feed'])->name('public.feed');

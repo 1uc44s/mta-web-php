@@ -30,3 +30,4 @@ Thumbs.db
 /mta-resource/web_bridge/config.lua
 /storage/app/private/*
 !/storage/app/private/.gitignore
+.taste-skill/

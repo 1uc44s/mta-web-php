@@ -12,7 +12,9 @@ return [
     'site.short_name' => ['group' => 'site', 'type' => 'string', 'default' => 'Meridyen', 'public' => true],
     'site.tagline' => ['group' => 'site', 'type' => 'string', 'default' => 'Şehrin ritmi, senin hikâyen.', 'public' => true],
     'site.description' => ['group' => 'site', 'type' => 'string', 'default' => 'MTA:SA üzerinde sesli, kurallı ve yaşayan bir roleplay şehri. Hesabını aç, kuralları öğren, hikâyeni yaz.', 'public' => true],
-    'site.logo_media_id' => ['group' => 'site', 'type' => 'int', 'default' => null, 'public' => true],
+    // ACP → Marka ekranından yönetilir ('managed': genel ayar formunda görünmez) — docs/DESIGN.md §2.
+    'site.logo_path' => ['group' => 'site', 'type' => 'string', 'default' => null, 'public' => true, 'managed' => true],
+    'site.icon_set' => ['group' => 'site', 'type' => 'string', 'default' => null, 'public' => true, 'managed' => true],
     'site.og_default_media_id' => ['group' => 'site', 'type' => 'int', 'default' => null, 'public' => true],
     'site.contact_email' => ['group' => 'site', 'type' => 'string', 'default' => null, 'public' => true],
     'site.data_controller' => ['group' => 'site', 'type' => 'json', 'default' => null, 'public' => true],

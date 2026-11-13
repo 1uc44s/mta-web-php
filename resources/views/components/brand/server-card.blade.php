@@ -4,7 +4,7 @@
     use App\Enums\ServerStatus;
     $state = $status?->status;
 @endphp
-<div {{ $attributes->class(['relative rounded-lg border border-border-strong bg-surface-1/90 shadow-1 backdrop-blur-sm']) }}>
+<div {{ $attributes->class(['glass relative rounded-[var(--radius-xl)] shadow-2']) }}>
     <div class="flex items-center justify-between border-b border-border px-5 py-3.5">
         <p class="eyebrow">{{ __('public.status.card_title') }}</p>
         <x-brand.status-pill :status="$status" compact />

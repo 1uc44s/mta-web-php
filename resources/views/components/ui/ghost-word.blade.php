@@ -1,0 +1,2 @@
+{{-- Dev soluk arka plan kelimesi (v2 "dev tabela", docs/DESIGN.md §1). Yalnızca dekoratif. --}}
+<span aria-hidden="true" {{ $attributes->class(['ghost-word absolute -z-10 select-none']) }}>{{ $slot }}</span>

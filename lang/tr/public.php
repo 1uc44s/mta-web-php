@@ -106,6 +106,11 @@ return [
     ],
 
     'home_sections' => [
+        // v2 bölüm metinleri (dev arka plan kelimeleri dekoratiftir, ekran okuyucuya okunmaz).
+        'all_systems' => 'Tüm sistemler',
+        'choose_ghost' => 'Seçim',
+        'start_ghost' => 'Başla',
+        'or' => 'ya da',
         'stats' => [
             'registered_users' => 'Kayıtlı oyuncu',
             'factions_count' => 'Aktif fraksiyon',

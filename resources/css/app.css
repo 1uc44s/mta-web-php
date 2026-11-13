@@ -1,5 +1,5 @@
 /*
- * Meridyen Roleplay — tasarım token'ları ve temel katman.
+ * Tasarım token'ları ve temel katman — v2 "Gün Batımı Bulvarı".
  * Kaynak: docs/DESIGN.md §3–4. Token adı veya değeri değişirse önce DESIGN.md güncellenir.
  */
 @import 'tailwindcss';
@@ -12,65 +12,71 @@
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 @custom-variant low-effects (&:where([data-effects=low], [data-effects=low] *));
 
-/* ---------- Ham token'lar: Dark (varsayılan, "Gece") ---------- */
+/* ---------- Ham token'lar: Dark (varsayılan, "Gün batımı") ---------- */
 :root,
 [data-theme='dark'] {
     color-scheme: dark;
 
-    --c-bg: #0b0d10;
-    --c-surface-1: #12151a;
-    --c-surface-2: #181c22;
-    --c-surface-3: #20252d;
-    --c-border: #262c35;
-    --c-border-strong: #343b46;
-    --c-border-input: #606a79;
-    --c-text: #e9ecef;
-    --c-text-muted: #a3acb9;
-    --c-text-subtle: #858f9c;
-    --c-accent: #2de2c8;
-    --c-accent-hover: #62edd8;
-    --c-accent-fg: #03201b;
-    --c-accent-soft: rgb(45 226 200 / 0.12);
-    --c-amber: #ffb547;
-    --c-amber-soft: rgb(255 181 71 / 0.12);
-    --c-success: #3dd68c;
-    --c-warning: #ffb547;
-    --c-danger: #f2555a;
-    --c-info: #6cb6ff;
-    --c-grid-line: rgb(233 236 239 / 0.05);
+    --c-bg: #0e0b10;
+    --c-surface-1: #17121a;
+    --c-surface-2: #1e1822;
+    --c-surface-3: #282030;
+    --c-border: #30283a;
+    --c-border-strong: #42384d;
+    --c-border-input: #776b83;
+    --c-text: #f5eff4;
+    --c-text-muted: #bdb1bf;
+    --c-text-subtle: #9c90a0;
+    --c-accent: #ff7a45;
+    --c-accent-hover: #ff9a6e;
+    --c-accent-fg: #220b02;
+    --c-accent-soft: rgb(255 122 69 / 0.14);
+    --c-amber: #ffc65c;
+    --c-amber-soft: rgb(255 198 92 / 0.12);
+    --c-success: #3ddc97;
+    --c-warning: #ffc65c;
+    --c-danger: #ff5468;
+    --c-info: #5ec8ff;
+    --c-grid-line: rgb(245 239 244 / 0.05);
+    --c-glass: rgb(30 24 34 / 0.62);
+    --c-glow: rgb(255 122 69 / 0.22);
+    --c-ghost: rgb(245 239 244 / 0.045);
 
-    --elevation-1: inset 0 1px 0 rgb(255 255 255 / 0.04);
-    --elevation-2: inset 0 1px 0 rgb(255 255 255 / 0.05), 0 16px 40px -12px rgb(0 0 0 / 0.6);
+    --elevation-1: inset 0 1px 0 rgb(255 255 255 / 0.05);
+    --elevation-2: inset 0 1px 0 rgb(255 255 255 / 0.06), 0 24px 60px -20px rgb(0 0 0 / 0.7);
 }
 
 /* ---------- Ham token'lar: Light ("Gündüz") ---------- */
 [data-theme='light'] {
     color-scheme: light;
 
-    --c-bg: #f5f6f7;
+    --c-bg: #f7f3f1;
     --c-surface-1: #ffffff;
-    --c-surface-2: #f0f2f4;
-    --c-surface-3: #e7eaee;
-    --c-border: #dde1e6;
-    --c-border-strong: #c5cbd3;
-    --c-border-input: #7d8693;
-    --c-text: #0e1116;
-    --c-text-muted: #4a5361;
-    --c-text-subtle: #5f6875;
-    --c-accent: #0a7c6d;
-    --c-accent-hover: #08695c;
+    --c-surface-2: #f2ece9;
+    --c-surface-3: #e9e1dd;
+    --c-border: #e0d7d2;
+    --c-border-strong: #cbbfb9;
+    --c-border-input: #857a75;
+    --c-text: #17110f;
+    --c-text-muted: #514743;
+    --c-text-subtle: #645955;
+    --c-accent: #b8430f;
+    --c-accent-hover: #9c3609;
     --c-accent-fg: #ffffff;
-    --c-accent-soft: rgb(10 124 109 / 0.1);
-    --c-amber: #9a5b00;
-    --c-amber-soft: rgb(154 91 0 / 0.1);
-    --c-success: #147a45;
-    --c-warning: #9a5b00;
-    --c-danger: #c42b30;
-    --c-info: #1f63b8;
-    --c-grid-line: rgb(14 17 22 / 0.06);
+    --c-accent-soft: rgb(184 67 15 / 0.1);
+    --c-amber: #8f5600;
+    --c-amber-soft: rgb(143 86 0 / 0.1);
+    --c-success: #137a47;
+    --c-warning: #8f5600;
+    --c-danger: #c0283b;
+    --c-info: #1d62b5;
+    --c-grid-line: rgb(23 17 15 / 0.06);
+    --c-glass: rgb(255 255 255 / 0.72);
+    --c-glow: rgb(184 67 15 / 0.12);
+    --c-ghost: rgb(23 17 15 / 0.05);
 
-    --elevation-1: 0 1px 2px rgb(14 17 22 / 0.06), 0 1px 1px rgb(14 17 22 / 0.04);
-    --elevation-2: 0 12px 32px -8px rgb(14 17 22 / 0.18);
+    --elevation-1: 0 1px 2px rgb(23 17 15 / 0.06), 0 1px 1px rgb(23 17 15 / 0.04);
+    --elevation-2: 0 18px 40px -12px rgb(23 17 15 / 0.2);
 }
 
 /* ---------- Tailwind utility eşlemesi (bg-bg, text-text-muted, border-border-input …) ---------- */
@@ -97,6 +103,9 @@
     --color-info: var(--c-info);
     --color-internal: var(--c-amber);
     --color-grid-line: var(--c-grid-line);
+    --color-glass: var(--c-glass);
+    --color-glow: var(--c-glow);
+    --color-ghost: var(--c-ghost);
 
     --shadow-1: var(--elevation-1);
     --shadow-2: var(--elevation-2);
@@ -107,8 +116,8 @@
     --font-display: 'Archivo Variable', ui-sans-serif, system-ui, sans-serif;
     --font-mono: 'JetBrains Mono Variable', ui-monospace, 'Cascadia Mono', Consolas, monospace;
 
-    --text-display: clamp(2.5rem, 1.6rem + 4.2vw, 5.25rem);
-    --text-display--line-height: 1;
+    --text-display: clamp(2.25rem, 0.8rem + 4.2vw, 5.25rem);
+    --text-display--line-height: 0.98;
     --text-h1: clamp(2rem, 1.5rem + 2.2vw, 3.25rem);
     --text-h1--line-height: 1.1;
     --text-h2: clamp(1.5rem, 1.25rem + 1.2vw, 2.25rem);
@@ -119,6 +128,7 @@
     --radius-sm: 6px;
     --radius-md: 10px;
     --radius-lg: 14px;
+    --radius-xl: 24px;
     --radius-pill: 999px;
 
     --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -274,10 +284,11 @@
     }
 }
 @utility eyebrow {
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
+    font-family: var(--font-sans);
+    font-weight: 700;
+    font-size: 0.8125rem;
     line-height: 1.4;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--c-text-subtle);
 }
@@ -288,4 +299,86 @@
 
 @utility font-wide {
     font-stretch: 112%;
+}
+
+/* ---------- v2 "Gün Batımı Bulvarı" yardımcıları (docs/DESIGN.md §1, §3.3) ---------- */
+
+/* Cam yüzey: menü hapı, özellik kartları, durum kartı. Düşük efektte opak. */
+@utility glass {
+    background-color: var(--c-glass);
+    border: 1px solid var(--c-border);
+    box-shadow: var(--elevation-1);
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    [data-effects='low'] & {
+        background-color: var(--c-surface-1);
+    }
+}
+
+/* Menü hapı: içerik altından geçerken okunur kalsın diye daha opak cam. */
+@utility glass-strong {
+    background-color: color-mix(in srgb, var(--c-surface-1) 88%, transparent);
+}
+
+/* Dev soluk arka plan kelimesi (hayalet tabela). Dekoratif; aria-hidden ile kullanılır. */
+@utility ghost-word {
+    font-family: var(--font-display);
+    font-stretch: 125%;
+    font-weight: 900;
+    line-height: 0.8;
+    letter-spacing: -0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--c-ghost);
+    pointer-events: none;
+    user-select: none;
+}
+
+/* Gün batımı ışıması: yalnızca hero ve çağrı bandı. Düşük efektte kapalı. */
+@utility glow-sunset {
+    background-image:
+        radial-gradient(40% 55% at 82% 62%, var(--c-glow), transparent 70%),
+        radial-gradient(30% 40% at 12% 8%, rgb(255 84 104 / 0.08), transparent 70%);
+    [data-effects='low'] & {
+        background-image: none;
+    }
+}
+
+@utility glow-cta {
+    background-image: radial-gradient(60% 120% at 50% 120%, var(--c-glow), transparent 70%);
+    [data-effects='low'] & {
+        background-image: none;
+    }
+}
+
+/* Bölüm girişi: JS yoksa içerik her zaman görünür (html.js-reveal yalnızca modül yüklenince eklenir). */
+@layer components {
+    @media (prefers-reduced-motion: no-preference) {
+        .js-reveal [data-reveal] {
+            opacity: 0;
+            transform: translateY(24px);
+            transition:
+                opacity 600ms var(--ease-out),
+                transform 600ms var(--ease-out);
+            transition-delay: var(--reveal-delay, 0ms);
+        }
+        .js-reveal [data-reveal].is-visible {
+            opacity: 1;
+            transform: none;
+        }
+        .js-reveal [data-reveal-delay='1'] { --reveal-delay: 80ms; }
+        .js-reveal [data-reveal-delay='2'] { --reveal-delay: 160ms; }
+        .js-reveal [data-reveal-delay='3'] { --reveal-delay: 240ms; }
+
+        .sun-drift { animation: mrp-sun-drift 18s ease-in-out infinite alternate; }
+    }
+    [data-effects='low'] .js-reveal [data-reveal],
+    .js-reveal[data-effects='low'] [data-reveal] {
+        opacity: 1;
+        transform: none;
+    }
+    @keyframes mrp-sun-drift {
+        from { transform: translateY(0); }
+        to { transform: translateY(14px); }
+    }
 }

@@ -4,7 +4,7 @@
         <x-ui.section-header :number="$number" :eyebrow="$eyebrow ?? 'Etkinlikler'" :title="$title ?? 'Takvimde neler var?'" />
         <x-ui.button variant="ghost" href="{{ route('public.events.index') }}" icon-right="arrow-right">{{ __('public.home_sections.all_events') }}</x-ui.button>
     </div>
-    <ul class="mt-10 divide-y divide-border rounded-lg border border-border bg-surface-1">
+    <ul class="mt-10 divide-y divide-border glass rounded-[var(--radius-xl)]">
         @foreach ($events as $event)
             @include('public.events.partials.row', ['event' => $event])
         @endforeach

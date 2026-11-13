@@ -71,6 +71,7 @@ final class AdminLayoutComposer
             ['label' => 'admin.nav.roles', 'route' => 'admin.roles.index', 'icon' => 'key-round', 'can' => 'roles.read', 'match' => 'admin.roles.*'],
         ]],
         ['label' => 'admin.nav.system', 'items' => [
+            ['label' => 'admin.nav.branding', 'route' => 'admin.branding', 'icon' => 'palette', 'can' => 'settings.read', 'match' => 'admin.branding*'],
             ['label' => 'admin.nav.settings', 'route' => 'admin.settings.index', 'icon' => 'sliders-horizontal', 'can' => 'settings.read', 'match' => 'admin.settings.*'],
             ['label' => 'game.admin.integrations', 'route' => 'admin.integrations.mta', 'icon' => 'plug', 'can' => 'integrations.manage', 'match' => 'admin.integrations.*'],
             ['label' => 'admin.nav.health', 'route' => 'admin.system.health', 'icon' => 'activity', 'can' => 'settings.read', 'match' => 'admin.system.*'],

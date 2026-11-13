@@ -9,6 +9,7 @@ import { initPaymentStatus } from './modules/payment-status';
 import { initNotificationBadge } from './modules/notifications';
 import { initPreferences } from './modules/preferences';
 import { initPwa } from './modules/pwa';
+import { initReveal } from './modules/reveal';
 import { initPush } from './modules/push';
 import { initRealtime } from './echo';
 import { initRulesFilter } from './modules/rules-filter';
@@ -28,6 +29,7 @@ const boot = () => {
     initLinkCode();
     initPaymentStatus();
     initPwa();
+    initReveal();
     initPush();
     initRealtime().catch(() => {});
 };

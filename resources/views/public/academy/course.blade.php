@@ -8,7 +8,7 @@
         @endif
     </x-ui.page-header>
     <div class="mx-auto max-w-[1240px] px-4 py-14 sm:px-8">
-        <ol class="divide-y divide-border rounded-lg border border-border bg-surface-1">
+        <ol class="divide-y divide-border glass rounded-[var(--radius-xl)]">
             @foreach ($course->topics as $topic)
                 <li class="group relative flex items-center gap-5 px-5 py-4 hover:bg-surface-2">
                     <span class="font-mono text-sm text-text-subtle">{{ str_pad((string) $loop->iteration, 2, '0', STR_PAD_LEFT) }}</span>

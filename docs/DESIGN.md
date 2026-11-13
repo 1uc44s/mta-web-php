@@ -1,41 +1,40 @@
 # DESIGN — Görsel Dil ve Tasarım Sistemi
 
-> **Sürüm:** 1.0.0 · **Son güncelleme:** 2026-11-11 · **Durum:** Onay bekliyor
+> **Sürüm:** 2.0.0 · **Son güncelleme:** 2026-11-13 · **Durum:** Onay bekliyor (proje sahibi isteği: grandroleplay.net benzeri yapı, birebir kopya değil)
 > **İlgili:** [PRD](PRD.md) · [CMS §4](CMS.md#4-sistem-şablonları--sayfa-bölümleri-page-builder) · [SRS §4.2](SRS.md#42-erişilebilirlik-nfr-a11y--wcag-22-aa)
 
 Bu doküman, istenen listeye ek olarak oluşturulmuştur. Proje sahibi tasarımın önemli olduğunu vurguladığı için görsel kararlar da tek doğruluk kaynağında tutulur. Kod içindeki token adları burada tanımlananlarla birebir aynıdır.
 
 ---
 
-## 1. Tasarım konsepti: "Gece Haritası"
+## 1. Tasarım konsepti: "Gün Batımı Bulvarı" (v2)
 
-**Meridyen** adı bir haritanın boylam çizgilerinden gelir. Görsel dil bu fikri şehrin gece hâliyle birleştirir: **antrasit asfalt** üzerinde bir **navigasyon ekranı**. Turkuaz rota çizgisi oyuncuyu hedefine götürür, sodyum lambası amberi önemli noktaları işaretler, ince meridyen çizgileri de her şeyi bir haritanın üzerindeymiş gibi hissettirir.
+> v1 "Gece Haritası" (turkuaz, ince meridyen çizgileri) proje sahibinin isteğiyle 2026-11-13'te değiştirildi: site, grandroleplay.net'in **yapısal** dilini (yüzen hap menü, dev soluk arka plan kelimeleri, iki tonlu ağır başlık, cam kartlar, "yasal mı yeraltı mı" seçimi, geniş çağrı bandı) izler; **renk, metin, görsel ve kompozisyon ayrıntısı kopyalanmaz.** Referans sitenin mor/menekşe paleti, karakter illüstrasyonları, logo ve metinleri kullanılmaz.
+
+San Andreas'ta güneşin batıp neon tabelaların yandığı saat: **mor değil, sıcak**. Zemin neredeyse siyah bir mürekkep moru, vurgu gün batımı turuncusu; yasal taraf sabah mavisi, yeraltı tarafı neon kırmızı.
 
 | Fikir | Görsel karşılığı | Nerede |
 |---|---|---|
-| Harita / meridyen | 1 px ince boylam ve enlem çizgileri, düşük opaklık | Hero arka planı, boş durumlar, 404 |
-| Koordinat | Monospace küçük büyük harf "eyebrow" etiketler: `§02 · OYUN SİSTEMLERİ` | Bölüm başlıklarının üstü |
-| Rota | Kesikli turkuaz çizgiyle birbirine bağlanan numaralı duraklar | `/start`, onboarding adımları, başvuru durum çizelgesi |
-| Neon tabela | Tek vurgu rengi turkuaz. Yalnızca etkileşim ve "canlı" anlamı taşır | CTA, link, odak, canlı rozet |
-| Sodyum lamba | Sınırlı amber | Öne çıkan haber, etkinlik, uyarı, "Yeni" rozeti |
-| Plaka | Çerçeveli monospace bilgi kutusu | Sunucu adresi, bağlama kodu, ticket no |
+| Gün batımı | Tek vurgu: turuncu (`accent`). Hero ve çağrı bandında **yumuşak turuncu ışıma** (radial), başka yerde ışıma yok | CTA, link, odak, hero, çağrı bandı |
+| Dev tabela | Bölüm arkasında çok büyük, çok soluk (≈ %4) tek kelime (`x-ui.ghost-word`) — markanın kısa adı veya bölümün kelimesi | Hero, seçim bölümü, çağrı bandı, iç sayfa başlığı |
+| Ufuk | Hero'da kodla çizilmiş şehir silueti: çizgili güneş diski, kuleler, palmiyeler (`x-brand.skyline`). Sahte ekran görüntüsü / stok karakter yok | Ana sayfa hero |
+| Cam | Yarı saydam yüzey + `backdrop-filter: blur` + ince açık kenar (`x-ui.glass`) | Menü hapı, özellik kartları, durum kartı |
+| İki yol | Yasal (`info` mavisi) ve yeraltı (`danger` kırmızısı) iki büyük panel, ortada "ya da" | `lifestyle_split` |
+| Plaka | Sunucu adresi ve bağlama kodu mono plakası (değişmedi) | Sunucu kartı, panel |
 
-**Kaçınılacaklar (brief §3.1):** Her yerde glow, gökkuşağı gradyanları, ağır parallax, mor-pembe "cyberpunk" klişesi, referans sitenin renk ve kompozisyonu, sahte ekran görüntüleri ya da stok "gamer" görselleri.
+**Kaçınılacaklar:** referans sitenin mor paleti ve görselleri, gökkuşağı gradyanı, metin içinde gradyan, her karta ışıma, ağır paralaks, abartılı ünlemler. Düşük efekt modunda (`data-effects=low`) blur ve ışımalar kapanır, kartlar opak olur.
 
-**Ton:** Sakin, güvenilir ve sinematik. Bağıran bir oyun sitesi değil, iyi işletilen bir şehrin belediye binası ile gece kulübü arasında bir yer.
+**Ton:** Sinematik ve davetkâr; yine de iyi işletilen bir şehir: kurallar, destek ve güvenlik ciddiye alınır.
 
 ## 2. Marka
 
 | Öğe | Karar |
 |---|---|
-| Ad | Meridyen Roleplay (çalışma adı, D-13). Kısa: **Meridyen**, kısaltma **MRP** |
-| Logo | Wordmark `MERİDYEN` (Archivo, genişlik 125, ağırlık 800, harf aralığı +0.04em) + işaret: bir dairenin içinde sağa kaydırılmış tek boylam yayı (küre üzerindeki meridyen). İşaret turkuaz, wordmark metin rengindedir |
-| İşaret kullanımı | Favicon, PWA ikonu (maskable: işaret %60 güvenli alanda), avatar yer tutucusu |
-| Slogan (taslak) | "Şehrin ritmi, senin hikâyen." (ACP'den değiştirilebilir) |
-| Ses | Kısa, doğrudan, ikinci tekil şahıs ("Hesabını bağla"), samimi ama ciddi. Ünlem işareti ve abartı ("EN İYİ SUNUCU!!!") kullanılmaz |
-
-Logo SVG dosyaları Faz 2'de `resources/svg/brand/` altında üretilir. Logo, marka adı değişince yeniden çizilir (OD-01).
-
+| Ad | **ACP → Marka** ekranından değiştirilir (`site.name`, `site.short_name`). Kod içinde marka adı sabit yazılmaz: arayüz `config('app.name')` okur, uygulama açılışta bu değeri `site.name` ayarından alır (`App\Support\Brand`). Varsayılan çalışma adı "Meridyen Roleplay" / "Meridyen" (D-13, OD-01) |
+| Logo | ACP'den yüklenir (PNG/JPG/WebP, ≤ 2 MB). Sunucu yeniden kodlar (WebP, en fazla 640×200, metadata silinir); SVG kabul edilmez (XSS). Yüklenmemişse kodla çizilen varsayılan işaret + kısa ad gösterilir |
+| Sekme ikonu (favicon) | ACP'den yüklenir (PNG/JPG/WebP, en az 64×64, ≤ 1 MB). Sunucu kare kırpıp PNG olarak 32, 180, 192 ve 512 px üretir: tarayıcı sekmesi, Apple dokunma ikonu ve PWA manifesti bu setten beslenir. Yüklenmemişse `favicon.svg` |
+| Slogan | `site.tagline` (ACP → Marka) |
+| Ses | Kısa, doğrudan, ikinci tekil şahıs ("Hesabını bağla"), samimi ama ciddi. Abartı ("EN İYİ SUNUCU!!!") kullanılmaz |
 ## 3. Token'lar
 
 Tailwind v4 `@theme` ile tanımlanır (`resources/css/app.css`). Renkler OKLCH'de yazılır, hex karşılıkları referans içindir. Bileşenler **yalnızca semantik token** kullanır, ham renk kullanmaz.
@@ -44,45 +43,46 @@ Tailwind v4 `@theme` ile tanımlanır (`resources/css/app.css`). Renkler OKLCH'd
 
 | Token | Dark (varsayılan) | Light | Kullanım |
 |---|---|---|---|
-| `--color-bg` | `#0B0D10` | `#F5F6F7` | Sayfa zemini |
-| `--color-surface-1` | `#12151A` | `#FFFFFF` | Kart, header |
-| `--color-surface-2` | `#181C22` | `#F0F2F4` | İç içe yüzey, input |
-| `--color-surface-3` | `#20252D` | `#E7EAEE` | Hover, seçili satır |
-| `--color-border` | `#262C35` | `#DDE1E6` | Varsayılan çizgi |
-| `--color-border-strong` | `#343B46` | `#C5CBD3` | Ayırıcı, kart vurgusu (dekoratif) |
-| `--color-border-input` | `#606A79` | `#7D8693` | Input, checkbox ve select sınırı (WCAG 1.4.11 için ≥ 3:1) |
-| `--color-text` | `#E9ECEF` | `#0E1116` | Ana metin |
-| `--color-text-muted` | `#A3ACB9` | `#4A5361` | İkincil metin |
-| `--color-text-subtle` | `#858F9C` | `#5F6875` | Yardımcı metin, placeholder |
-| `--color-accent` | `#2DE2C8` | `#0A7C6D` | Birincil eylem, link, odak, "canlı" |
-| `--color-accent-hover` | `#62EDD8` | `#08695C` | |
-| `--color-accent-fg` | `#03201B` | `#FFFFFF` | Accent dolgu üzerindeki metin |
-| `--color-accent-soft` | `rgb(45 226 200 / 0.12)` | `rgb(10 124 109 / 0.10)` | Seçili durum zemini, rozet zemini |
-| `--color-amber` | `#FFB547` | `#9A5B00` | İkincil neon (sınırlı) |
-| `--color-amber-soft` | `rgb(255 181 71 / 0.12)` | `rgb(154 91 0 / 0.10)` | |
-| `--color-success` | `#3DD68C` | `#147A45` | |
-| `--color-warning` | `#FFB547` | `#9A5B00` | Amber ile aynı ton. **Her zaman ikon + metinle** kullanılır |
-| `--color-danger` | `#F2555A` | `#C42B30` | |
-| `--color-info` | `#6CB6FF` | `#1F63B8` | |
-| `--color-internal` | `#FFB547` | `#9A5B00` | İç not çerçevesi (§6.6) |
-| `--color-grid-line` | `rgb(233 236 239 / 0.05)` | `rgb(14 17 22 / 0.06)` | Meridyen çizgileri |
-
-**Kontrast kontrol tablosu** — WCAG 2.x göreli parlaklık formülüyle ölçülmüştür (2026-11-11). Faz 2'de `tests/Unit/Design/ContrastTest.php` aynı hesabı token dosyasından yapar ve eşik altına düşen çiftte testi başarısız kılar:
+| `--color-bg` | `#0E0B10` | `#F7F3F1` | Sayfa zemini |
+| `--color-surface-1` | `#17121A` | `#FFFFFF` | Kart, header |
+| `--color-surface-2` | `#1E1822` | `#F2ECE9` | İç içe yüzey, input |
+| `--color-surface-3` | `#282030` | `#E9E1DD` | Hover, seçili satır |
+| `--color-border` | `#30283A` | `#E0D7D2` | Varsayılan çizgi |
+| `--color-border-strong` | `#42384D` | `#CBBFB9` | Ayırıcı, kart vurgusu (dekoratif) |
+| `--color-border-input` | `#776B83` | `#857A75` | Input, checkbox ve select sınırı (≥ 3:1) |
+| `--color-text` | `#F5EFF4` | `#17110F` | Ana metin |
+| `--color-text-muted` | `#BDB1BF` | `#514743` | İkincil metin |
+| `--color-text-subtle` | `#9C90A0` | `#645955` | Yardımcı metin, placeholder |
+| `--color-accent` | `#FF7A45` | `#B8430F` | Birincil eylem, link, odak, gün batımı |
+| `--color-accent-hover` | `#FF9A6E` | `#9C3609` | |
+| `--color-accent-fg` | `#220B02` | `#FFFFFF` | Accent dolgu üzerindeki metin |
+| `--color-accent-soft` | `rgb(255 122 69 / 0.14)` | `rgb(184 67 15 / 0.10)` | Seçili durum zemini, rozet zemini |
+| `--color-amber` | `#FFC65C` | `#8F5600` | İkincil vurgu (sınırlı) |
+| `--color-amber-soft` | `rgb(255 198 92 / 0.12)` | `rgb(143 86 0 / 0.10)` | |
+| `--color-success` | `#3DDC97` | `#137A47` | |
+| `--color-warning` | `#FFC65C` | `#8F5600` | **Her zaman ikon + metinle** |
+| `--color-danger` | `#FF5468` | `#C0283B` | Hata; seçim bölümünde "yeraltı" |
+| `--color-info` | `#5EC8FF` | `#1D62B5` | Bilgi; seçim bölümünde "yasal" |
+| `--color-internal` | `#FFC65C` | `#8F5600` | İç not çerçevesi (§6.3) |
+| `--color-grid-line` | `rgb(245 239 244 / 0.05)` | `rgb(23 17 15 / 0.06)` | Hayalet kelime, ince çizgi |
+| `--color-glass` | `rgb(30 24 34 / 0.62)` | `rgb(255 255 255 / 0.72)` | Cam yüzey |
+| `--color-glow` | `rgb(255 122 69 / 0.22)` | `rgb(184 67 15 / 0.12)` | Hero / çağrı bandı ışıması |
+**Kontrast kontrol tablosu** — WCAG 2.x göreli parlaklık formülüyle ölçülmüştür (2026-11-13, v2 paleti). `tests/Unit/Design/ContrastTest.php` aynı hesabı `resources/css/app.css` token dosyasından yapar ve eşik altına düşen çiftte testi başarısız kılar:
 
 | Çift | Dark | Light | Eşik |
 |---|---|---|---|
-| text / bg | 16.4:1 | 17.5:1 | ≥ 4.5 |
-| text-muted / surface-1 | 8.0:1 | 7.8:1 | ≥ 4.5 |
-| text-subtle / surface-1 | 5.6:1 | 5.6:1 | ≥ 4.5 |
-| text-subtle / surface-3 (en kötü durum: hover satırı) | 4.7:1 | 4.7:1 | ≥ 4.5 |
-| accent / bg (link, odak halkası) | 11.9:1 | 4.7:1 | ≥ 4.5 |
-| accent / surface-1 | 11.2:1 | 5.1:1 | ≥ 4.5 |
-| accent-fg / accent (birincil buton) | 10.5:1 | 5.1:1 | ≥ 4.5 |
-| amber / surface-1 | 10.4:1 | 5.4:1 | ≥ 4.5 |
-| danger / surface-1 | 5.4:1 | 5.6:1 | ≥ 4.5 |
-| success / surface-1 | 9.8:1 | 5.4:1 | ≥ 4.5 |
-| info / surface-1 | 8.5:1 | 5.9:1 | ≥ 4.5 |
-| border-input / surface-2 (input sınırı) | 3.1:1 | 3.3:1 | ≥ 3.0 |
+| text / bg | 17.3:1 | 17.0:1 | ≥ 4.5 |
+| text-muted / surface-1 | 9.0:1 | 9.0:1 | ≥ 4.5 |
+| text-subtle / surface-1 | 6.1:1 | 6.8:1 | ≥ 4.5 |
+| text-subtle / surface-3 (en kötü durum: hover satırı) | 5.2:1 | 5.3:1 | ≥ 4.5 |
+| accent / bg (link, odak halkası) | 7.6:1 | 5.0:1 | ≥ 4.5 |
+| accent / surface-1 | 7.1:1 | 5.5:1 | ≥ 4.5 |
+| accent-fg / accent (birincil buton) | 7.3:1 | 5.5:1 | ≥ 4.5 |
+| amber / surface-1 | 11.9:1 | 6.0:1 | ≥ 4.5 |
+| danger / surface-1 | 5.9:1 | 5.8:1 | ≥ 4.5 |
+| success / surface-1 | 10.4:1 | 5.4:1 | ≥ 4.5 |
+| info / surface-1 | 9.8:1 | 6.1:1 | ≥ 4.5 |
+| border-input / surface-2 (input sınırı) | 3.5:1 | 3.6:1 | ≥ 3.0 |
 
 > `border` ve `border-strong` yalnızca dekoratif ayırıcıdır (~1.6:1). Bir bileşenin sınırını tanımlamak için **kullanılmaz**; bu iş için `border-input` kullanılır. Gelecekte bir token değişirse eşik değiştirilmez, token ayarlanır.
 
@@ -126,7 +126,9 @@ Okuma genişliği: gövde metni `max-width: 68ch`.
 | `--radius-pill` | 999 px — durum hapı |
 | Gölge (dark) | Kullanılmaz. Derinlik **yüzey tonu + 1 px border + üst kenarda 1 px iç parlaklık** (`inset 0 1px 0 rgb(255 255 255 / 0.04)`) ile verilir |
 | Gölge (light) | `--shadow-1: 0 1px 2px rgb(14 17 22 / .06), 0 1px 1px rgb(14 17 22 / .04)`; `--shadow-2` (popover/modal): `0 12px 32px -8px rgb(14 17 22 / .18)` |
-| Glow | **Tek yer:** odak halkası (`0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-accent)`) ve canlı nokta. Başka glow yok |
+| Glow | Odak halkası, canlı nokta ve **yalnızca** hero + çağrı bandındaki `--color-glow` radial ışıması (v2). Kartlarda glow yok; düşük efekt modunda ışıma kapanır |
+| Cam (v2) | `--color-glass` + `backdrop-filter: blur(14px)` + 1 px `border` — menü hapı, özellik kartları, durum kartı. Düşük efekt modunda opak `surface-1` |
+| Radius (v2, public) | Menü hapı ve butonlar `pill`; public kartlar `24px` (`--radius-xl`); panel/ACP bileşenleri v1 radius değerlerini korur |
 
 ### 3.4 Hareket
 
@@ -222,12 +224,12 @@ SVG `pattern`: 1 px boylam çizgileri (hafif kavisli, bir küre yüzeyi hissi) +
 
 ## 7. Düzen kalıpları
 
-### 7.1 Public site
-- **Header:** 64 px, `surface-1` + `backdrop-filter: blur(12px)` (düşük efekt modunda opak), kaydırınca alt border belirir. Sol: logo. Orta: navigasyon (≥ 1024 px). Sağ: durum hapı, tema menüsü, Discord ikonu, "Oyuncu Paneli" butonu. < 1024 px'te hamburger → tam ekran drawer.
-- **Hero:** Tam genişlik, min-height `min(88svh, 860px)`. Arka planda oyun görseli/videosu + soldan sağa koyulaşan gradyan + meridyen ızgarası. İçerik sol 7 kolonda: eyebrow (`§01 · SAN ANDREAS · ROLEPLAY`), display başlık (2 satır), açıklama (`text-lg`, `text-muted`), CTA'lar. Sağ 5 kolonda (≥ 1024 px) **yüzen durum kartı** (`server_status` mini) bulunur. Mobilde durum kartı CTA'ların altına iner.
-- **Bölüm ritmi:** Bölümler arasında zemin değişimi yerine ince meridyen çizgisi ayırıcı kullanılır. Bir bölüm `surface-1` zemine sahipse sonraki `bg` olur (en fazla iki ton).
-- **Footer:** 4 kolon (marka, hızlı bağlantılar, topluluk, yasal) + alt satır (telif, veri sorumlusu, "Bu sunucu Rockstar Games veya Take-Two ile bağlantılı değildir" ibaresi).
-
+### 7.1 Public site (v2)
+- **Header:** sayfanın üstünde 12 px boşlukla **yüzen cam hap** (`radius-pill`, `max-width: 1240px`). Sol: logo (yüklenen görsel veya varsayılan işaret + kısa ad). Orta: navigasyon hapları; aktif sayfa dolu accent hap. Sağ: durum hapı, tema menüsü, "Giriş yap" / "Oyuncu paneli" dolu hap buton. < 1024 px'te hamburger → tam ekran drawer.
+- **Hero:** `min-height: min(92svh, 900px)`. Arka planda markanın kısa adı dev hayalet kelime olarak, sağ altta turuncu ışıma. Sol 7 kolon: durum hapı, iki tonlu display başlık (`title` metin rengi, `title_accent` accent), açıklama, iki hap buton, üç kısa "ilke". Sağ 5 kolon: kodla çizilmiş şehir ufku (`x-brand.skyline`) ve üzerinde cam sunucu durum kartı.
+- **Bölüm ritmi:** bölümler `bg` zeminde; ayrım boşluk ve hayalet kelimeyle. Seçim bölümü iki renkli tam genişlik panel, çağrı bandı accent ışımalı geniş kart.
+- **İç sayfa başlığı (`x-ui.page-header`):** breadcrumb + h1 + giriş; arkasında sayfa adının hayalet kelimesi.
+- **Footer:** üstte tam genişlik dev marka adı (soluk), altında 4 kolon (marka + slogan, hızlı bağlantılar, topluluk, yasal) ve alt satır (telif, veri sorumlusu, "Rockstar Games veya Take-Two ile bağlantılı değildir").
 ### 7.2 Oyuncu paneli
 - Masaüstü: solda 264 px sidebar (logo, kullanıcı kartı, menü grupları, en altta sunucu durumu). Üst bar 56 px (breadcrumb, bildirim zili, tema, kullanıcı menüsü).
 - Mobil: üst bar + **alt sekme çubuğu** (Genel, Destek, Karakterler, Bildirimler, Menü). "Menü" sekmesi tam menüyü drawer olarak açar. PWA standalone modunda alt çubuk safe-area'ya uyar.

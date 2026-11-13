@@ -22,6 +22,9 @@ final class SettingsController extends Controller
     {
         $groups = [];
         foreach ($this->settings->catalog() as $key => $meta) {
+            if ($meta['managed'] ?? false) {
+                continue;
+            }
             $groups[$meta['group']]['count'] = ($groups[$meta['group']]['count'] ?? 0) + 1;
             $groups[$meta['group']]['super'] = ($groups[$meta['group']]['super'] ?? false) || ($meta['super'] ?? false);
         }
@@ -31,7 +34,7 @@ final class SettingsController extends Controller
 
     public function edit(Request $request, string $group): View
     {
-        $items = array_filter($this->settings->catalog(), fn (array $m): bool => $m['group'] === $group);
+        $items = array_filter($this->settings->catalog(), fn (array $m): bool => $m['group'] === $group && ! ($m['managed'] ?? false));
         abort_if($items === [], 404);
 
         /** @var User $actor */

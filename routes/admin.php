@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\ApplicationController;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\BranchController;
+use App\Http\Controllers\Admin\BrandingController;
 use App\Http\Controllers\Admin\CharacterController;
 use App\Http\Controllers\Admin\ContactMessageController;
 use App\Http\Controllers\Admin\ContentController;
@@ -76,6 +77,11 @@ Route::post('branches/{branch}/members/{user:ulid}/lead', [BranchController::cla
 Route::get('audit-logs', [AuditLogController::class, 'index'])->middleware('can:audit.read')->name('audit-logs.index');
 Route::get('audit-logs/{log}', [AuditLogController::class, 'show'])->middleware('can:audit.read')->name('audit-logs.show');
 Route::get('activity-logs', ActivityLogController::class)->middleware('can:activity.read')->name('activity-logs.index');
+// Marka (ad, logo, sekme ikonu) — docs/ROUTES.md §6, DESIGN §2.
+Route::get('branding', [BrandingController::class, 'edit'])->middleware('can:settings.read')->name('branding');
+Route::post('branding', [BrandingController::class, 'update'])->middleware(['can:settings.update', 'password.confirm'])->name('branding.update');
+Route::post('branding/{asset}/remove', [BrandingController::class, 'remove'])->middleware(['can:settings.update', 'password.confirm'])->whereIn('asset', ['logo', 'icon'])->name('branding.remove');
+
 Route::get('settings', [SettingsController::class, 'index'])->middleware('can:settings.read')->name('settings.index');
 Route::get('settings/{group}', [SettingsController::class, 'edit'])->middleware('can:settings.read')->where('group', '[a-z_]+')->name('settings.edit');
 Route::post('settings/{group}', [SettingsController::class, 'update'])->middleware(['can:settings.update', 'password.confirm'])->where('group', '[a-z_]+')->name('settings.update');
