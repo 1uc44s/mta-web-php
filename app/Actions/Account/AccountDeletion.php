@@ -71,7 +71,7 @@ final class AccountDeletion
                 'suspension_reason' => null,
             ])->save();
 
-            foreach (['sessions', 'user_notification_preferences', 'email_change_requests', 'user_security_events', 'user_roles', 'branch_members', 'game_link_codes'] as $table) {
+            foreach (['sessions', 'user_notification_preferences', 'email_change_requests', 'user_security_events', 'user_roles', 'branch_members', 'game_link_codes', 'push_subscriptions'] as $table) {
                 DB::table($table)->where('user_id', $user->id)->delete();
             }
             DB::table('notifications')->where(['notifiable_type' => $user->getMorphClass(), 'notifiable_id' => $user->id])->delete();

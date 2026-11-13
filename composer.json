@@ -13,9 +13,11 @@
         "intervention/image": "^4.4",
         "laravel/fortify": "^1.42",
         "laravel/framework": "^13.17",
+        "laravel/reverb": "^1.13",
         "laravel/tinker": "^3.0",
         "league/commonmark": "^2.10",
         "mallardduck/blade-lucide-icons": "^2.0",
+        "minishlink/web-push": "^11.0",
         "symfony/html-sanitizer": "^8.1"
     },
     "require-dev": {

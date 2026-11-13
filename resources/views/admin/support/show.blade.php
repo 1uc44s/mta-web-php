@@ -18,6 +18,7 @@
         </div>
     @endif
 
+    <x-ui.realtime-banner :channels="'support.ticket.'.$ticket->ulid" event="support.message" :message="__('notifications.realtime.ticket')" />
     <div class="grid gap-6 xl:grid-cols-[1fr_22rem]">
         <div class="space-y-4">
             <ol class="space-y-3">

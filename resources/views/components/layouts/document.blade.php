@@ -34,6 +34,15 @@
     <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
     <link rel="apple-touch-icon" href="{{ asset('icons/icon-192.png') }}">
     <meta name="mrp-sw" content="{{ (app()->isProduction() || config('roleplay.pwa.register_in_dev')) ? asset('sw.js') : '' }}">
+    {{-- Gerçek zaman + Web Push (Faz 10, ARCHITECTURE §9/§8.1): yalnızca oturum açık ve özellik etkinken; secret asla. --}}
+    @auth
+        @if ($realtime = \App\Support\Realtime::clientConfig())
+            <meta name="mrp-realtime" content="{{ json_encode($realtime + ['user' => auth()->id()]) }}">
+        @endif
+        @if (app(\App\Services\Push\PushSubscriptions::class)->available())
+            <meta name="mrp-push" content="{{ config('roleplay.push.public_key') }}" data-subscribe-url="{{ route('panel.push.subscribe') }}" data-unsubscribe-url="{{ route('panel.push.unsubscribe') }}">
+        @endif
+    @endauth
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body {{ $attributes->class(['min-h-svh bg-bg text-text antialiased']) }}>

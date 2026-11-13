@@ -58,6 +58,10 @@ final class SupportController extends Controller
         return view('admin.support.index', [
             'tickets' => $tickets, 'status' => $status, 'assigned' => $assigned, 'q' => $q,
             'categories' => SupportCategory::query()->orderBy('sort')->pluck('name', 'id'),
+            // Gerçek zaman (Faz 10): dinlenecek branş kanalları — kanal yetkisi routes/channels.php'de yeniden doğrulanır.
+            'realtimeBranches' => $actor->can('support.all_branches')
+                ? Branch::query()->pluck('id')->map(fn ($id): int => (int) $id)->all()
+                : $actor->activeBranchIds(),
         ]);
     }
 

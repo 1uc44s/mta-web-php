@@ -4,8 +4,9 @@
  * - Gezinmeler: ağ önce; ağ yoksa /offline.html.
  * - /build/* (içerik hash'li) varlıklar: cache önce (çalışma zamanı cache'i).
  * - Mesajlar: SKIP_WAITING (güncelleme onayı), CLEAR_RUNTIME_CACHE (çıkış).
+ * - Web Push (Faz 10): yalnızca başlık/özet/URL gösterilir; tıklamada yalnızca aynı origin'e gidilir.
  */
-const VERSION = 'mrp-v1';
+const VERSION = 'mrp-v2';
 const PRECACHE = `${VERSION}-precache`;
 const RUNTIME = `${VERSION}-runtime`;
 const PRECACHE_URLS = ['/offline.html', '/manifest.webmanifest', '/favicon.svg', '/icons/icon-192.png'];
@@ -62,4 +63,38 @@ self.addEventListener('fetch', (event) => {
             }))),
         );
     }
+});
+
+self.addEventListener('push', (event) => {
+    let data = {};
+    try {
+        data = event.data ? event.data.json() : {};
+    } catch {
+        data = {};
+    }
+    const title = typeof data.title === 'string' && data.title !== '' ? data.title : 'Meridyen Roleplay';
+    event.waitUntil(self.registration.showNotification(title, {
+        body: typeof data.body === 'string' ? data.body : '',
+        tag: typeof data.tag === 'string' ? data.tag : undefined,
+        icon: '/icons/icon-192.png',
+        badge: '/icons/icon-192.png',
+        data: { url: typeof data.url === 'string' ? data.url : '/panel' },
+    }));
+});
+
+self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
+    let target = new URL('/panel', self.location.origin);
+    try {
+        const candidate = new URL(event.notification.data?.url || '/panel', self.location.origin);
+        if (candidate.origin === self.location.origin) {
+            target = candidate;
+        }
+    } catch {
+        // geçersiz URL: panel ana sayfası
+    }
+    event.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windows) => {
+        const open = windows.find((w) => w.url === target.href);
+        return open ? open.focus() : self.clients.openWindow(target.href);
+    }));
 });

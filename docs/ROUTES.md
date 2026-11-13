@@ -142,6 +142,8 @@ Fortify'ın `updateProfileInformation` ve `updatePasswords` özellikleri **kapal
 |---|---|---|---|---|
 | GET | `/panel/academy` | `panel.academy` | | İlerleme özeti |
 | POST | `/panel/academy/topics/{topic}/complete` | `panel.academy.complete` | | İdempotent. `{topic}` = konu id'si (slug ders içinde benzersiz olduğundan) |
+| GET | `/panel/academy/topics/{topic}/quiz` | `panel.academy.quiz` | F:academy_quiz | Konu sınavı (Faz 10). Doğru cevaplar istemciye gönderilmez |
+| POST | `/panel/academy/topics/{topic}/quiz` | `panel.academy.quiz.submit` | F:academy_quiz, T:10,60 | `answers[question_id]=option_id`. Deneme sınırı + bekleme süresi; geçerse konu tamamlanır |
 | POST | `/panel/rules/acknowledge` | `panel.rules.acknowledge` | | Geçerli kural sürümünü onaylar |
 
 ### 5.4 Destek
@@ -207,6 +209,9 @@ Fortify'ın `updateProfileInformation` ve `updatePasswords` özellikleri **kapal
 | GET | `/panel/security/events` | `panel.security.events` | | Son 90 gün güvenlik olaylarım |
 | POST | `/panel/account/delete-request` | `panel.account.delete-request` | PC | 14 gün bekleme |
 | POST | `/panel/account/delete-cancel` | `panel.account.delete-cancel` | | |
+| POST | `/panel/account/export` | `panel.account.export` | PC, T:3,60 | KVKK veri dökümü (Faz 10, SRS §6.3): JSON dosya indirme, `Cache-Control: no-store`. Güvenlik olayı `data_exported` |
+| POST | `/panel/push/subscriptions` | `panel.push.subscribe` | F:push, T:20,60 | JSON `{endpoint, keys:{p256dh, auth}, contentEncoding}` (Faz 10) |
+| POST | `/panel/push/subscriptions/delete` | `panel.push.unsubscribe` | F:push | JSON `{endpoint}`; yalnızca kendi aboneliği |
 
 ---
 
@@ -354,6 +359,8 @@ Kaynağa özel rotalar ve yetki istisnaları:
 | POST | `/admin/content/rules/bump-version` | `admin.content.rules.bump-version` | `content.publish` | Kural seti sürümünü artırır → oyunculardan yeniden onay ister |
 | — | `factions` güncelleme | | `content.update` **veya** `factions.update_own` | `factions.update_own`: yalnızca üyesi olduğu fraksiyon branşının fraksiyonu ve yalnızca metin alanları. **Faz 8'e ertelendi** (fraksiyon branşı + başvurularla birlikte); Faz 5'te yalnızca `content.update` |
 | — | `academy-*` | | `academy.manage` | `content.*` yerine |
+| — | `academy-quizzes` (Faz 10) | | `academy.manage` | Sınav ayarları (CMS kaynak deseni) |
+| GET / POST | `/admin/academy-quizzes/{quiz}/questions`, `…/questions/{question}/delete` | `admin.academy-quizzes.questions(.store/.destroy)` | `academy.manage` | Soru + 2–6 seçenek, tam 1 doğru |
 | GET | `/admin/media` | `admin.media.index` | `content.read` | Izgara + arama |
 | POST | `/admin/media` | `admin.media.store` | `media.upload` | T:uploads |
 | POST | `/admin/media/{media:ulid}` | `admin.media.update` | `media.upload` | Alt metin, dekoratif bayrağı |
@@ -525,6 +532,14 @@ Yalnızca web'e **bağlı** hesaplar için kabul edilir (bağlı değilse `200 {
 CSRF istisnaları (`bootstrap/app.php` › `validateCsrfTokens(except: [...])`): yalnızca `webhooks/*`. (`api/*` rotaları zaten `web` grubunda değildir.)
 
 ---
+
+### 7.4 Gerçek zaman (Faz 10, Laravel Reverb)
+
+| Yöntem | URI | Ad | Açıklama |
+|---|---|---|---|
+| POST | `/broadcasting/auth` | — | Laravel kanal yetkilendirmesi (`web` + `auth`). Yalnızca `BROADCAST_CONNECTION=reverb` iken istemci bağlanır |
+
+Kanallar (`routes/channels.php`, ARCHITECTURE §9): `private-user.{id}` (yalnızca kendisi — bildirimler), `private-support.ticket.{ulid}` (talep sahibi veya kapsamlı personel), `private-staff.branch.{id}` (branş üyesi veya `support.all_branches`).
 
 ## 8. Hata ve durum kodları (web)
 

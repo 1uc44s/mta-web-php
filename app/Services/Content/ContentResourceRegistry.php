@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Content;
 
 use App\Models\AcademyCourse;
+use App\Models\AcademyQuiz;
 use App\Models\AcademyTopic;
 use App\Models\Announcement;
 use App\Models\ApplicationType;
@@ -37,7 +38,7 @@ use InvalidArgumentException;
  *
  * Alan tipleri: text · textarea · markdown · select · bool · int · datetime · url · media · belongs · tags · rules · channels
  *
- * @phpstan-type ContentField array{type: string, label: string, rules?: list<mixed>, options?: array<string, string>, model?: class-string<Model>, display?: string, help?: string, wide?: bool, default?: scalar}
+ * @phpstan-type ContentField array{type: string, label: string, rules?: list<mixed>, options?: array<string, string>, model?: class-string<Model>, display?: string, help?: string, wide?: bool, default?: scalar, unique?: bool}
  * @phpstan-type ContentDef array{model: class-string<Model>, label: string, singular: string, family: string, title: string, publishable: bool, sortable: bool, slug_from: string|null, search: list<string>, columns: list<string>, fields: array<string, ContentField>, path?: string, name?: string, public?: string, revisions?: string, system_guard?: bool}
  */
 final class ContentResourceRegistry
@@ -237,6 +238,19 @@ final class ContentResourceRegistry
                     'rules' => ['type' => 'rules', 'label' => 'İlgili kurallar', 'help' => 'Kural kodları, virgülle (ör. RP-2.1, RP-2.3).'],
                 ],
             ],
+            'academy-quizzes' => [
+                'model' => AcademyQuiz::class, 'label' => 'Akademi sınavları', 'singular' => 'Sınav', 'family' => 'academy', 'title' => 'title',
+                'publishable' => false, 'sortable' => false, 'slug_from' => null, 'search' => ['title'], 'columns' => ['title', 'academy_topic_id', 'pass_percent', 'is_active'],
+                'path' => 'academy-quizzes', 'name' => 'academy-quizzes',
+                'fields' => [
+                    'academy_topic_id' => ['type' => 'belongs', 'label' => 'Konu', 'model' => AcademyTopic::class, 'display' => 'title', 'rules' => ['required'], 'unique' => true, 'help' => 'Konu başına tek sınav.'],
+                    'title' => ['type' => 'text', 'label' => 'Başlık', 'rules' => ['required', 'string', 'max:150']],
+                    'pass_percent' => ['type' => 'int', 'label' => 'Geçme eşiği (%)', 'rules' => ['required', 'integer', 'min:1', 'max:100'], 'default' => 70],
+                    'max_attempts' => ['type' => 'int', 'label' => 'Deneme sınırı (0 = sınırsız)', 'rules' => ['required', 'integer', 'min:0', 'max:20'], 'default' => 3],
+                    'cooldown_minutes' => ['type' => 'int', 'label' => 'Başarısız denemeden sonra bekleme (dk)', 'rules' => ['required', 'integer', 'min:0', 'max:10080'], 'default' => 60],
+                    'is_active' => ['type' => 'bool', 'label' => 'Aktif (soru eklendikten sonra açın)'],
+                ],
+            ],
             'announcements' => [
                 'model' => Announcement::class, 'label' => 'Duyurular', 'singular' => 'Duyuru', 'family' => 'announcements', 'title' => 'title',
                 'publishable' => true, 'sortable' => false, 'slug_from' => null, 'search' => ['title'], 'columns' => ['title', 'priority', 'starts_at'],
@@ -246,7 +260,7 @@ final class ContentResourceRegistry
                     'body' => ['type' => 'markdown', 'label' => 'Metin', 'rules' => ['required', 'string', 'max:5000'], 'wide' => true],
                     'priority' => ['type' => 'select', 'label' => 'Önem', 'options' => ['info' => 'Bilgi', 'important' => 'Önemli', 'critical' => 'Kritik'], 'rules' => ['required']],
                     'audience' => ['type' => 'select', 'label' => 'Hedef kitle', 'options' => ['all' => 'Herkes (site bandı dahil)', 'players' => 'Giriş yapmış oyuncular'], 'rules' => ['required']],
-                    'channels' => ['type' => 'channels', 'label' => 'Kanallar', 'options' => ['public_banner' => 'Site bandı', 'panel' => 'Oyuncu paneli', 'email' => 'E-posta (yayında bir kez)']],
+                    'channels' => ['type' => 'channels', 'label' => 'Kanallar', 'options' => ['public_banner' => 'Site bandı', 'panel' => 'Oyuncu paneli', 'email' => 'E-posta (yayında bir kez)', 'discord' => 'Discord (herkese açık duyuru, bir kez)']],
                     'starts_at' => ['type' => 'datetime', 'label' => 'Başlangıç', 'rules' => ['required', 'date']],
                     'ends_at' => ['type' => 'datetime', 'label' => 'Bitiş', 'rules' => ['nullable', 'date', 'after:starts_at']],
                 ],

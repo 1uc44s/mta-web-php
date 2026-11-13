@@ -9,6 +9,7 @@
         </x-slot:actions>
     </x-admin.header>
 
+    <x-ui.realtime-banner :channels="implode(' ', array_map(fn (int $b): string => 'staff.branch.'.$b, $realtimeBranches))" event="support.queue" :message="__('notifications.realtime.queue')" />
     <form method="GET" class="mb-4 flex flex-wrap items-end gap-2">
         <label class="sr-only" for="status">Durum</label>
         <select id="status" name="status" class="h-10 rounded-md border border-border-input bg-surface-1 px-3 text-sm text-text">

@@ -6,6 +6,7 @@ namespace App\Services\Bridge;
 
 use App\Enums\AuditAction;
 use App\Services\Audit\AuditLogger;
+use App\Services\Integrations\OpsAlerts;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
@@ -20,7 +21,7 @@ final class BridgeAlerts
 
     public const WINDOW_SECONDS = 300;
 
-    public function __construct(private readonly AuditLogger $audit) {}
+    public function __construct(private readonly AuditLogger $audit, private readonly OpsAlerts $ops) {}
 
     /** @param  array<string, scalar|null>  $context */
     public function failure(string $reason, array $context = []): void
@@ -33,6 +34,7 @@ final class BridgeAlerts
 
         if ($count === self::THRESHOLD + 1 && Cache::add($bucket.':alerted', true, self::WINDOW_SECONDS * 2)) {
             $this->audit->record(AuditAction::BridgeSignatureAlert, null, ['after' => ['failures' => $count, 'window_seconds' => self::WINDOW_SECONDS, 'last_reason' => $reason]], null, null, 'bridge');
+            $this->ops->critical('bridge.signature_alert', ['failures' => $count, 'last_reason' => $reason]);
         }
     }
 }

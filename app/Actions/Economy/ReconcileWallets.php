@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\WalletReconciliationRun;
 use App\Notifications\PanelNotice;
 use App\Services\Audit\AuditLogger;
+use App\Services\Integrations\OpsAlerts;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -18,7 +19,7 @@ use Illuminate\Support\Facades\DB;
  */
 final class ReconcileWallets
 {
-    public function __construct(private readonly AuditLogger $audit) {}
+    public function __construct(private readonly AuditLogger $audit, private readonly OpsAlerts $ops) {}
 
     public function run(?User $actor = null): WalletReconciliationRun
     {
@@ -61,6 +62,7 @@ final class ReconcileWallets
             $this->audit->record(AuditAction::WalletReconciliationMismatch, $run, [
                 'after' => ['mismatches' => count($mismatches), 'wallet_ids' => array_slice(array_column($mismatches, 'wallet_id'), 0, 20)],
             ], null, $actor, $actor === null ? 'scheduler' : 'user');
+            $this->ops->critical('wallet.reconciliation_mismatch', ['mismatches' => count($mismatches)]);
 
             User::query()->whereHas('roles.permissions', fn ($q) => $q->where('key', 'payments.reconcile'))->get()
                 ->each(fn (User $u) => $u->notify(new PanelNotice('reconciliation_mismatch', __('economy.notice.mismatch', ['count' => count($mismatches)]), route('admin.payments.reconciliation'))));

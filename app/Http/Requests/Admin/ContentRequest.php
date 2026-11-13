@@ -46,6 +46,9 @@ final class ContentRequest extends FormRequest
                 'channels' => ['array'],
                 default => $base !== [] ? $base : ['nullable', 'string'],
             };
+            if ($field['unique'] ?? false) {
+                $rules[$name][] = Rule::unique($model->getTable(), $name)->ignore($id);
+            }
             if ($field['type'] === 'channels') {
                 $rules[$name.'.*'] = [Rule::in(array_keys($field['options'] ?? []))];
             }

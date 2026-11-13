@@ -9,6 +9,7 @@ use App\Http\Requests\Panel\NotificationPreferencesRequest;
 use App\Http\Requests\Panel\PreferencesRequest;
 use App\Models\User;
 use App\Services\Notifications\NotificationPreferences;
+use App\Services\Push\PushSubscriptions;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
@@ -17,14 +18,14 @@ use Illuminate\View\View;
 /** Ayarlar — docs/ROUTES.md §5.1, SRS FR-UCP-004 (tema/efekt kullanıcıda + cookie), DATABASE §3.11. */
 final class SettingsController extends Controller
 {
-    public function __construct(private readonly NotificationPreferences $preferences) {}
+    public function __construct(private readonly NotificationPreferences $preferences, private readonly PushSubscriptions $push) {}
 
     public function show(Request $request): View
     {
         /** @var User $user */
         $user = $request->user();
 
-        return view('panel.settings', ['user' => $user, 'prefs' => $this->preferences->matrix($user)]);
+        return view('panel.settings', ['user' => $user, 'prefs' => $this->preferences->matrix($user), 'pushAvailable' => $this->push->available()]);
     }
 
     public function preferences(PreferencesRequest $request): RedirectResponse

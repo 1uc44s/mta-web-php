@@ -10,6 +10,7 @@
         </div>
         <h1 class="mt-2 font-display text-h2 font-bold text-text">{{ $ticket->subject }}</h1>
 
+        <x-ui.realtime-banner class="mt-6" :channels="'support.ticket.'.$ticket->ulid" event="support.message" :message="__('notifications.realtime.ticket')" />
         <ol class="mt-8 space-y-4">
             @foreach ($messages as $m)
                 @php $mine = $m->author_type === 'player'; @endphp

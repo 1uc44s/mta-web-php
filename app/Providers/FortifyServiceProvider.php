@@ -61,6 +61,10 @@ final class FortifyServiceProvider extends ServiceProvider
         Fortify::twoFactorChallengeView(fn () => view('auth.two-factor-challenge'));
 
         Fortify::authenticateUsing(fn (Request $request): ?User => $this->authenticate($request));
+
+        // Parola onayı (password.confirm): giriş alanı `login` sanal bir alan olduğundan Fortify'ın varsayılan
+        // `guard->validate([login => $user->login])` yolu kullanılamaz; doğrudan hash karşılaştırılır.
+        Fortify::confirmPasswordsUsing(fn (User $user, ?string $password): bool => is_string($password) && $password !== '' && Hash::check($password, $user->password));
     }
 
     /**

@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Panel;
 
 use App\Actions\Account\AccountDeletion;
 use App\Actions\Account\AccountSecurity;
+use App\Actions\Account\ExportPersonalData;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Panel\EmailChangeRequest;
 use App\Http\Requests\Panel\PasswordUpdateRequest;
@@ -13,6 +14,7 @@ use App\Models\User;
 use App\Models\UserSecurityEvent;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
@@ -112,6 +114,21 @@ final class SecurityController extends Controller
         $this->deletion->request($user, $request);
 
         return back()->with('toast', 'Hesap silme talebin alındı. 14 gün içinde iptal edebilirsin.');
+    }
+
+    /** KVKK veri dökümü (Faz 10) — JSON dosyası, önbelleğe alınmaz. */
+    public function export(Request $request, ExportPersonalData $export): Response
+    {
+        /** @var User $user */
+        $user = $request->user();
+        $json = (string) json_encode($export->download($user, $request), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+        return response($json, 200, [
+            'Content-Type' => 'application/json; charset=utf-8',
+            'Content-Disposition' => 'attachment; filename="meridyen-veri-'.now()->format('Ymd-His').'.json"',
+            'Cache-Control' => 'no-store, private',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
     }
 
     public function deleteCancel(Request $request): RedirectResponse

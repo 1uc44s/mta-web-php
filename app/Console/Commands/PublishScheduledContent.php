@@ -37,6 +37,7 @@ final class PublishScheduledContent extends Command
                     $model->forceFill(['status' => ContentStatus::Published])->save();
                     if ($model instanceof Announcement) {
                         ContentWorkflow::dispatchAnnouncementEmail($model);
+                        ContentWorkflow::dispatchAnnouncementDiscord($model);
                     }
                     $total++;
                 });

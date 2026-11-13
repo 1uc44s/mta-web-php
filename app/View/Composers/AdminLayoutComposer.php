@@ -58,6 +58,7 @@ final class AdminLayoutComposer
             ['label' => 'Kurallar', 'route' => 'admin.content.rules.index', 'icon' => 'scale', 'can' => 'content.read', 'match' => 'admin.content.rule*'],
             ['label' => 'Akademi dersleri', 'route' => 'admin.content.academy-courses.index', 'icon' => 'graduation-cap', 'can' => 'academy.manage', 'match' => 'admin.content.academy-courses.*'],
             ['label' => 'Akademi konuları', 'route' => 'admin.content.academy-topics.index', 'icon' => 'book-open', 'can' => 'academy.manage', 'match' => 'admin.content.academy-topics.*'],
+            ['label' => 'Akademi sınavları', 'route' => 'admin.academy-quizzes.index', 'icon' => 'list-checks', 'can' => 'academy.manage', 'match' => 'admin.academy-quizzes.*'],
         ]],
         ['label' => 'content_admin.nav.communication', 'items' => [
             ['label' => 'Duyurular', 'route' => 'admin.announcements.index', 'icon' => 'megaphone', 'can' => 'announcements.manage', 'match' => 'admin.announcements.*'],

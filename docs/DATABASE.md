@@ -183,7 +183,7 @@ Append-only. Saklama 180 gün.
 |---|---|---|---|
 | id | BIGINT UNSIGNED PK | | |
 | user_id | BIGINT UNSIGNED | ✓ | FK → users **CASCADE** (anonimleştirmede silinir) |
-| event | VARCHAR(48) | | `login_success, login_failed, logout, password_changed, password_reset, email_change_requested, email_changed, two_factor_enabled, two_factor_disabled, recovery_code_used, sessions_revoked, suspicious_login, account_linked, account_unlinked` |
+| event | VARCHAR(48) | | `login_success, login_failed, logout, password_changed, password_reset, email_change_requested, email_changed, two_factor_enabled, two_factor_disabled, recovery_code_used, sessions_revoked, suspicious_login, account_linked, account_unlinked, data_exported` (Faz 10) |
 | identifier_hash | CHAR(64) | ✓ | Başarısız girişte denenen tanımlayıcının HMAC'i |
 | ip_hash | CHAR(64) | ✓ | HMAC(IP) |
 | ip_masked | VARCHAR(64) | ✓ | |
@@ -230,11 +230,29 @@ Append-only rıza/onay geçmişi. Son kayıt geçerlidir.
 |---|---|---|---|---|
 | user_id | BIGINT UNSIGNED | | | FK → users **CASCADE** |
 | category | VARCHAR(32) | | | `support, applications, announcements, payments, sanctions` (security tercihe kapalıdır) |
-| channel | VARCHAR(32) | | | `mail, panel, discord, whatsapp` |
+| channel | VARCHAR(32) | | | `mail, push, panel, discord, whatsapp` (Faz 10: `push` = Web Push) |
 | enabled | BOOLEAN | | 1 | |
 | updated_at | DATETIME | ✓ | | |
 
 - PK: `(user_id, category, channel)`.
+
+### 3.11a `push_subscriptions` (Faz 10, Web Push — ARCHITECTURE §8.1)
+
+| Kolon | Tip | Null | Açıklama |
+|---|---|---|---|
+| id | BIGINT UNSIGNED PK | | |
+| user_id | BIGINT UNSIGNED | | FK → users **CASCADE** |
+| endpoint | TEXT | | Tarayıcı push servisi URL'i |
+| endpoint_hash | CHAR(64) | | `sha256(endpoint)` — unique (`uq_push_endpoint`) |
+| public_key | VARCHAR(255) | | `p256dh` |
+| auth_token | TEXT | | `auth` — **encrypted** cast |
+| content_encoding | VARCHAR(16) | | `aes128gcm` |
+| user_agent_summary | VARCHAR(120) | ✓ | |
+| failures | TINYINT UNSIGNED | | Ardışık başarısız gönderim; 404/410 yanıtında kayıt silinir |
+| last_used_at | DATETIME | ✓ | |
+| created_at / updated_at | DATETIME | ✓ | |
+
+- Index: `idx_push_user (user_id)`. Kullanıcı başına en fazla 10 abonelik (servis kontrolü; en eskisi silinir). Hesap anonimleştirmede silinir (§13).
 
 ### 3.12 `user_contact_channels` (R2/R3)
 
@@ -958,7 +976,7 @@ Medyaya referans veren FK'ler (`*_media_id`) **SET NULL** davranışlıdır. Sil
 | priority | VARCHAR(16) | | `info, important, critical` |
 | audience | VARCHAR(16) | | `all, players, linked_players, roles` |
 | audience_role_ids | JSON | ✓ | `audience=roles` için |
-| channels | JSON | | `["public_banner","panel","email"]` |
+| channels | JSON | | `["public_banner","panel","email","discord"]` (Faz 10: `discord` yalnızca `audience=all` duyurularda, yayında bir kez) |
 | starts_at | DATETIME | | |
 | ends_at | DATETIME | ✓ | |
 | email_dispatched_at | DATETIME | ✓ | E-posta kanalı bir kez çalışır |
@@ -977,7 +995,10 @@ Medyaya referans veren FK'ler (`*_media_id`) **SET NULL** davranışlıdır. Sil
 | `academy_topics` (Konu) | `id, academy_course_id` FK **CASCADE**, `slug` (ders içinde uq: `(academy_course_id, slug)`), `title VARCHAR(150), body MEDIUMTEXT, step_label VARCHAR(48) NULL` (`/start` adım başlığı), `estimated_minutes SMALLINT`, *yayın blok* |
 | `academy_topic_rule` | `academy_topic_id` FK **CASCADE**, `rule_id` FK **CASCADE**. PK ikili |
 | `academy_progress` | `user_id` FK **CASCADE**, `academy_topic_id` FK **CASCADE**, `completed_at`. PK `(user_id, academy_topic_id)` |
-| `academy_quizzes` … (R2) | Taslak: `academy_quizzes, academy_questions, academy_options, academy_attempts`. Faz 10'da bu dokümana eklenecek |
+| `academy_quizzes` (Faz 10) | `id, academy_topic_id` FK **CASCADE** (unique — konu başına 1 sınav), `title VARCHAR(150), pass_percent TINYINT UNSIGNED DEFAULT 70, max_attempts TINYINT UNSIGNED DEFAULT 3` (0 = sınırsız), `cooldown_minutes SMALLINT UNSIGNED DEFAULT 60` (başarısız denemeden sonra), `is_active BOOLEAN`, timestamps |
+| `academy_questions` (Faz 10) | `id, academy_quiz_id` FK **CASCADE**, `body VARCHAR(500), sort SMALLINT`, timestamps |
+| `academy_options` (Faz 10) | `id, academy_question_id` FK **CASCADE**, `body VARCHAR(255), is_correct BOOLEAN, sort SMALLINT`. Soru başına 2–6 seçenek, tam olarak 1 doğru (servis kontrolü) |
+| `academy_attempts` (Faz 10) | `id, ulid, academy_quiz_id` FK **CASCADE**, `user_id` FK **CASCADE**, `score_percent TINYINT UNSIGNED, passed BOOLEAN, answers JSON` (`{question_id: option_id}`), `created_at`. Index `(user_id, academy_quiz_id, created_at)`. Geçen deneme konuyu `academy_progress` ile tamamlanmış sayar. Doğru seçenekler oyuncuya yalnızca geçtikten sonra gösterilir |
 
 ### 10.18 Mesaj şablonları
 
@@ -1106,7 +1127,7 @@ Medyaya referans veren FK'ler (`*_media_id`) **SET NULL** davranışlıdır. Sil
 
 `AnonymizeUser` action'ı (tek transaction):
 1. `users`: `username = 'silinmis_' + id`, `email = 'deleted+{ulid}@invalid.local'`, `password` rastgele hash, 2FA alanları NULL, `status = anonymized`.
-2. `sessions`, `user_contact_channels`, `user_notification_preferences`, `email_change_requests`, `game_link_codes`, `user_security_events` silinir.
+2. `sessions`, `user_contact_channels`, `user_notification_preferences`, `push_subscriptions`, `email_change_requests`, `game_link_codes`, `user_security_events` silinir.
 3. `game_account_links` aktifse `revoked` olur ve köprüye `account.link_revoked` komutu gönderilir.
 4. Ticket mesajları korunur (personel geçmişi), ancak yazar adı "Silinmiş kullanıcı" olarak gösterilir.
 5. Finansal kayıtlar ve audit **değişmez** (yasal saklama).

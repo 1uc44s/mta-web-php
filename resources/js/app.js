@@ -9,6 +9,8 @@ import { initPaymentStatus } from './modules/payment-status';
 import { initNotificationBadge } from './modules/notifications';
 import { initPreferences } from './modules/preferences';
 import { initPwa } from './modules/pwa';
+import { initPush } from './modules/push';
+import { initRealtime } from './echo';
 import { initRulesFilter } from './modules/rules-filter';
 import { initServerStatus } from './modules/server-status';
 import { initUi } from './modules/ui';
@@ -26,6 +28,8 @@ const boot = () => {
     initLinkCode();
     initPaymentStatus();
     initPwa();
+    initPush();
+    initRealtime().catch(() => {});
 };
 
 if (document.readyState === 'loading') {
@@ -35,3 +39,4 @@ if (document.readyState === 'loading') {
 }
 
 Alpine.start();
+

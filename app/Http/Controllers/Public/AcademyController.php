@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Public;
 
+use App\Actions\Panel\AcademyQuizzes;
 use App\Http\Controllers\Controller;
 use App\Models\AcademyCourse;
 use App\Models\AcademyTopic;
@@ -33,7 +34,7 @@ final class AcademyController extends Controller
         return view('public.academy.course', ['course' => $course]);
     }
 
-    public function topic(MarkdownRenderer $markdown, string $course, string $topic): View
+    public function topic(MarkdownRenderer $markdown, AcademyQuizzes $quizzes, string $course, string $topic): View
     {
         $course = AcademyCourse::query()->published()->where('slug', $course)
             ->with(['topics' => fn ($q) => $q->published()])
@@ -51,6 +52,7 @@ final class AcademyController extends Controller
             'previous' => $index > 0 ? $course->topics[$index - 1] : null,
             'next' => $course->topics[$index + 1] ?? null,
             'position' => $index + 1,
+            'quiz' => $quizzes->activeQuizFor($current),
         ]);
     }
 

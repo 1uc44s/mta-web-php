@@ -8,14 +8,21 @@ use App\Models\AcademyCourse;
 use App\Models\AcademyTopic;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
-/** Konu "Okudum" — docs/CMS.md §5.2: idempotent; yalnızca yayındaki konu (ve yayındaki ders) tamamlanabilir. */
+/** Konu "Okudum" — docs/CMS.md §5.2: idempotent; yalnızca yayındaki konu (ve yayındaki ders) tamamlanabilir. Aktif sınavı olan konu yalnızca sınavla tamamlanır (Faz 10). */
 final class CompleteAcademyTopic
 {
+    public function __construct(private readonly AcademyQuizzes $quizzes) {}
+
     public function handle(User $user, AcademyTopic $topic): void
     {
         $coursePublished = AcademyCourse::query()->published()->whereKey($topic->academy_course_id)->exists();
         abort_unless($topic->isPublished() && $coursePublished, 404);
+
+        if ($this->quizzes->activeQuizFor($topic) !== null) {
+            throw ValidationException::withMessages(['topic' => __('academy.quiz.errors.quiz_required')]);
+        }
 
         DB::table('academy_progress')->insertOrIgnore([
             'user_id' => $user->id,

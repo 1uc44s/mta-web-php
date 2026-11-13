@@ -19,7 +19,7 @@ Laravel 13 · PHP 8.4 · MariaDB 10.11 · Blade + Tailwind CSS v4 + Alpine.js (C
 | 7 | MTA köprüsü + Lua resource | ✅ |
 | 8 | Başvurular, moderasyon, oyun komutları, cihazlar | ✅ (özellik bayrakları varsayılan kapalı) |
 | 9 | Ekonomi ve ödeme | ✅ FakeProvider ile (OD-03/OD-04 bekliyor; `features.wallet/payments` varsayılan kapalı) |
-| 10 | Gelişmiş kanallar | ⏳ |
+| 10 | Gelişmiş kanallar (Reverb, Web Push, Discord, Akademi sınavı, KVKK dökümü) | ✅ özellikler varsayılan kapalı; WhatsApp atlandı (OD-05, R3) |
 | 11 | Sertleştirme ve yayın | 🟡 R1 yerel kısım ✅ (güvenlik testleri, audit, yedek/geri yükleme testi, izleme, operasyon dokümanı); production kurulumu, hukuk ve marka onayı açık |
 
 ---
@@ -355,6 +355,40 @@ Karar durumu: **OD-03** (cüzdan türleri) ve **OD-04** (ödeme sağlayıcısı)
 
 **Gerçek sağlayıcı (OD-04 sonrası):** `App\Services\Payments\PaymentProvider` arayüzünü (`createCheckout`, `verifyWebhook`, `normalizeEvent`, `getPaymentStatus`, `refundPayment`) uygulayan adapter + `PaymentManager::PROVIDERS` eşlemesi + `.env` anahtarları.
 
+### Faz 10 — Gerçek zaman, Web Push, Discord, Akademi sınavı, KVKK dökümü
+
+> Düzeltme (Faz 10 tarayıcı kontrolünde bulundu): `POST /user/confirm-password` 500 veriyordu (giriş alanı `login` sanal olduğu için Fortify varsayılan doğrulaması `$user->login` okuyordu). `Fortify::confirmPasswordsUsing` ile doğrudan hash karşılaştırmasına alındı; regresyon testi `PushAndExportTest`.
+
+Tümü **varsayılan kapalı**: `features.push`, `features.academy_quiz`, `discord.announcements`, `discord.ops_alerts` (ACP → Ayarlar); Reverb yalnızca `BROADCAST_CONNECTION=reverb` iken. WhatsApp kanalı **atlandı** (OD-05 kararı yok, R3).
+
+**Oyuncu paneli:**
+
+| Yöntem | URL | Ad | Not |
+|---|---|---|---|
+| GET | `/panel/academy/topics/{id}/quiz` | `panel.academy.quiz` | F:academy_quiz. Doğru seçenekler yalnızca sınav geçildikten sonra gösterilir |
+| POST | `/panel/academy/topics/{id}/quiz` (`answers[soru_id]=seçenek_id`) | `panel.academy.quiz.submit` | 10/saat. Deneme sınırı + başarısızlık sonrası bekleme; geçerse konu tamamlanır. Aktif sınavlı konu "Okudum" ile tamamlanamaz |
+| POST | `/panel/push/subscriptions` (JSON `{endpoint, keys:{p256dh, auth}, contentEncoding}`) | `panel.push.subscribe` | F:push, 20/saat. Yalnızca HTTPS endpoint, kullanıcı başına 10 |
+| POST | `/panel/push/subscriptions/delete` (JSON `{endpoint}`) | `panel.push.unsubscribe` | Yalnızca kendi aboneliği |
+| POST | `/panel/account/export` | `panel.account.export` | Parola onayı, 3/saat. JSON dosyası (`Cache-Control: no-store`); güvenlik olayı `data_exported` |
+| POST | `/broadcasting/auth` (`socket_id`, `channel_name`) | — | Yalnızca Reverb açıkken anlamlı; web oturumu ile kanal yetkisi |
+
+**Gerçek zaman kanalları (`routes/channels.php`):** `private-user.{id}` (yalnızca kendisi — panel bildirimleri, rozet anında artar), `private-support.ticket.{ulid}` (talep sahibi veya kapsamlı personel — `support.message` olayı, "yeni mesaj — yenile" bandı), `private-staff.branch.{id}` (branş üyesi veya `support.all_branches` — `support.queue`). Yayınlar yalnızca kimlik alanı taşır; mesaj gövdesi ve iç not **asla** yayınlanmaz. İstemci ayarları `<meta name="mrp-realtime">` (public anahtar, host, port, şema) — secret istemciye gitmez; CSP `connect-src` Reverb host'unu yalnızca etkinken ekler.
+
+**Web Push:** `php artisan mrp:vapid-keys` → `.env` `VAPID_*` → `features.push`. Ayarlar sayfasında "Bu cihazda aç". Tercih matrisi (`NotificationPreferences::MATRIX`): destek (e-posta + push), duyurular (e-posta), başvurular / cezalar / ödemeler (push). Yük yalnızca başlık, özet, URL; 404/410 veya 5 ardışık hata → abonelik silinir. Service worker `sw.js` (`mrp-v2`) push + tıklama (yalnızca aynı origin).
+
+**Discord:** `DISCORD_WEBHOOK_ANNOUNCEMENTS` / `DISCORD_WEBHOOK_OPS` (`.env`, yalnızca `https://discord.com/api/webhooks/…`). Duyuruda "Discord" kanalı seçilirse ve hedef `all` ise yayında **bir kez** gönderilir. Ops: `mrp:health-check` kritikleri, köprü imza alarmı, mutabakat farkı (30 dk tekilleştirme). Metin markdown/`@everyone` arındırılır, `allowed_mentions: {parse: []}`, ≤ 2000 karakter. Her gönderim `message_dispatches` (kanal `discord_webhook`).
+
+**ACP:**
+
+| Yöntem | URL | Ad | Yetki |
+|---|---|---|---|
+| — | `/admin/academy-quizzes…` | `admin.academy-quizzes.*` | `academy.manage` (CMS kaynak deseni: konu (tekil), başlık, geçme eşiği %, deneme sınırı (0 = sınırsız), bekleme dk, aktif) |
+| GET / POST | `/admin/academy-quizzes/{id}/questions` (`body`, `options[0..5]`, `correct`) | `admin.academy-quizzes.questions(.store)` | `academy.manage` — 2–6 seçenek, tam bir doğru |
+| POST | `/admin/academy-quizzes/{id}/questions/{question}/delete` | `admin.academy-quizzes.questions.destroy` | `academy.manage` |
+
+**Komutlar:** `php artisan mrp:vapid-keys` (VAPID anahtar çifti, yalnızca ekrana; Windows/XAMPP'ta EC anahtar üretimi için `OPENSSL_CONF=C:
+mpp\apache\conf\openssl.cnf` gerekir), `php artisan reverb:start` (production: `deploy/supervisor/meridyen-reverb.conf`).
+
 ## 3. JSON API (`/api/v1`)
 
 Hata biçimi (tüm JSON uçları):
@@ -527,13 +561,25 @@ Faz 5'te mevcut tablolar da kullanılmaya başladı: `page_revisions` (sayfa dü
 | `refunds` | `ulid`, `payment_order_id`, `amount_minor`, `reason`, `status` (`requested\|approved\|processing\|succeeded\|failed\|rejected\|requires_review`), `provider_refund_id`, `wallet_transaction_id`, `requested_by`, `approved_by` (≠ talep eden) | |
 | `wallet_adjustment_requests` | `ulid`, `wallet_id`, `direction`, `amount`, `reason` (≥ 20), `status` (`pending\|approved\|rejected\|applied\|cancelled`), `requires_second_approval`, `reversal_of_id`, `requested_by`, `reviewed_by`, `review_note`, `wallet_transaction_id` | Dört göz |
 | `wallet_reconciliation_runs` | `ulid`, `triggered_by`, `wallets_checked`, `mismatches`, `total_balance`, `ledger_net`, `details` JSON, `started_at`, `finished_at` | FR-WAL-007 raporu |
+**Push ve Akademi sınavı tabloları (Faz 10):**
+
+| Tablo | Önemli kolonlar | Not |
+|---|---|---|
+| `push_subscriptions` | `user_id` (CASCADE), `endpoint` TEXT, `endpoint_hash` CHAR(64) (unique), `public_key`, `auth_token` (**şifreli**), `content_encoding` (`aes128gcm\|aesgcm`), `user_agent_summary`, `failures`, `last_used_at` | Hesap anonimleştirmesinde silinir |
+| `academy_quizzes` | `academy_topic_id` (**unique**, CASCADE), `title`, `pass_percent` (70), `max_attempts` (3; 0 = sınırsız), `cooldown_minutes` (60), `is_active` | Konu başına tek sınav |
+| `academy_questions` | `academy_quiz_id` (CASCADE), `body` (≤ 500), `sort` | |
+| `academy_options` | `academy_question_id` (CASCADE), `body` (≤ 255), `is_correct`, `sort` | `is_correct` oyuncuya geçmeden gönderilmez |
+| `academy_attempts` | `ulid`, `academy_quiz_id`, `user_id`, `score_percent`, `passed`, `answers` JSON (`{soru_id: seçenek_id}`), `created_at`; index (`user_id`,`academy_quiz_id`,`created_at`) | Geçen deneme `academy_progress` yazar |
+
+`user_notification_preferences.channel` artık `push` da alır; `user_security_events.event` için `data_exported` eklendi.
+
 **Seed sırası:** `ServerSeeder` → `AccessControlSeeder` (izinler, 9 sistem rolü + matris, 6 branş, 5 destek kategorisi) → `MessageTemplateSeeder` (sistem e-posta şablonları) → `ContentSeeder` → `EconomySeeder` (web_credit + 3 paket) → (`local` ise) `DemoSeeder`. İlk süper admin seed ile oluşturulmaz (bkz. §2 Yönetim paneli).
 
 ---
 
 ## 5. Operasyon (Faz 11 R1)
 
-Ayrıntı: [docs/OPERATIONS.md](docs/OPERATIONS.md). Örnek production dosyaları: [`deploy/`](deploy/) — `nginx/meridyen.conf`, `supervisor/meridyen-worker.conf`, `cron/meridyen`, `backup.sh` (şifreli günlük döküm + dosyalar).
+Ayrıntı: [docs/OPERATIONS.md](docs/OPERATIONS.md). Örnek production dosyaları: [`deploy/`](deploy/) — `nginx/meridyen.conf` (Faz 10: `/app/` wss proxy), `supervisor/meridyen-worker.conf`, `supervisor/meridyen-reverb.conf` (Faz 10), `cron/meridyen`, `backup.sh` (şifreli günlük döküm + dosyalar).
 
 | Komut | Zamanlama | Görev |
 |---|---|---|

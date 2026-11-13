@@ -31,6 +31,10 @@ return [
     'features.devices' => ['group' => 'features', 'type' => 'bool', 'default' => false, 'public' => true],
     'features.events' => ['group' => 'features', 'type' => 'bool', 'default' => true, 'public' => true],
     'features.pwa' => ['group' => 'features', 'type' => 'bool', 'default' => true, 'public' => true],
+    'features.push' => ['group' => 'features', 'type' => 'bool', 'default' => false, 'public' => true],
+    'features.academy_quiz' => ['group' => 'features', 'type' => 'bool', 'default' => false, 'public' => true],
+    'discord.announcements' => ['group' => 'discord', 'type' => 'bool', 'default' => false, 'public' => false],
+    'discord.ops_alerts' => ['group' => 'discord', 'type' => 'bool', 'default' => false, 'public' => false],
 
     'accounts.max_links_per_user' => ['group' => 'accounts', 'type' => 'int', 'default' => 3, 'public' => false],
 

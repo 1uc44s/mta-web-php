@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Actions\Support;
 
 use App\Enums\AuditAction;
+use App\Events\SupportMessagePosted;
+use App\Events\SupportQueueChanged;
 use App\Models\Branch;
 use App\Models\SupportCategory;
 use App\Models\SupportMessage;
@@ -15,6 +17,7 @@ use App\Notifications\SupportActivity;
 use App\Services\Audit\AuditLogger;
 use App\Services\Messaging\MessageDispatcher;
 use App\Services\Notifications\NotificationPreferences;
+use App\Support\Realtime;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -70,6 +73,7 @@ final class TicketWorkflow
             }
 
             $this->event($ticket, $player, 'created', null, 'open');
+            $this->broadcast($ticket, null);
 
             return $ticket;
         });
@@ -95,6 +99,7 @@ final class TicketWorkflow
             if ($from !== $to) {
                 $this->event($ticket, $player, 'status_changed', $from, $to);
             }
+            $this->broadcast($ticket, 'player');
         });
 
         if ($ticket->assigned_to !== null) {
@@ -125,6 +130,7 @@ final class TicketWorkflow
                 if ($from !== 'waiting_for_player') {
                     $this->event($ticket, $staff, 'status_changed', $from, 'waiting_for_player');
                 }
+                $this->broadcast($ticket, 'staff');
             }
 
             return $message;
@@ -248,6 +254,18 @@ final class TicketWorkflow
     }
 
     /** FR-SUP-004: `T-000123` — tek satırlık sayaçla yarışsız. */
+    /** Gerçek zaman (Faz 10): yalnızca Reverb açıkken; commit sonrası yayınlanır, gövde içermez. */
+    private function broadcast(SupportTicket $ticket, ?string $author): void
+    {
+        if (! Realtime::enabled()) {
+            return;
+        }
+        if ($author !== null) {
+            SupportMessagePosted::dispatch($ticket->ulid, $author);
+        }
+        SupportQueueChanged::dispatch($ticket->branch_id);
+    }
+
     private function nextNumber(): string
     {
         DB::update('UPDATE support_ticket_sequence SET n = LAST_INSERT_ID(n + 1) WHERE id = 1');

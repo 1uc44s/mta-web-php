@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Panel\AcademyController;
+use App\Http\Controllers\Panel\AcademyQuizController;
 use App\Http\Controllers\Panel\ApplicationController;
 use App\Http\Controllers\Panel\CharacterController;
 use App\Http\Controllers\Panel\DashboardController;
@@ -10,6 +11,7 @@ use App\Http\Controllers\Panel\DeviceController;
 use App\Http\Controllers\Panel\GameAccountController;
 use App\Http\Controllers\Panel\NotificationController;
 use App\Http\Controllers\Panel\PaymentController;
+use App\Http\Controllers\Panel\PushController;
 use App\Http\Controllers\Panel\SanctionController;
 use App\Http\Controllers\Panel\SecurityController;
 use App\Http\Controllers\Panel\SettingsController;
@@ -31,6 +33,8 @@ Route::get('security/two-factor', TwoFactorController::class)->name('security.tw
 // §5.3 Akademi, kurallar ve duyurular (Faz 5)
 Route::get('academy', [AcademyController::class, 'index'])->name('academy');
 Route::post('academy/topics/{topic:id}/complete', [AcademyController::class, 'complete'])->whereNumber('topic')->name('academy.complete');
+Route::get('academy/topics/{topic:id}/quiz', [AcademyQuizController::class, 'show'])->middleware('feature:academy_quiz')->whereNumber('topic')->name('academy.quiz');
+Route::post('academy/topics/{topic:id}/quiz', [AcademyQuizController::class, 'submit'])->middleware(['feature:academy_quiz', 'throttle:10,60'])->whereNumber('topic')->name('academy.quiz.submit');
 Route::post('rules/acknowledge', [AcademyController::class, 'acknowledgeRules'])->name('rules.acknowledge');
 Route::post('announcements/{announcement:ulid}/read', [AcademyController::class, 'readAnnouncement'])->name('announcements.read');
 
@@ -42,6 +46,8 @@ Route::post('notifications/{id}/read', [NotificationController::class, 'read'])-
 Route::get('settings', [SettingsController::class, 'show'])->name('settings');
 Route::post('settings/preferences', [SettingsController::class, 'preferences'])->name('settings.preferences');
 Route::post('settings/notifications', [SettingsController::class, 'notifications'])->name('settings.notifications');
+Route::post('push/subscriptions', [PushController::class, 'subscribe'])->middleware(['feature:push', 'throttle:20,60'])->name('push.subscribe');
+Route::post('push/subscriptions/delete', [PushController::class, 'unsubscribe'])->middleware('feature:push')->name('push.unsubscribe');
 
 // §5.8 Güvenlik ve hesap (Faz 6)
 Route::get('security', [SecurityController::class, 'show'])->name('security');
@@ -54,6 +60,7 @@ Route::post('security/sessions/revoke-all', [SecurityController::class, 'revokeA
 Route::post('security/sessions/{session}/revoke', [SecurityController::class, 'revokeSession'])->middleware('password.confirm')->where('session', '[A-Za-z0-9]{20,100}')->name('security.sessions.revoke');
 Route::get('security/events', [SecurityController::class, 'events'])->name('security.events');
 Route::post('account/delete-request', [SecurityController::class, 'deleteRequest'])->middleware('password.confirm')->name('account.delete-request');
+Route::post('account/export', [SecurityController::class, 'export'])->middleware(['password.confirm', 'throttle:3,60'])->name('account.export');
 Route::post('account/delete-cancel', [SecurityController::class, 'deleteCancel'])->name('account.delete-cancel');
 
 // §5.3 Oyun hesapları ve karakterler (Faz 7) — kod üretimi doğrulanmış e-posta + throttle:link-code

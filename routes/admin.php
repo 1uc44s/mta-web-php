@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\IntegrationController;
 use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\PageSectionController;
 use App\Http\Controllers\Admin\PaymentController as AdminPaymentController;
+use App\Http\Controllers\Admin\QuizQuestionController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SanctionController;
 use App\Http\Controllers\Admin\SettingsController;
@@ -138,6 +139,13 @@ Route::post('templates/{template}/revisions/{revision}/restore', [TemplateContro
 Route::get('contact', [ContactMessageController::class, 'index'])->middleware('can:contact.read')->name('contact.index');
 Route::get('contact/{message:ulid}', [ContactMessageController::class, 'show'])->middleware('can:contact.read')->name('contact.show');
 Route::post('contact/{message:ulid}/status', [ContactMessageController::class, 'status'])->middleware('can:contact.read')->name('contact.status');
+
+// §6.8 Akademi sınav soruları (Faz 10) — sınav ayarları CMS kaynak deseninde (`academy-quizzes`).
+Route::prefix('academy-quizzes/{quiz}')->name('academy-quizzes.')->whereNumber('quiz')->group(function (): void {
+    Route::get('questions', [QuizQuestionController::class, 'index'])->middleware('can:academy.manage')->name('questions');
+    Route::post('questions', [QuizQuestionController::class, 'store'])->middleware('can:academy.manage')->name('questions.store');
+    Route::post('questions/{question}/delete', [QuizQuestionController::class, 'destroy'])->middleware('can:academy.manage')->whereNumber('question')->name('questions.destroy');
+});
 
 // §6.4 Destek (Faz 6) — kapsam (branş) her uçta controller'da; kategoriler/makrolar yukarıdaki kaynak deseninde.
 Route::prefix('support')->name('support.')->group(function (): void {

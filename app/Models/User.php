@@ -221,4 +221,10 @@ final class User extends Authenticatable implements MustVerifyEmail
             'expires_minutes' => (int) config('auth.passwords.users.expire', 60),
         ]);
     }
+
+    /** Yayın bildirimi kanalı — routes/channels.php `user.{id}` (docs/ROUTES.md §7.4). */
+    public function receivesBroadcastNotificationsOn(): string
+    {
+        return 'user.'.$this->id;
+    }
 }

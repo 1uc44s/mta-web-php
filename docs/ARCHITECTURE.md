@@ -540,6 +540,16 @@ Alpine bileşeni `poller` ortak yardımcıdır: `document.visibilityState` takib
 
 R2'de Reverb'e geçildiğinde aynı olaylar private kanallarla yayınlanır (`private-user.{id}`, `private-staff.branch.{id}`). Polling, WebSocket koptuğunda yedek yol olarak kalır (brief §15.3).
 
+**Faz 10 uygulaması:** Gerçek zaman yalnızca `BROADCAST_CONNECTION=reverb` iken açıktır (`App\Support\Realtime::enabled()`); aksi halde sunucu yayın yapmaz, istemci bağlanmaz ve yalnızca polling çalışır. İstemci bağlantı ayarlarını derleme zamanı `VITE_*` yerine sunucunun yazdığı `<meta name="mrp-realtime">` etiketinden okur (anahtar, host, port, şema — secret asla). CSP `connect-src` yalnızca etkinken Reverb host'unu (ws/wss) ekler.
+
+| Olay | Kanal | İstemci davranışı |
+|---|---|---|
+| Panel bildirimi (`PanelNotice`, `SupportActivity` — `broadcast` kanalı) | `private-user.{id}` | Okunmamış sayacı anında artar |
+| `SupportMessagePosted` (public mesaj) | `private-support.ticket.{ulid}` | Talep sayfasında "Yeni mesaj — yenile" bandı |
+| `SupportQueueChanged` | `private-staff.branch.{id}` | ACP kuyruk sayaçlarını yeniler |
+
+Yayın içeriği yalnızca kimlik ve gösterim alanlarıdır; mesaj gövdesi ve iç notlar asla yayınlanmaz. Production: `php artisan reverb:start` Supervisor altında, Nginx `wss://` proxy (deploy/ dosyaları).
+
 ## 10. Kuyruk ve zamanlayıcı
 
 | Zamanlama | Komut / Job | Amaç |

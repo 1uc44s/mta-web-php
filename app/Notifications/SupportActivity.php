@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Notifications;
 
 use App\Models\SupportTicket;
+use App\Notifications\Channels\WebPushChannel;
+use App\Support\Realtime;
 use Illuminate\Notifications\Notification;
 
 /**
@@ -19,7 +21,7 @@ final class SupportActivity extends Notification
     /** @return list<string> */
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return Realtime::withBroadcast(['database', WebPushChannel::class]);
     }
 
     /** @return array<string, string> */
@@ -35,5 +37,17 @@ final class SupportActivity extends Notification
                 ? route('panel.support.show', $this->ticket)
                 : route('admin.support.show', $this->ticket),
         ];
+    }
+
+    /**
+     * Yalnızca oyuncuya giden `staff_replied` push alır (kategori `support`).
+     *
+     * @return array{category: string|null, title: string, body: string|null, url: string, tag: string}
+     */
+    public function toWebPush(object $notifiable): array
+    {
+        $data = $this->toArray($notifiable);
+
+        return ['category' => $this->kind === 'staff_replied' ? 'support' : null, 'title' => $data['title'], 'body' => $data['subject'], 'url' => $data['url'], 'tag' => 'support-'.$this->ticket->ulid];
     }
 }

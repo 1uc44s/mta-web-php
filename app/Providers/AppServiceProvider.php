@@ -8,6 +8,8 @@ use App\Listeners\AuthEventSubscriber;
 use App\Models\User;
 use App\Services\Bridge\ServerStatusResolver;
 use App\Services\Content\MarkdownRenderer;
+use App\Services\Push\PushTransport;
+use App\Services\Push\WebPushTransport;
 use App\Services\Settings\SettingsRepository;
 use App\Support\ConfigValidator;
 use App\View\Composers\AdminLayoutComposer;
@@ -33,6 +35,7 @@ final class AppServiceProvider extends ServiceProvider
         $this->app->singleton(SettingsRepository::class);
         $this->app->singleton(MarkdownRenderer::class);
         $this->app->singleton(ServerStatusResolver::class);
+        $this->app->bind(PushTransport::class, WebPushTransport::class);
     }
 
     public function boot(): void

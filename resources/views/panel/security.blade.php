@@ -76,6 +76,14 @@
             <a href="{{ route('panel.security.events') }}" class="mt-4 inline-block text-sm text-accent hover:underline">Son 90 günün güvenlik olayları →</a>
         </section>
 
+        <section aria-labelledby="h-export" class="rounded-lg border border-border bg-surface-1 p-6">
+            <h2 id="h-export" class="font-display text-h4 font-semibold text-text">Verilerimi indir (KVKK)</h2>
+            <p class="mt-1 max-w-2xl text-sm text-text-muted">Hesabına ait profil, onay, güvenlik olayı, destek, başvuru, ceza, cüzdan, ödeme, oyun hesabı ve bildirim kayıtlarını JSON dosyası olarak indirirsin. Yetkili iç notları ve şifreli alanlar dosyada yer almaz. Saatte en fazla 3 kez; parola onayı istenir.</p>
+            <form method="POST" action="{{ route('panel.account.export') }}" class="mt-4">@csrf
+                <x-ui.button type="submit" size="sm" variant="secondary" icon="download">Veri dökümünü indir</x-ui.button>
+            </form>
+        </section>
+
         @if ($user->status->value !== 'pending_deletion' && ! $user->isStaff())
             <section aria-labelledby="h-delete" class="rounded-lg border border-danger/30 p-6">
                 <h2 id="h-delete" class="font-display text-h4 font-semibold text-text">Hesabı sil</h2>

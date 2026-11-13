@@ -26,8 +26,8 @@ final class NotificationPreferencesRequest extends FormRequest
     {
         $input = (array) $this->validated('prefs', []);
         $out = [];
-        foreach (NotificationPreferences::CATEGORIES as $category) {
-            foreach (NotificationPreferences::CHANNELS as $channel) {
+        foreach (NotificationPreferences::MATRIX as $category => $channels) {
+            foreach ($channels as $channel) {
                 $out[$category][$channel] = (bool) ($input[$category][$channel] ?? false);
             }
         }

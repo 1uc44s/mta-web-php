@@ -284,6 +284,10 @@ sequenceDiagram
 | features | `features.devices` | bool | false | ✓ | |
 | features | `features.events` | bool | true | ✓ | |
 | features | `features.pwa` | bool | true | ✓ | |
+| features | `features.push` | bool | false | ✓ | Faz 10 Web Push (VAPID anahtarları `.env`) |
+| features | `features.academy_quiz` | bool | false | ✓ | Faz 10 konu sınavları |
+| discord | `discord.announcements` | bool | false | | Duyurular Discord'a da gönderilir (`DISCORD_WEBHOOK_ANNOUNCEMENTS`, `.env`) |
+| discord | `discord.ops_alerts` | bool | false | | Kritik operasyon uyarıları (`DISCORD_WEBHOOK_OPS`, `.env`) |
 | accounts | `accounts.max_links_per_user` | int | 3 | | |
 | support | `support.max_attachments` | int | 3 | | |
 | support | `support.auto_resolve_days` | int | 7 | | `waiting_for_player` → `resolved` |

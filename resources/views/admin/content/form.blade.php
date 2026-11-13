@@ -23,6 +23,9 @@
             @if ($resource === 'pages' && $exists)
                 <x-ui.button size="sm" variant="secondary" icon="layout-list" :href="route('admin.content.pages.sections', $model->getKey())">{{ __('content_admin.sections') }}</x-ui.button>
             @endif
+            @if ($resource === 'academy-quizzes' && $exists)
+                <x-ui.button size="sm" variant="secondary" icon="list-checks" :href="route('admin.academy-quizzes.questions', $model->getKey())">Sorular</x-ui.button>
+            @endif
             @if (isset($def['revisions']) && $exists)
                 <x-ui.button size="sm" variant="secondary" icon="history" :href="route('admin.content.'.$resource.'.revisions', $model->getKey())">{{ __('content_admin.revisions') }}</x-ui.button>
             @endif
@@ -116,7 +119,10 @@
                     </div>
                 </x-admin.card>
 
-                @if (isset($def['revisions']) && $exists)
+                @if ($resource === 'academy-quizzes' && $exists)
+                <x-ui.button size="sm" variant="secondary" icon="list-checks" :href="route('admin.academy-quizzes.questions', $model->getKey())">Sorular</x-ui.button>
+            @endif
+            @if (isset($def['revisions']) && $exists)
                     <x-admin.card>
                         <x-ui.field name="revision_note" :label="__('content_admin.revision_note')"><x-ui.input name="revision_note" maxlength="255" /></x-ui.field>
                     </x-admin.card>

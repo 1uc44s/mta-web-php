@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 use App\Actions\Support\TicketWorkflow;
 use App\Enums\AuditAction;
+use App\Models\AcademyQuestion;
+use App\Models\AcademyQuiz;
+use App\Models\AcademyTopic;
 use App\Models\Application;
 use App\Models\ApplicationType;
 use App\Models\Branch;
@@ -92,7 +95,13 @@ function adminRouteCases(): array
         'refund' => Refund::query()->create(['payment_order_id' => $order->id, 'amount_minor' => 50, 'reason' => 'Test iadesi', 'requested_by' => $target->id]),
     ];
 
+    // Faz 10: akademi sınavı + soru
+    $quizTopic = AcademyTopic::query()->firstOrFail();
+    $quiz = AcademyQuiz::query()->create(['academy_topic_id' => $quizTopic->id, 'title' => 'Sınav']);
+    $question = AcademyQuestion::query()->create(['academy_quiz_id' => $quiz->id, 'body' => 'Soru?']);
+
     $base = [
+        'quiz' => $quiz->id, 'question' => $question->id,
         'application' => $application->ulid, 'sanction' => $sanction->ulid, 'appeal' => $appeal->ulid, 'command' => $command->ulid, 'device' => $device->id,
         'wallet' => $economy['wallet']->id, 'transaction' => $economy['transaction']->ulid, 'adjustment' => $economy['adjustment']->ulid,
         'order' => $economy['order']->ulid, 'refund' => $economy['refund']->ulid,

@@ -11,6 +11,7 @@
 | Veritabanı | MariaDB 10.11, `utf8mb4_unicode_ci` | Ayrı kullanıcılar (§1.1) |
 | Kuyruk | `database` sürücüsü + Supervisor | `deploy/supervisor/meridyen-worker.conf` |
 | Zamanlayıcı | cron → `php artisan schedule:run` her dakika | `deploy/cron/meridyen` |
+| Gerçek zaman (Faz 10, isteğe bağlı) | Laravel Reverb + Supervisor | `deploy/supervisor/meridyen-reverb.conf`, Nginx `/app/` wss proxy. Kapalıyken (`BROADCAST_CONNECTION=log`) panel polling ile çalışır |
 | MTA | `mta-resource/web_bridge` | [mta-resource/web_bridge/README.md](../mta-resource/web_bridge/README.md) |
 
 ### 1.1 Veritabanı kullanıcıları (en az yetki)
@@ -33,7 +34,7 @@ GRANT SELECT, LOCK TABLES, SHOW VIEW, TRIGGER, EVENT ON meridyen.* TO 'meridyen_
 
 ### 1.2 Ortam değişkenleri (production)
 
-`APP_ENV=production`, `APP_DEBUG=false`, `APP_URL=https://…`, `SESSION_SECURE_COOKIE=true`, `SESSION_COOKIE=__Host-meridyen_session` (`__Host-` öneki: Secure + Path=/ + Domain yok), `LOG_CHANNEL=daily`, `LOG_LEVEL=warning`, `QUEUE_CONNECTION=database`, `MAIL_*` gerçek SMTP, `BRIDGE_SERIAL_PEPPER` (32+ rastgele bayt). `.env` izni `640`, sahibi dağıtım kullanıcısı, grubu `www-data`; **repoda asla bulunmaz** (`.gitignore`).
+`APP_ENV=production`, `APP_DEBUG=false`, `APP_URL=https://…`, `SESSION_SECURE_COOKIE=true`, `SESSION_COOKIE=__Host-meridyen_session` (`__Host-` öneki: Secure + Path=/ + Domain yok), `LOG_CHANNEL=daily`, `LOG_LEVEL=warning`, `QUEUE_CONNECTION=database`, `MAIL_*` gerçek SMTP, `BRIDGE_SERIAL_PEPPER` (32+ rastgele bayt). Faz 10 (isteğe bağlı): `BROADCAST_CONNECTION=reverb` + `REVERB_APP_ID/KEY/SECRET` (rastgele), `REVERB_HOST=<alan-adı>`, `REVERB_PORT=443`, `REVERB_SCHEME=https`; Web Push için `php artisan mrp:vapid-keys` çıktısı `VAPID_PUBLIC_KEY/VAPID_PRIVATE_KEY` + `VAPID_SUBJECT=mailto:…` (ardından ACP → Ayarlar → `features.push`); Discord için `DISCORD_WEBHOOK_ANNOUNCEMENTS` / `DISCORD_WEBHOOK_OPS` (yalnızca `https://discord.com/api/webhooks/…` kabul edilir; ACP → Ayarlar → `discord.*`). `.env` izni `640`, sahibi dağıtım kullanıcısı, grubu `www-data`; **repoda asla bulunmaz** (`.gitignore`).
 
 ## 2. Dağıtım
 
@@ -81,7 +82,7 @@ php artisan mrp:health-check
 | Audit zinciri | `audit:verify` (günlük 03:30) | Kırılma → critical |
 | Uygulama hataları | `storage/logs/laravel-*.log` (redaksiyonlu) | Yeni hata türü |
 
-Alarm satırları `storage/logs/security-YYYY-MM-DD.log` dosyasına yazılır; log toplayıcı `critical`/`warning` düzeylerini e-posta veya Discord'a iletir. `mrp:health-check` çıkış kodu 1 = alarm var (`--json` ile ayrıntı).
+Alarm satırları `storage/logs/security-YYYY-MM-DD.log` dosyasına yazılır; log toplayıcı `critical`/`warning` düzeylerini e-posta veya Discord'a iletir. Faz 10: `discord.ops_alerts` açık ve `DISCORD_WEBHOOK_OPS` tanımlıysa `mrp:health-check` kritikleri, köprü imza alarmı ve mutabakat farkı uygulama tarafından da Discord'a gönderilir (aynı kontrol 30 dk'da bir kez; her gönderim `message_dispatches`, kanal `discord_webhook`). `mrp:health-check` çıkış kodu 1 = alarm var (`--json` ile ayrıntı).
 
 ## 6. Break-glass (acil yönetici erişimi)
 
@@ -98,6 +99,8 @@ Alarm satırları `storage/logs/security-YYYY-MM-DD.log` dosyasına yazılır; l
 | `APP_KEY` | **Planlı bakım.** Eski anahtar `APP_PREVIOUS_KEYS` içinde tutulur; şifreli kolonlar (`integration_credentials.secret`, 2FA sırları) yeniden kaydedilerek yeni anahtarla şifrelenir. Bekleyen bağlama kodları ve imzalı bağlantılar geçersizleşir | Tüm oturumlar düşer |
 | `BRIDGE_SERIAL_PEPPER` | Değiştirilmez (serial HMAC eşleşmesi bozulur); sızıntıda cihaz kayıtları yeniden doğrulanır (Faz 8) | |
 | SMTP / ödeme / Discord anahtarları | Sağlayıcı panelinden yenile → `.env` → `optimize` | |
+| Reverb `REVERB_APP_SECRET` | Yeni değer → `.env` → `optimize` → `supervisorctl restart meridyen-reverb` | Açık WebSocket bağlantıları yeniden bağlanır |
+| VAPID anahtarları | Yalnızca sızıntıda: `mrp:vapid-keys` → `.env` → `optimize` | Tüm push abonelikleri geçersizleşir; oyuncular yeniden açar |
 
 Sızıntı şüphesinde sıra: iptal → yenile → etki analizi (audit + security log) → TODO.md'ye olay kaydı.
 

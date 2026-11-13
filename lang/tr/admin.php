@@ -201,7 +201,7 @@ return [
         'json_hint' => 'JSON biçiminde',
         'groups' => [
             'site' => 'Site kimliği', 'server' => 'Sunucu', 'social' => 'Sosyal bağlantılar', 'features' => 'Özellik bayrakları',
-            'accounts' => 'Oyun hesapları', 'support' => 'Destek', 'wallet' => 'Cüzdan', 'maintenance' => 'Bakım',
+            'accounts' => 'Oyun hesapları', 'support' => 'Destek', 'wallet' => 'Cüzdan', 'discord' => 'Discord', 'maintenance' => 'Bakım',
             'rules' => 'Kurallar', 'analytics' => 'Analitik', 'security' => 'Güvenlik', 'mail' => 'E-posta',
         ],
         'errors' => ['unknown' => 'Bilinmeyen ayar anahtarı.'],

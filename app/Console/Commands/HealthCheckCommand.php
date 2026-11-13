@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Models\MtaServer;
+use App\Services\Integrations\OpsAlerts;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -28,7 +29,7 @@ final class HealthCheckCommand extends Command
 
     public const HEARTBEAT_WARN_SECONDS = 300;
 
-    public function handle(): int
+    public function handle(OpsAlerts $ops): int
     {
         $alerts = [];
 
@@ -58,6 +59,9 @@ final class HealthCheckCommand extends Command
 
         foreach ($alerts as $alert) {
             Log::channel('security')->log($alert['level'], 'health.'.$alert['check'], ['value' => $alert['value']]);
+            if ($alert['level'] === 'critical') {
+                $ops->critical('health.'.$alert['check'], ['value' => $alert['value']]);
+            }
         }
 
         if ($this->option('json')) {

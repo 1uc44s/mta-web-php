@@ -7,11 +7,14 @@ namespace App\Actions\Content;
 use App\Enums\AuditAction;
 use App\Enums\ContentStatus;
 use App\Jobs\SendAnnouncementEmails;
+use App\Jobs\SendDiscordMessage;
 use App\Models\Announcement;
 use App\Models\User;
 use App\Services\Audit\AuditLogger;
 use App\Services\Content\ContentCache;
+use App\Services\Integrations\DiscordWebhook;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -67,6 +70,7 @@ final class ContentWorkflow
 
         if ($to === ContentStatus::Published && $model instanceof Announcement) {
             self::dispatchAnnouncementEmail($model);
+            self::dispatchAnnouncementDiscord($model);
         }
 
         return $to;
@@ -78,6 +82,24 @@ final class ContentWorkflow
         if (in_array('email', $announcement->channels, true) && $announcement->email_dispatched_at === null) {
             $announcement->forceFill(['email_dispatched_at' => now()])->save();
             SendAnnouncementEmails::dispatch($announcement->id);
+        }
+    }
+
+    /**
+     * Discord kanalı (Faz 10): yalnızca herkese açık (`audience=all`) duyurular, `discord.announcements` açıkken,
+     * duyuru başına bir kez (yeniden yayında tekrar gönderilmez).
+     */
+    public static function dispatchAnnouncementDiscord(Announcement $announcement): void
+    {
+        $discord = app(DiscordWebhook::class);
+
+        if (! in_array('discord', $announcement->channels, true) || $announcement->audience !== 'all' || ! $discord->enabled('announcements')) {
+            return;
+        }
+
+        if (Cache::add('announcement:discord:'.$announcement->id, true, now()->addDays(90))) {
+            $text = '**'.DiscordWebhook::sanitize($announcement->title)."**\n".route('panel.dashboard');
+            SendDiscordMessage::dispatch('announcements', $text, 'announcements.published');
         }
     }
 }

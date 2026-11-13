@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
+use App\Support\Realtime;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Vite;
@@ -41,6 +42,11 @@ final class SecurityHeaders
         $script = ["'self'", "'nonce-{$nonce}'"];
         $style = ["'self'", "'nonce-{$nonce}'"];
         $connect = ["'self'"];
+
+        // Gerçek zaman (Faz 10): Reverb WebSocket host'u yalnızca etkinken eklenir.
+        if (($realtime = Realtime::connectSource()) !== null) {
+            $connect[] = $realtime;
+        }
 
         // Yerel geliştirme: Vite dev sunucusu (HMR) farklı bir porttan çalışır.
         if (! app()->isProduction() && Vite::isRunningHot()) {

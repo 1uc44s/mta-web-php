@@ -70,6 +70,22 @@ return [
         'test_providers' => ['fake'],
     ],
 
+    // Faz 10 — Web Push (docs/ARCHITECTURE.md §8.1). Private anahtar yalnızca .env'de; yanıtlara asla çıkmaz.
+    'push' => [
+        'subject' => env('VAPID_SUBJECT', 'mailto:destek@meridyen-rp.test'),
+        'public_key' => env('VAPID_PUBLIC_KEY'),
+        'private_key' => env('VAPID_PRIVATE_KEY'),
+        'max_subscriptions_per_user' => 10,
+    ],
+
+    // Faz 10 — Discord webhook kanalı (docs/CMS.md §6.3). URL'ler gizlidir; ACP `discord.*` ayarlarıyla açılır.
+    'discord' => [
+        'webhooks' => [
+            'announcements' => env('DISCORD_WEBHOOK_ANNOUNCEMENTS'),
+            'ops' => env('DISCORD_WEBHOOK_OPS'),
+        ],
+    ],
+
     'pwa' => [
         'register_in_dev' => (bool) env('PWA_DEV', false),
     ],
